@@ -85,9 +85,6 @@
 
             </ui:VisualElement>
 
-            <!-- 하단 액션 버튼 -->
-            <ui:Button text="Start Endless Mode" name="StartButton" class="action-button"/>
-
         </ui:VisualElement>
         </ui:VisualElement>
 

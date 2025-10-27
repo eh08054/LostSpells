@@ -32,7 +32,6 @@ namespace LostSpells.UI
 
         private UIDocument uiDocument;
         private Button backButton;
-        private Button startButton;
 
         // 난이도 카드들
         private VisualElement easyCard;
@@ -66,7 +65,6 @@ namespace LostSpells.UI
 
             // UI 요소 찾기
             backButton = root.Q<Button>("BackButton");
-            startButton = root.Q<Button>("StartButton");
 
             // 난이도 카드들
             easyCard = root.Q<VisualElement>("EasyCard");
@@ -84,9 +82,6 @@ namespace LostSpells.UI
             // 이벤트 등록
             if (backButton != null)
                 backButton.clicked += OnBackButtonClicked;
-
-            if (startButton != null)
-                startButton.clicked += OnStartButtonClicked;
 
             // 난이도 카드 호버 이벤트 (마우스 올리면 선택)
             if (easyCard != null)
@@ -117,9 +112,6 @@ namespace LostSpells.UI
             if (backButton != null)
                 backButton.clicked -= OnBackButtonClicked;
 
-            if (startButton != null)
-                startButton.clicked -= OnStartButtonClicked;
-
             if (easyCard != null)
                 easyCard.UnregisterCallback<MouseEnterEvent>(evt => OnDifficultyCardHover(Difficulty.Easy));
 
@@ -143,19 +135,6 @@ namespace LostSpells.UI
             UpdateUI();
 
             Debug.Log($"[EndlessMode] {difficulty} 난이도 선택됨");
-        }
-
-        private void OnStartButtonClicked()
-        {
-            Debug.Log($"========================================");
-            Debug.Log($"[EndlessMode] Endless Mode 시작!");
-            Debug.Log($"[EndlessMode] 난이도: {selectedDifficulty}");
-            Debug.Log($"[EndlessMode] 최고 점수: {GetCurrentStats().bestScore}");
-            Debug.Log($"[EndlessMode] 최고 웨이브: {GetCurrentStats().bestWave}");
-            Debug.Log($"========================================");
-
-            // TODO: 실제 게임 씬으로 이동
-            // SceneManager.LoadScene($"EndlessMode_{selectedDifficulty}");
         }
 
         #endregion
