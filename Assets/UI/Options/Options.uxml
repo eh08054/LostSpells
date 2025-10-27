@@ -1,0 +1,195 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements"
+        editor-extension-mode="False">
+    <!-- USS 스타일시트 자동 적용 -->
+    <Style src="/Assets/UI/Common/Common.uss"/>
+    <Style src="/Assets/UI/Options/Options.uss"/>
+
+    <!-- 전체 화면 컨테이너 -->
+    <ui:VisualElement name="Options" class="screen-container">
+
+        <!-- 배경 레이어 (맨 뒤) -->
+        <ui:VisualElement name="BackgroundLayer" class="background-layer"/>
+
+        <!-- 중경 레이어 (건물들) -->
+        <ui:VisualElement name="MiddlegroundLayer" class="middleground-layer"/>
+
+        <!-- UI 컨텐츠 (맨 앞) -->
+        <ui:VisualElement name="UIContent" class="ui-content">
+            <!-- 상단 헤더 바 -->
+            <ui:VisualElement name="HeaderBar" class="header-bar">
+            <!-- 왼쪽 영역 -->
+            <ui:VisualElement name="HeaderLeft" class="header-side header-left">
+                <ui:Button text="" name="BackButton" class="back-button"/>
+            </ui:VisualElement>
+
+            <!-- 중앙 제목 -->
+            <ui:Label text="Options" name="HeaderTitle" class="header-title"/>
+
+            <!-- 오른쪽 영역 -->
+            <ui:VisualElement name="HeaderRight" class="header-side"/>
+        </ui:VisualElement>
+
+        <!-- 컨텐츠 영역 -->
+        <ui:VisualElement name="ContentArea" class="content-area options-content">
+            <!-- 왼쪽 패널: 카테고리 버튼들 -->
+            <ui:VisualElement name="LeftPanel" class="left-panel">
+                <ui:Button text="Audio" name="AudioButton" class="category-button"/>
+                <ui:Button text="Graphics" name="GraphicsButton" class="category-button"/>
+                <ui:Button text="Language" name="LanguageButton" class="category-button"/>
+                <ui:Button text="Game" name="GameButton" class="category-button"/>
+            </ui:VisualElement>
+
+            <!-- 오른쪽 패널: 설정 내용 (스크롤 가능) -->
+            <ui:ScrollView name="RightPanel" class="right-panel">
+                <!-- 오디오 설정 패널 -->
+                <ui:VisualElement name="AudioPanel" class="settings-panel">
+                    <ui:Label text="Audio Settings" name="AudioPanelTitle" class="panel-title"/>
+
+                    <ui:VisualElement class="setting-row">
+                        <ui:Label text="Master Volume" name="MasterLabel" class="setting-label"/>
+                        <ui:VisualElement name="MasterSlider" class="custom-slider">
+                            <ui:VisualElement class="slider-track">
+                                <ui:VisualElement name="MasterFill" class="slider-fill"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:Label text="80%" name="MasterValue" class="slider-value-label"/>
+                    </ui:VisualElement>
+
+                    <ui:VisualElement class="setting-row">
+                        <ui:Label text="BGM Volume" name="BGMLabel" class="setting-label"/>
+                        <ui:VisualElement name="BGMSlider" class="custom-slider">
+                            <ui:VisualElement class="slider-track">
+                                <ui:VisualElement name="BGMFill" class="slider-fill"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:Label text="80%" name="BGMValue" class="slider-value-label"/>
+                    </ui:VisualElement>
+
+                    <ui:VisualElement class="setting-row">
+                        <ui:Label text="SFX Volume" name="SFXLabel" class="setting-label"/>
+                        <ui:VisualElement name="SFXSlider" class="custom-slider">
+                            <ui:VisualElement class="slider-track">
+                                <ui:VisualElement name="SFXFill" class="slider-fill"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:Label text="80%" name="SFXValue" class="slider-value-label"/>
+                    </ui:VisualElement>
+
+                    <ui:VisualElement class="setting-row">
+                        <ui:Label text="Microphone" name="MicrophoneLabel" class="setting-label"/>
+                        <ui:DropdownField name="MicrophoneDropdown" class="setting-dropdown"/>
+                    </ui:VisualElement>
+
+                    <ui:VisualElement class="setting-row">
+                        <ui:Label text="Voice Threshold" name="VoiceThresholdLabel" class="setting-label"/>
+                        <ui:VisualElement name="VoiceThresholdSlider" class="custom-slider">
+                            <ui:VisualElement class="slider-track">
+                                <ui:VisualElement name="VoiceThresholdFill" class="slider-fill"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:Label text="70%" name="VoiceThresholdValue" class="slider-value-label"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <!-- 그래픽 설정 패널 -->
+                <ui:VisualElement name="GraphicsPanel" class="settings-panel" style="display: none;">
+                    <ui:Label text="Graphics Settings" name="GraphicsPanelTitle" class="panel-title"/>
+
+                    <ui:VisualElement class="setting-row">
+                        <ui:Label text="Resolution" name="ResolutionLabel" class="setting-label"/>
+                        <ui:DropdownField name="ResolutionDropdown" class="setting-dropdown"/>
+                    </ui:VisualElement>
+
+                    <ui:VisualElement class="setting-row">
+                        <ui:Label text="Screen Mode" name="ScreenModeLabel" class="setting-label"/>
+                        <ui:DropdownField name="ScreenModeDropdown" class="setting-dropdown"/>
+                    </ui:VisualElement>
+
+                    <ui:VisualElement class="setting-row">
+                        <ui:Label text="V-Sync" name="VSyncLabel" class="setting-label"/>
+                        <ui:VisualElement name="VSyncToggle" class="toggle-button-group">
+                            <ui:Button text="On" name="VSyncOn" class="toggle-button toggle-button-left"/>
+                            <ui:Button text="Off" name="VSyncOff" class="toggle-button toggle-button-right"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+
+                    <ui:VisualElement class="setting-row">
+                        <ui:Label text="Brightness" name="BrightnessLabel" class="setting-label"/>
+                        <ui:VisualElement name="BrightnessSlider" class="custom-slider">
+                            <ui:VisualElement class="slider-track">
+                                <ui:VisualElement name="BrightnessFill" class="slider-fill"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:Label text="50%" name="BrightnessValue" class="slider-value-label"/>
+                    </ui:VisualElement>
+
+                    <ui:VisualElement class="setting-row">
+                        <ui:Label text="Contrast" name="ContrastLabel" class="setting-label"/>
+                        <ui:VisualElement name="ContrastSlider" class="custom-slider">
+                            <ui:VisualElement class="slider-track">
+                                <ui:VisualElement name="ContrastFill" class="slider-fill"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:Label text="50%" name="ContrastValue" class="slider-value-label"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <!-- 언어 설정 패널 -->
+                <ui:VisualElement name="LanguagePanel" class="settings-panel" style="display: none;">
+                    <ui:Label text="Language Settings" name="LanguagePanelTitle" class="panel-title"/>
+
+                    <ui:VisualElement class="setting-row">
+                        <ui:Label text="Game Language" name="GameLanguageLabel" class="setting-label"/>
+                        <ui:DropdownField name="GameLanguageDropdown" class="setting-dropdown"/>
+                    </ui:VisualElement>
+
+                    <ui:VisualElement class="setting-row">
+                        <ui:Label text="Voice Language" name="VoiceLanguageLabel" class="setting-label"/>
+                        <ui:DropdownField name="VoiceLanguageDropdown" class="setting-dropdown"/>
+                    </ui:VisualElement>
+
+                    <ui:VisualElement class="setting-row">
+                        <ui:Label text="Subtitle" name="SubtitleLabel" class="setting-label"/>
+                        <ui:VisualElement name="SubtitleToggle" class="toggle-button-group">
+                            <ui:Button text="On" name="SubtitleOn" class="toggle-button toggle-button-left"/>
+                            <ui:Button text="Off" name="SubtitleOff" class="toggle-button toggle-button-right"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <!-- 게임 설정 패널 -->
+                <ui:VisualElement name="GamePanel" class="settings-panel" style="display: none;">
+                    <ui:Label text="Game Settings" name="GamePanelTitle" class="panel-title"/>
+
+                    <ui:VisualElement class="setting-row">
+                        <ui:Label text="Difficulty" name="DifficultyLabel" class="setting-label"/>
+                        <ui:DropdownField name="DifficultyDropdown" class="setting-dropdown"/>
+                    </ui:VisualElement>
+
+                    <ui:VisualElement class="setting-row">
+                        <ui:Label text="Keybinds" name="KeybindsLabel" class="setting-label"/>
+                        <ui:Button text="Change Keybinds" name="KeybindsButton" class="setting-button"/>
+                    </ui:VisualElement>
+
+                    <ui:VisualElement class="setting-row">
+                        <ui:Label text="Screen Shake" name="ScreenShakeLabel" class="setting-label"/>
+                        <ui:VisualElement name="ScreenShakeToggle" class="toggle-button-group">
+                            <ui:Button text="On" name="ScreenShakeOn" class="toggle-button toggle-button-left"/>
+                            <ui:Button text="Off" name="ScreenShakeOff" class="toggle-button toggle-button-right"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+
+                    <ui:VisualElement class="setting-row">
+                        <ui:Label text="Hit Effect" name="HitEffectLabel" class="setting-label"/>
+                        <ui:VisualElement name="HitEffectToggle" class="toggle-button-group">
+                            <ui:Button text="On" name="HitEffectOn" class="toggle-button toggle-button-left"/>
+                            <ui:Button text="Off" name="HitEffectOff" class="toggle-button toggle-button-right"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:ScrollView>
+        </ui:VisualElement>
+        </ui:VisualElement>
+
+    </ui:VisualElement>
+</ui:UXML>

@@ -1,0 +1,266 @@
+/* 배경 레이어 (하늘) */
+.background-layer {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-image: url("project://database/Assets/Gothicvania-Town/Art/Environment/Background/background.png");
+    -unity-background-scale-mode: scale-and-crop;
+}
+
+/* 중경 레이어 (건물) */
+.middleground-layer {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-image: url("project://database/Assets/Gothicvania-Town/Art/Environment/Background/middleground.png");
+    -unity-background-scale-mode: scale-and-crop;
+}
+
+/* UI 컨텐츠 (맨 앞) */
+.ui-content {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+}
+
+/* 챕터 카드 컨테이너 */
+.chapter-cards-container {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+}
+
+/* 보이는 챕터들 컨테이너 */
+.visible-chapters {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+/* 화살표 버튼 */
+.nav-arrow-btn {
+    width: 100px;
+    height: 320px;
+    flex-shrink: 0;
+    margin-left: 16px;
+    margin-right: 16px;
+    background-color: transparent;
+    border-width: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+.nav-arrow-btn:disabled {
+    opacity: 0.5;
+}
+
+.nav-arrow-btn:hover {
+    scale: 1.05;
+}
+
+.nav-arrow-btn:active {
+    scale: 0.95;
+}
+
+.nav-arrow-bg {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 320px;
+    height: 100px;
+    translate: -50% -50%;
+    background-image: url("project://database/Assets/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/IRONY%20TITLE%20%20Large.png");
+    -unity-background-scale-mode: stretch-to-fill;
+    rotate: 90deg;
+}
+
+.next-btn .nav-arrow-bg {
+    rotate: -90deg;
+}
+
+.nav-arrow-text {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    color: rgb(255, 255, 255);
+    font-size: 64px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    -unity-text-outline-width: 2px;
+    -unity-text-outline-color: rgb(40, 30, 20);
+}
+
+/* 챕터 카드 기본 */
+.chapter-card {
+    flex-shrink: 0;
+    width: 250px;
+    height: 360px;
+    background-image: url("project://database/Assets/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/UI%20board%20Large%20%20parchment.png");
+    -unity-background-scale-mode: stretch-to-fill;
+    -unity-background-image-tint-color: rgb(255, 255, 255);
+    padding: 20px;
+    margin-left: 15px;
+    margin-right: 15px;
+    position: relative;
+    transition-property: -unity-background-image-tint-color, scale;
+    transition-duration: 0.2s;
+}
+
+/* 해금된 카드 - 호버 효과 */
+.chapter-card:hover {
+    scale: 1.05;
+    -unity-background-image-tint-color: rgb(255, 240, 220);
+}
+
+/* 해금된 카드 - 클릭 효과 */
+.chapter-card:active {
+    scale: 0.98;
+    -unity-background-image-tint-color: rgb(240, 230, 200);
+}
+
+/* 잠긴 카드 - 이미지를 어둡게 */
+.chapter-card.locked-card {
+    -unity-background-image-tint-color: rgb(100, 100, 100);
+}
+
+/* 잠긴 카드 - 호버 효과 */
+.chapter-card.locked-card:hover {
+    scale: 1.05;
+    -unity-background-image-tint-color: rgb(120, 120, 120);
+}
+
+/* 잠긴 카드 - 클릭 효과 */
+.chapter-card.locked-card:active {
+    scale: 0.98;
+    -unity-background-image-tint-color: rgb(90, 90, 90);
+}
+
+/* 모든 카드 동일한 크기 */
+.side-card,
+.center-card {
+    opacity: 1;
+}
+
+/* 카드 오버레이 - 사용 안 함 */
+.card-overlay {
+    display: none;
+}
+
+/* 챕터 컨텐츠 */
+.chapter-content {
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+/* 챕터 번호 */
+.chapter-number {
+    color: rgb(139, 69, 19);
+    font-size: 16px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    margin-bottom: 6px;
+    -unity-text-outline-width: 1px;
+    -unity-text-outline-color: rgba(255, 255, 255, 0.5);
+}
+
+/* 챕터 제목 */
+.chapter-title {
+    color: rgb(60, 30, 10);
+    font-size: 28px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    margin-bottom: 12px;
+    -unity-text-outline-width: 2px;
+    -unity-text-outline-color: rgba(255, 255, 255, 0.3);
+}
+
+/* 잠금 아이콘 - 카드 중앙에 오버레이 */
+.lock-icon {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    translate: -50% -50%;
+    width: 100px;
+    height: 100px;
+    background-image: url("project://database/Assets/2D%20Casual%20UI/Sprite/GUI.png#GUI_0");
+    -unity-background-scale-mode: scale-to-fit;
+    display: none;
+    z-index: 10;
+}
+
+/* 챕터 진행 상황 */
+.chapter-progress {
+    color: rgb(100, 60, 30);
+    font-size: 14px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    margin-top: 8px;
+    margin-bottom: 6px;
+}
+
+/* 챕터 상태 */
+.chapter-status {
+    font-size: 13px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    padding: 6px 12px;
+    border-radius: 8px;
+    margin-top: 6px;
+}
+
+.chapter-status.locked {
+    color: rgb(150, 50, 50);
+    background-color: rgba(100, 0, 0, 0.2);
+    display: flex;
+}
+
+.chapter-status.unlocked {
+    color: rgb(50, 150, 50);
+    background-color: rgba(0, 100, 0, 0.2);
+    display: flex;
+}
+
+.chapter-status.completed {
+    color: rgb(200, 150, 50);
+    background-color: rgba(200, 150, 0, 0.2);
+    display: flex;
+}
+
+/* 하단 액션 버튼 */
+.action-button {
+    width: 250px;
+    height: 60px;
+    margin-top: 30px;
+    background-image: url("project://database/Assets/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/TextBTN_Big.png");
+    -unity-background-scale-mode: stretch-to-fill;
+    border-width: 0;
+    color: rgb(255, 255, 255);
+    font-size: 20px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    -unity-text-outline-width: 2px;
+    -unity-text-outline-color: rgb(40, 30, 20);
+    align-self: center;
+}
+
+.action-button:disabled {
+    opacity: 0.5;
+}
+
+.action-button:hover {
+    scale: 1.05;
+}
+
+.action-button:active {
+    scale: 0.95;
+}

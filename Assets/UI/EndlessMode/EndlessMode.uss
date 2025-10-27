@@ -1,0 +1,144 @@
+/* Endless Mode - 최소 스타일 */
+
+/* 배경 레이어 (하늘) */
+.background-layer {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-image: url("project://database/Assets/Gothicvania-Town/Art/Environment/Background/background.png");
+    -unity-background-scale-mode: scale-and-crop;
+}
+
+/* 중경 레이어 (건물) */
+.middleground-layer {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-image: url("project://database/Assets/Gothicvania-Town/Art/Environment/Background/middleground.png");
+    -unity-background-scale-mode: scale-and-crop;
+}
+
+/* UI 컨텐츠 (맨 앞) */
+.ui-content {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+}
+
+/* 버튼 컨테이너 */
+.difficulty-container {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+
+/* 난이도 카드 */
+.difficulty-card {
+    width: 250px;
+    min-height: 300px;
+    margin: 10px;
+    padding: 20px;
+    background-image: url("project://database/Assets/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/UI%20board%20Large%20%20parchment.png");
+    -unity-background-scale-mode: stretch-to-fill;
+    -unity-background-image-tint-color: rgb(255, 255, 255);
+    border-width: 0;
+    transition-property: scale, -unity-background-image-tint-color;
+    transition-duration: 0.2s;
+}
+
+/* 호버 효과 - 마우스 올리면 커짐 */
+.difficulty-card:hover {
+    scale: 1.08;
+}
+
+/* 선택된 카드 - 색상만 변경 (크기는 변하지 않음) */
+.difficulty-card.selected-card {
+    -unity-background-image-tint-color: rgb(255, 230, 150);
+}
+
+/* 선택된 카드도 호버 시 커짐 */
+.difficulty-card.selected-card:hover {
+    scale: 1.08;
+}
+
+/* 카드 헤더 */
+.card-header {
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+}
+
+/* 난이도 라벨 */
+.difficulty-label {
+    font-size: 28px;
+    color: rgb(60, 30, 10);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+}
+
+/* 카드 본문 */
+.card-body {
+    flex-direction: column;
+}
+
+/* 난이도 설명 */
+.difficulty-description {
+    font-size: 14px;
+    color: rgb(80, 50, 30);
+    -unity-font-style: italic;
+    -unity-text-align: middle-center;
+    margin-bottom: 10px;
+}
+
+/* 통계 컨테이너 */
+.stats-container {
+    flex-direction: column;
+    margin-top: 10px;
+    padding: 10px;
+    background-color: rgba(139, 69, 19, 0.1);
+}
+
+/* 통계 라벨 */
+.stats-label {
+    font-size: 12px;
+    color: rgb(100, 60, 30);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    margin-top: 5px;
+}
+
+/* 통계 값 */
+.stats-value {
+    font-size: 20px;
+    color: rgb(139, 69, 19);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    margin-bottom: 5px;
+}
+
+/* 하단 액션 버튼 */
+.action-button {
+    width: 250px;
+    height: 60px;
+    margin-top: 30px;
+    background-image: url("project://database/Assets/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/TextBTN_Medium.png");
+    -unity-background-scale-mode: stretch-to-fill;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    color: rgb(240, 220, 180);
+    font-size: 20px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    align-self: center;
+    transition-property: scale;
+    transition-duration: 0.15s;
+}
+
+.action-button:hover {
+    scale: 1.05;
+}
+
+.action-button:active {
+    background-image: url("project://database/Assets/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/TextBTN_Medium_Pressed.png");
+    scale: 0.98;
+}

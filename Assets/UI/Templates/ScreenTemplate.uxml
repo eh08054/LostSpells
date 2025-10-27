@@ -1,0 +1,59 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements"
+        editor-extension-mode="False">
+    <!--
+    ========================================
+    공통 화면 템플릿
+    ========================================
+
+    사용 방법:
+    1. 이 파일을 복사해서 새 화면 폴더에 붙여넣기
+    2. [화면이름] 부분을 실제 화면 이름으로 변경
+    3. ContentArea 안에 화면별 UI 요소 추가
+
+    예시:
+    - GameModeSelection (게임모드 선택)
+    - StoryMode (스토리 모드)
+    - ChapterSelect (챕터 선택)
+    - Options (옵션)
+    -->
+
+    <!-- USS 스타일시트 자동 적용 -->
+    <Style src="/Assets/UI/Common/Common.uss"/>
+    <!-- 아래 경로를 실제 화면 이름으로 변경하세요 -->
+    <!--<Style src="/Assets/UI/[화면이름]/[화면이름].uss"/>-->
+
+    <!-- 전체 화면 컨테이너 -->
+    <ui:VisualElement name="[화면이름]" class="screen-container">
+
+        <!-- 상단 헤더 바 -->
+        <ui:VisualElement name="HeaderBar" class="header-bar">
+            <!-- 왼쪽 영역 -->
+            <ui:VisualElement name="HeaderLeft" class="header-side header-left">
+                <ui:Button text="&lt;" name="BackButton" class="back-button"/>
+            </ui:VisualElement>
+
+            <!-- 중앙 제목 -->
+            <ui:Label text="화면 제목" name="HeaderTitle" class="header-title"/>
+
+            <!-- 오른쪽 영역 (균형 유지용) -->
+            <ui:VisualElement name="HeaderRight" class="header-side"/>
+        </ui:VisualElement>
+
+        <!-- 컨텐츠 영역 -->
+        <ui:VisualElement name="ContentArea" class="content-area">
+
+            <!-- ========== 여기에 화면별 UI 요소 추가 ========== -->
+
+            <!-- 예시: 버튼 목록 -->
+            <!--
+            <ui:VisualElement name="ButtonContainer" class="button-container">
+                <ui:Button text="버튼 1" name="Button1" class="menu-button"/>
+                <ui:Button text="버튼 2" name="Button2" class="menu-button"/>
+                <ui:Button text="버튼 3" name="Button3" class="menu-button"/>
+            </ui:VisualElement>
+            -->
+
+        </ui:VisualElement>
+
+    </ui:VisualElement>
+</ui:UXML>

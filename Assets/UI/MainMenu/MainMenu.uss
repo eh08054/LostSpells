@@ -1,0 +1,162 @@
+/* 메인메뉴 전용 스타일 */
+
+/* 메인메뉴 컨테이너 */
+.main-menu {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+/* 배경 레이어 (하늘) */
+.background-layer {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-image: url("project://database/Assets/Gothicvania-Town/Art/Environment/Background/background.png");
+    -unity-background-scale-mode: scale-and-crop;
+}
+
+/* 중경 레이어 (건물) */
+.middleground-layer {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-image: url("project://database/Assets/Gothicvania-Town/Art/Environment/Background/middleground.png");
+    -unity-background-scale-mode: scale-and-crop;
+}
+
+/* UI 컨텐츠 (맨 앞) */
+.ui-content {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 게임 타이틀 */
+.game-title {
+    font-size: 84px;
+    color: rgb(255, 255, 255);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    letter-spacing: 8px;
+    margin-bottom: 100px;
+    text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.8);
+    -unity-text-outline-width: 2px;
+    -unity-text-outline-color: rgba(0, 0, 0, 0.5);
+}
+
+/* 메뉴 버튼 컨테이너 */
+.menu-button-container {
+    flex-direction: column;
+    align-items: center;
+    min-width: 320px;
+}
+
+/* 메뉴 버튼 스타일 - Fantasy Wooden GUI TextBTN_Big */
+.menu-button {
+    /* 원래 크기 유지 */
+    min-width: 250px;
+    min-height: 50px;
+    margin-top: var(--spacing-small);
+    margin-bottom: var(--spacing-small);
+    padding: var(--spacing-medium);
+
+    /* 배경 이미지 설정 */
+    background-image: url("project://database/Assets/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/TextBTN_Big.png");
+    -unity-background-scale-mode: stretch-to-fill;
+    -unity-background-image-tint-color: rgb(255, 255, 255);
+
+    /* 기본 버튼 배경 제거 */
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+
+    /* 텍스트 스타일 */
+    color: rgb(240, 220, 180);
+    font-size: var(--font-size-medium);
+    -unity-font-style: bold;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+
+    /* 트랜지션 효과 */
+    transition-property: -unity-background-image-tint-color, scale;
+    transition-duration: 0.15s;
+}
+
+/* 버튼 포커스 상태 - 선택 시 흰색 배경 제거 */
+.menu-button:focus {
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+}
+
+/* 버튼 호버 상태 */
+.menu-button:hover {
+    scale: 1.02;
+    background-color: rgba(0, 0, 0, 0);
+}
+
+/* 버튼 눌림 상태 - 이미지를 어둡게 */
+.menu-button:active {
+    -unity-background-image-tint-color: rgb(180, 180, 180);
+    scale: 0.98;
+    background-color: rgba(0, 0, 0, 0);
+}
+
+/* ===== 팝업 스타일 ===== */
+
+/* 팝업 오버레이 (반투명 배경) */
+.popup-overlay {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    justify-content: center;
+    align-items: center;
+    display: none;
+}
+
+/* 팝업 컨테이너 */
+.popup-container {
+    width: 400px;
+    min-height: 250px;
+    background-image: url("project://database/Assets/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/UI%20board%20Large%20%20parchment.png");
+    -unity-background-scale-mode: stretch-to-fill;
+    border-width: 0;
+    padding: 40px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* 팝업 제목 */
+.popup-title {
+    font-size: 36px;
+    color: rgb(60, 30, 10);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    margin-bottom: 20px;
+}
+
+/* 팝업 메시지 */
+.popup-message {
+    font-size: 18px;
+    color: rgb(80, 50, 30);
+    -unity-text-align: middle-center;
+    margin-bottom: 30px;
+}
+
+/* 팝업 버튼 컨테이너 */
+.popup-buttons {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+/* 팝업 버튼 간격 및 크기 */
+.popup-button {
+    min-width: 125px;
+    margin-left: 10px;
+    margin-right: 10px;
+}
