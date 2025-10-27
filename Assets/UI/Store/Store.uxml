@@ -1,0 +1,209 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements"
+        editor-extension-mode="False">
+    <!-- USS 스타일시트 자동 적용 -->
+    <Style src="/Assets/UI/Common/Common.uss"/>
+    <Style src="/Assets/UI/Store/Store.uss"/>
+
+    <!-- 전체 화면 컨테이너 -->
+    <ui:VisualElement name="Store" class="screen-container">
+
+        <!-- 상단 헤더 바 -->
+        <ui:VisualElement name="HeaderBar" class="header-bar">
+            <!-- 왼쪽 영역 -->
+            <ui:VisualElement name="HeaderLeft" class="header-side header-left">
+                <ui:Button text="&lt;" name="BackButton" class="back-button"/>
+            </ui:VisualElement>
+
+            <!-- 중앙 제목 -->
+            <ui:Label text="Store" name="HeaderTitle" class="header-title"/>
+
+            <!-- 오른쪽 영역: 보유 아이템 표시 -->
+            <ui:VisualElement name="HeaderRight" class="header-side header-right">
+                <!-- 다이아 표시 -->
+                <ui:VisualElement class="header-currency-bar">
+                    <ui:VisualElement class="currency-icon-large diamond-icon"/>
+                    <ui:VisualElement class="currency-bar-content">
+                        <ui:Label text="0" name="HeaderDiamonds" class="currency-amount"/>
+                        <ui:VisualElement class="currency-plus-button"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <!-- 부활석 표시 -->
+                <ui:VisualElement class="header-currency-bar">
+                    <ui:VisualElement class="currency-icon-large revive-stone-icon"/>
+                    <ui:VisualElement class="currency-bar-content">
+                        <ui:Label text="0" name="HeaderReviveStones" class="currency-amount"/>
+                        <ui:VisualElement class="currency-plus-button"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- 컨텐츠 영역 -->
+        <ui:VisualElement name="ContentArea" class="content-area store-content">
+
+            <!-- 좌측 패널: 카테고리 버튼 -->
+            <ui:VisualElement name="LeftPanel" class="left-panel">
+                <ui:Button text="Diamonds" name="DiamondButton" class="category-button"/>
+                <ui:Button text="Revive Stones" name="ReviveStoneButton" class="category-button"/>
+            </ui:VisualElement>
+
+            <!-- 우측 패널: 상품 목록 -->
+            <ui:ScrollView name="RightPanel" class="right-panel">
+
+                <!-- 다이아 상품 패널 -->
+                <ui:VisualElement name="DiamondPanel" class="store-panel">
+                    <!-- 다이아 상품 목록 -->
+                    <ui:VisualElement class="product-grid">
+                        <!-- 다이아 100개 -->
+                        <ui:VisualElement class="product-item">
+                            <ui:VisualElement class="product-title">
+                                <ui:VisualElement class="product-icon diamond-icon"/>
+                                <ui:Label text="100" class="product-amount"/>
+                            </ui:VisualElement>
+                            <ui:Label text="₩1,000" class="product-price"/>
+                            <ui:Button text="Buy" name="BuyDiamond100" class="buy-button"/>
+                        </ui:VisualElement>
+
+                        <!-- 다이아 500개 -->
+                        <ui:VisualElement class="product-item">
+                            <ui:VisualElement class="product-title">
+                                <ui:VisualElement class="product-icon diamond-icon"/>
+                                <ui:Label text="500" class="product-amount"/>
+                            </ui:VisualElement>
+                            <ui:Label text="₩4,500" class="product-price"/>
+                            <ui:Button text="Buy" name="BuyDiamond500" class="buy-button"/>
+                        </ui:VisualElement>
+
+                        <!-- 다이아 1000개 -->
+                        <ui:VisualElement class="product-item">
+                            <ui:VisualElement class="product-title">
+                                <ui:VisualElement class="product-icon diamond-icon"/>
+                                <ui:Label text="1,000" class="product-amount"/>
+                            </ui:VisualElement>
+                            <ui:Label text="₩8,000" class="product-price"/>
+                            <ui:Button text="Buy" name="BuyDiamond1000" class="buy-button"/>
+                        </ui:VisualElement>
+
+                        <!-- 다이아 5000개 -->
+                        <ui:VisualElement class="product-item">
+                            <ui:VisualElement class="product-title">
+                                <ui:VisualElement class="product-icon diamond-icon"/>
+                                <ui:Label text="5,000" class="product-amount"/>
+                            </ui:VisualElement>
+                            <ui:Label text="₩35,000" class="product-price"/>
+                            <ui:Button text="Buy" name="BuyDiamond5000" class="buy-button"/>
+                        </ui:VisualElement>
+
+                        <!-- 다이아 10000개 -->
+                        <ui:VisualElement class="product-item">
+                            <ui:VisualElement class="product-title">
+                                <ui:VisualElement class="product-icon diamond-icon"/>
+                                <ui:Label text="10,000" class="product-amount"/>
+                            </ui:VisualElement>
+                            <ui:Label text="₩65,000" class="product-price"/>
+                            <ui:Button text="Buy" name="BuyDiamond10000" class="buy-button"/>
+                        </ui:VisualElement>
+
+                        <!-- 다이아 50000개 -->
+                        <ui:VisualElement class="product-item">
+                            <ui:VisualElement class="product-title">
+                                <ui:VisualElement class="product-icon diamond-icon"/>
+                                <ui:Label text="50,000" class="product-amount"/>
+                            </ui:VisualElement>
+                            <ui:Label text="₩300,000" class="product-price"/>
+                            <ui:Button text="Buy" name="BuyDiamond50000" class="buy-button"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <!-- 부활석 상품 패널 -->
+                <ui:VisualElement name="ReviveStonePanel" class="store-panel" style="display: none;">
+                    <!-- 부활석 상품 목록 -->
+                    <ui:VisualElement class="product-grid">
+                        <!-- 부활석 1개 -->
+                        <ui:VisualElement class="product-item">
+                            <ui:VisualElement class="product-title">
+                                <ui:VisualElement class="product-icon revive-stone-icon"/>
+                                <ui:Label text="1" class="product-amount"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="product-price">
+                                <ui:VisualElement class="price-icon diamond-icon"/>
+                                <ui:Label text="100" class="price-amount"/>
+                            </ui:VisualElement>
+                            <ui:Button text="Buy" name="BuyReviveStone1" class="buy-button"/>
+                        </ui:VisualElement>
+
+                        <!-- 부활석 5개 -->
+                        <ui:VisualElement class="product-item">
+                            <ui:VisualElement class="product-title">
+                                <ui:VisualElement class="product-icon revive-stone-icon"/>
+                                <ui:Label text="5" class="product-amount"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="product-price">
+                                <ui:VisualElement class="price-icon diamond-icon"/>
+                                <ui:Label text="450" class="price-amount"/>
+                            </ui:VisualElement>
+                            <ui:Button text="Buy" name="BuyReviveStone5" class="buy-button"/>
+                        </ui:VisualElement>
+
+                        <!-- 부활석 10개 -->
+                        <ui:VisualElement class="product-item">
+                            <ui:VisualElement class="product-title">
+                                <ui:VisualElement class="product-icon revive-stone-icon"/>
+                                <ui:Label text="10" class="product-amount"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="product-price">
+                                <ui:VisualElement class="price-icon diamond-icon"/>
+                                <ui:Label text="800" class="price-amount"/>
+                            </ui:VisualElement>
+                            <ui:Button text="Buy" name="BuyReviveStone10" class="buy-button"/>
+                        </ui:VisualElement>
+
+                        <!-- 부활석 50개 -->
+                        <ui:VisualElement class="product-item">
+                            <ui:VisualElement class="product-title">
+                                <ui:VisualElement class="product-icon revive-stone-icon"/>
+                                <ui:Label text="50" class="product-amount"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="product-price">
+                                <ui:VisualElement class="price-icon diamond-icon"/>
+                                <ui:Label text="3,500" class="price-amount"/>
+                            </ui:VisualElement>
+                            <ui:Button text="Buy" name="BuyReviveStone50" class="buy-button"/>
+                        </ui:VisualElement>
+
+                        <!-- 부활석 100개 -->
+                        <ui:VisualElement class="product-item">
+                            <ui:VisualElement class="product-title">
+                                <ui:VisualElement class="product-icon revive-stone-icon"/>
+                                <ui:Label text="100" class="product-amount"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="product-price">
+                                <ui:VisualElement class="price-icon diamond-icon"/>
+                                <ui:Label text="6,500" class="price-amount"/>
+                            </ui:VisualElement>
+                            <ui:Button text="Buy" name="BuyReviveStone100" class="buy-button"/>
+                        </ui:VisualElement>
+
+                        <!-- 부활석 500개 -->
+                        <ui:VisualElement class="product-item">
+                            <ui:VisualElement class="product-title">
+                                <ui:VisualElement class="product-icon revive-stone-icon"/>
+                                <ui:Label text="500" class="product-amount"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="product-price">
+                                <ui:VisualElement class="price-icon diamond-icon"/>
+                                <ui:Label text="30,000" class="price-amount"/>
+                            </ui:VisualElement>
+                            <ui:Button text="Buy" name="BuyReviveStone500" class="buy-button"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+            </ui:ScrollView>
+
+        </ui:VisualElement>
+
+    </ui:VisualElement>
+</ui:UXML>

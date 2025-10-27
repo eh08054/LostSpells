@@ -1,0 +1,71 @@
+/* Endless Mode - 최소 스타일 */
+
+/* 버튼 컨테이너 */
+.difficulty-container {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+
+/* 난이도 카드 */
+.difficulty-card {
+    width: 250px;
+    min-height: 300px;
+    margin: 10px;
+    padding: 20px;
+    background-color: rgb(255, 255, 255);
+    border-width: 2px;
+    border-color: rgb(0, 0, 0);
+}
+
+/* 선택된 카드 */
+.selected-card {
+    background-color: rgb(220, 220, 220);
+    border-width: 3px;
+}
+
+/* 카드 헤더 */
+.card-header {
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom-width: 2px;
+    border-bottom-color: rgb(0, 0, 0);
+}
+
+/* 난이도 라벨 */
+.difficulty-label {
+    font-size: 24px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+}
+
+/* 카드 본문 */
+.card-body {
+    flex-direction: column;
+}
+
+/* 난이도 설명 */
+.difficulty-description {
+    font-size: 14px;
+    -unity-text-align: middle-center;
+    margin-bottom: 10px;
+}
+
+/* 통계 컨테이너 */
+.stats-container {
+    flex-direction: column;
+    margin-top: 10px;
+}
+
+/* 통계 라벨 */
+.stats-label {
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+/* 통계 값 */
+.stats-value {
+    font-size: 18px;
+    -unity-font-style: bold;
+    margin-bottom: 5px;
+}

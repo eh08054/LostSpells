@@ -1,0 +1,91 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements"
+       editor-extension-mode="False">
+    <!-- USS 스타일시트 -->
+    <Style src="/Assets/UI/Common/Common.uss"/>
+    <Style src="/Assets/UI/ChapterSelect/ChapterSelect.uss"/>
+
+    <!-- 전체 화면 컨테이너 -->
+    <ui:VisualElement name="ChapterSelect" class="screen-container">
+
+        <!-- 상단 헤더 바 -->
+        <ui:VisualElement name="HeaderBar" class="header-bar">
+            <!-- 왼쪽 영역 -->
+            <ui:VisualElement name="HeaderLeft" class="header-side header-left">
+                <ui:Button text="&lt;" name="BackButton" class="back-button"/>
+            </ui:VisualElement>
+
+            <!-- 중앙 제목 -->
+            <ui:Label text="Chapter Select" name="HeaderTitle" class="header-title"/>
+
+            <!-- 오른쪽 영역 (균형 유지용) -->
+            <ui:VisualElement name="HeaderRight" class="header-side"/>
+        </ui:VisualElement>
+
+        <!-- 컨텐츠 영역 -->
+        <ui:VisualElement name="ContentArea" class="content-area">
+
+            <!-- 챕터 카드 컨테이너 (가로 스크롤) -->
+            <ui:VisualElement name="ChapterCardsContainer" class="chapter-cards-container">
+
+                <!-- 왼쪽 화살표 버튼 -->
+                <ui:Button name="PrevButton" class="nav-arrow-btn prev-btn">
+                    <ui:VisualElement class="nav-arrow-bg"/>
+                    <ui:Label text="&lt;" class="nav-arrow-text"/>
+                </ui:Button>
+
+                <!-- 챕터 카드들 -->
+                <ui:VisualElement name="VisibleChapters" class="visible-chapters">
+
+                    <!-- 챕터 카드 1 (왼쪽) -->
+                    <ui:VisualElement name="LeftChapter" class="chapter-card side-card">
+                        <ui:VisualElement class="card-overlay"/>
+                        <ui:VisualElement class="chapter-content">
+                            <ui:Label text="CHAPTER 1" name="LeftChapterNumber" class="chapter-number"/>
+                            <ui:Label text="Pride" name="LeftChapterTitle" class="chapter-title"/>
+                            <ui:VisualElement name="LeftChapterLock" class="lock-icon"/>
+                            <ui:Label text="Progress: 0/10" name="LeftChapterProgress" class="chapter-progress"/>
+                            <ui:Label text="LOCKED" name="LeftChapterStatus" class="chapter-status locked"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+
+                    <!-- 챕터 카드 2 (중앙) -->
+                    <ui:VisualElement name="CenterChapter" class="chapter-card center-card">
+                        <ui:VisualElement class="card-overlay"/>
+                        <ui:VisualElement class="chapter-content">
+                            <ui:Label text="CHAPTER 2" name="CenterChapterNumber" class="chapter-number"/>
+                            <ui:Label text="Greed" name="CenterChapterTitle" class="chapter-title"/>
+                            <ui:VisualElement name="CenterChapterLock" class="lock-icon"/>
+                            <ui:Label text="Progress: 0/10" name="CenterChapterProgress" class="chapter-progress"/>
+                            <ui:Label text="LOCKED" name="CenterChapterStatus" class="chapter-status locked"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+
+                    <!-- 챕터 카드 3 (오른쪽) -->
+                    <ui:VisualElement name="RightChapter" class="chapter-card side-card">
+                        <ui:VisualElement class="card-overlay"/>
+                        <ui:VisualElement class="chapter-content">
+                            <ui:Label text="CHAPTER 3" name="RightChapterNumber" class="chapter-number"/>
+                            <ui:Label text="Lust" name="RightChapterTitle" class="chapter-title"/>
+                            <ui:VisualElement name="RightChapterLock" class="lock-icon"/>
+                            <ui:Label text="Progress: 0/10" name="RightChapterProgress" class="chapter-progress"/>
+                            <ui:Label text="LOCKED" name="RightChapterStatus" class="chapter-status locked"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+
+                </ui:VisualElement>
+
+                <!-- 오른쪽 화살표 버튼 -->
+                <ui:Button name="NextButton" class="nav-arrow-btn next-btn">
+                    <ui:VisualElement class="nav-arrow-bg"/>
+                    <ui:Label text="&gt;" class="nav-arrow-text"/>
+                </ui:Button>
+
+            </ui:VisualElement>
+
+            <!-- 하단 액션 버튼 -->
+            <ui:Button text="Start Chapter" name="ActionButton" class="action-button"/>
+
+        </ui:VisualElement>
+
+    </ui:VisualElement>
+</ui:UXML>
