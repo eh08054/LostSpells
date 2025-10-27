@@ -35,7 +35,6 @@ namespace LostSpells.UI
         private Button backButton;
         private Button prevButton;
         private Button nextButton;
-        private Button actionButton;
 
         // 챕터 카드 요소들
         private VisualElement leftChapter;
@@ -90,7 +89,6 @@ namespace LostSpells.UI
             backButton = root.Q<Button>("BackButton");
             prevButton = root.Q<Button>("PrevButton");
             nextButton = root.Q<Button>("NextButton");
-            actionButton = root.Q<Button>("ActionButton");
 
             // 챕터 카드들
             leftChapter = root.Q<VisualElement>("LeftChapter");
@@ -128,14 +126,11 @@ namespace LostSpells.UI
             if (nextButton != null)
                 nextButton.clicked += OnNextButtonClicked;
 
-            if (actionButton != null)
-                actionButton.clicked += OnActionButtonClicked;
-
             if (leftChapter != null)
                 leftChapter.RegisterCallback<ClickEvent>(evt => OnSideChapterClicked(-1));
 
             if (centerChapter != null)
-                centerChapter.RegisterCallback<ClickEvent>(evt => OnCenterChapterClicked());
+                centerChapter.RegisterCallback<ClickEvent>(evt => OnSideChapterClicked(0));
 
             if (rightChapter != null)
                 rightChapter.RegisterCallback<ClickEvent>(evt => OnSideChapterClicked(1));
@@ -159,14 +154,11 @@ namespace LostSpells.UI
             if (nextButton != null)
                 nextButton.clicked -= OnNextButtonClicked;
 
-            if (actionButton != null)
-                actionButton.clicked -= OnActionButtonClicked;
-
             if (leftChapter != null)
                 leftChapter.UnregisterCallback<ClickEvent>(evt => OnSideChapterClicked(-1));
 
             if (centerChapter != null)
-                centerChapter.UnregisterCallback<ClickEvent>(evt => OnCenterChapterClicked());
+                centerChapter.UnregisterCallback<ClickEvent>(evt => OnSideChapterClicked(0));
 
             if (rightChapter != null)
                 rightChapter.UnregisterCallback<ClickEvent>(evt => OnSideChapterClicked(1));
@@ -199,58 +191,45 @@ namespace LostSpells.UI
 
         private void OnSideChapterClicked(int direction)
         {
-            // direction: -1 = 왼쪽 카드 클릭, +1 = 오른쪽 카드 클릭
+            // direction: -1 = 왼쪽 카드 클릭, 0 = 중앙 카드 클릭, +1 = 오른쪽 카드 클릭
             int targetIndex = centerIndex + direction;
 
             // 범위 확인
-            if (targetIndex < 1 || targetIndex > chapters.Length - 2)
+            if (targetIndex < 0 || targetIndex >= chapters.Length)
                 return;
 
-            // 잠긴 챕터는 선택 불가
-            if (!chapters[targetIndex].isUnlocked)
+            ChapterData selectedChapter = chapters[targetIndex];
+
+            // 카드 정보 출력
+            string statusInfo = selectedChapter.isUnlocked ? "열림" : "잠김";
+            string completeInfo = "";
+            if (selectedChapter.isUnlocked)
             {
-                Debug.LogWarning($"[ChapterSelect] 챕터 {chapters[targetIndex].chapterNumber}번은 잠겨있어 선택할 수 없습니다!");
-                return;
+                if (selectedChapter.isCompleted)
+                {
+                    completeInfo = $", 진행도: {selectedChapter.currentStage}/{selectedChapter.totalStages}, 완료 여부: 완료됨";
+                }
+                else if (selectedChapter.currentStage > 0)
+                {
+                    completeInfo = $", 진행도: {selectedChapter.currentStage}/{selectedChapter.totalStages}, 완료 여부: 진행 중";
+                }
+                else
+                {
+                    completeInfo = $", 진행도: {selectedChapter.currentStage}/{selectedChapter.totalStages}, 완료 여부: 시작 안 함";
+                }
             }
+            Debug.Log($"[ChapterSelect] 챕터 {selectedChapter.chapterNumber} - {selectedChapter.chapterName}, 상태: {statusInfo}{completeInfo}");
 
-            // 중앙으로 이동
-            Debug.Log($"[ChapterSelect] 챕터 {chapters[targetIndex].chapterNumber}번 선택됨");
-            centerIndex = targetIndex;
-            UpdateChapterDisplay();
-        }
-
-        private void OnCenterChapterClicked()
-        {
-            // 중앙 카드 클릭 = Start Chapter 버튼과 동일한 동작
-            Debug.Log($"[ChapterSelect] 중앙 카드 클릭됨");
-            OnActionButtonClicked();
-        }
-
-        private void OnActionButtonClicked()
-        {
-            if (centerIndex < 0 || centerIndex >= chapters.Length)
+            // 중앙 카드가 아니고 해금된 카드라면 중앙으로 이동
+            if (direction != 0 && selectedChapter.isUnlocked)
             {
-                Debug.LogError($"[ChapterSelect] 잘못된 인덱스: {centerIndex}");
-                return;
+                // 범위 확인 (중앙은 항상 1~5 사이여야 양쪽에 카드가 보임)
+                if (targetIndex >= 1 && targetIndex <= chapters.Length - 2)
+                {
+                    centerIndex = targetIndex;
+                    UpdateChapterDisplay();
+                }
             }
-
-            ChapterData chapter = chapters[centerIndex];
-
-            if (!chapter.isUnlocked)
-            {
-                Debug.LogWarning($"[ChapterSelect] 챕터 {chapter.chapterNumber}번은 잠겨있습니다!");
-                return;
-            }
-
-            // 챕터 시작 - 콘솔 출력
-            Debug.Log($"========================================");
-            Debug.Log($"[ChapterSelect] {chapter.chapterNumber}번째 챕터 시작!");
-            Debug.Log($"[ChapterSelect] 챕터 이름: {chapter.chapterName}");
-            Debug.Log($"[ChapterSelect] 진행 상황: {chapter.currentStage}/{chapter.totalStages}");
-            Debug.Log($"========================================");
-
-            // TODO: 실제 게임 씬으로 이동
-            // SceneManager.LoadScene($"Chapter{chapter.chapterNumber}_Stage1");
         }
 
         #endregion
@@ -288,26 +267,6 @@ namespace LostSpells.UI
 
             if (nextButton != null)
                 nextButton.SetEnabled(centerIndex < chapters.Length - 2);
-
-            // 액션 버튼 업데이트 (중앙 카드 기준)
-            if (actionButton != null && centerIndex >= 0 && centerIndex < chapters.Length)
-            {
-                ChapterData centerData = chapters[centerIndex];
-                actionButton.SetEnabled(centerData.isUnlocked);
-
-                if (centerData.isCompleted)
-                {
-                    actionButton.text = "Replay Chapter";
-                }
-                else if (centerData.currentStage > 0)
-                {
-                    actionButton.text = "Continue";
-                }
-                else
-                {
-                    actionButton.text = "Start Chapter";
-                }
-            }
         }
 
         private void UpdateChapterCard(int index, VisualElement card, Label numberLabel, Label titleLabel,

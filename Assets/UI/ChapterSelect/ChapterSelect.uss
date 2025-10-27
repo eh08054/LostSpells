@@ -108,13 +108,37 @@
     margin-left: 15px;
     margin-right: 15px;
     position: relative;
-    transition-property: -unity-background-image-tint-color;
-    transition-duration: 0.3s;
+    transition-property: -unity-background-image-tint-color, scale;
+    transition-duration: 0.2s;
+}
+
+/* 해금된 카드 - 호버 효과 */
+.chapter-card:hover {
+    scale: 1.05;
+    -unity-background-image-tint-color: rgb(255, 240, 220);
+}
+
+/* 해금된 카드 - 클릭 효과 */
+.chapter-card:active {
+    scale: 0.98;
+    -unity-background-image-tint-color: rgb(240, 230, 200);
 }
 
 /* 잠긴 카드 - 이미지를 어둡게 */
 .chapter-card.locked-card {
     -unity-background-image-tint-color: rgb(100, 100, 100);
+}
+
+/* 잠긴 카드 - 호버 효과 */
+.chapter-card.locked-card:hover {
+    scale: 1.05;
+    -unity-background-image-tint-color: rgb(120, 120, 120);
+}
+
+/* 잠긴 카드 - 클릭 효과 */
+.chapter-card.locked-card:active {
+    scale: 0.98;
+    -unity-background-image-tint-color: rgb(90, 90, 90);
 }
 
 /* 모든 카드 동일한 크기 */

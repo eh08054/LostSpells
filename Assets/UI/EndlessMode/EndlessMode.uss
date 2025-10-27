@@ -41,13 +41,25 @@
     padding: 20px;
     background-image: url("project://database/Assets/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/UI%20board%20Large%20%20parchment.png");
     -unity-background-scale-mode: stretch-to-fill;
+    -unity-background-image-tint-color: rgb(255, 255, 255);
     border-width: 0;
+    transition-property: scale, -unity-background-image-tint-color;
+    transition-duration: 0.2s;
 }
 
-/* 선택된 카드 */
-.selected-card {
-    -unity-background-image-tint-color: rgb(255, 245, 200);
-    scale: 1.05;
+/* 호버 효과 - 마우스 올리면 커짐 */
+.difficulty-card:hover {
+    scale: 1.08;
+}
+
+/* 선택된 카드 - 색상만 변경 (크기는 변하지 않음) */
+.difficulty-card.selected-card {
+    -unity-background-image-tint-color: rgb(255, 230, 150);
+}
+
+/* 선택된 카드도 호버 시 커짐 */
+.difficulty-card.selected-card:hover {
+    scale: 1.08;
 }
 
 /* 카드 헤더 */

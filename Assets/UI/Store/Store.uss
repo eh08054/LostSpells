@@ -111,13 +111,10 @@
     padding: var(--spacing-large);
 }
 
-/* 우측 패널 - 스크롤 가능 영역 */
+/* 우측 패널 */
 .right-panel {
     flex-grow: 1;
-}
-
-.right-panel > .unity-scroll-view__content-container {
-    padding: 0;
+    overflow: hidden;
 }
 
 /* 상점 패널 공통 */

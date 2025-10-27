@@ -230,7 +230,7 @@ namespace LostSpells.UI
 
         private void OnBackButtonClicked()
         {
-            SceneManager.LoadScene("MainMenu");
+            SceneManager.LoadScene("GameModeSelection");
         }
 
         private void OnActionButtonClicked()

@@ -88,15 +88,21 @@ namespace LostSpells.UI
             if (startButton != null)
                 startButton.clicked += OnStartButtonClicked;
 
-            // 난이도 카드 클릭 이벤트
+            // 난이도 카드 호버 이벤트 (마우스 올리면 선택)
             if (easyCard != null)
-                easyCard.RegisterCallback<ClickEvent>(evt => OnDifficultyCardClicked(Difficulty.Easy));
+            {
+                easyCard.RegisterCallback<MouseEnterEvent>(evt => OnDifficultyCardHover(Difficulty.Easy));
+            }
 
             if (normalCard != null)
-                normalCard.RegisterCallback<ClickEvent>(evt => OnDifficultyCardClicked(Difficulty.Normal));
+            {
+                normalCard.RegisterCallback<MouseEnterEvent>(evt => OnDifficultyCardHover(Difficulty.Normal));
+            }
 
             if (hardCard != null)
-                hardCard.RegisterCallback<ClickEvent>(evt => OnDifficultyCardClicked(Difficulty.Hard));
+            {
+                hardCard.RegisterCallback<MouseEnterEvent>(evt => OnDifficultyCardHover(Difficulty.Hard));
+            }
 
             // 저장된 통계 불러오기
             LoadStats();
@@ -115,13 +121,13 @@ namespace LostSpells.UI
                 startButton.clicked -= OnStartButtonClicked;
 
             if (easyCard != null)
-                easyCard.UnregisterCallback<ClickEvent>(evt => OnDifficultyCardClicked(Difficulty.Easy));
+                easyCard.UnregisterCallback<MouseEnterEvent>(evt => OnDifficultyCardHover(Difficulty.Easy));
 
             if (normalCard != null)
-                normalCard.UnregisterCallback<ClickEvent>(evt => OnDifficultyCardClicked(Difficulty.Normal));
+                normalCard.UnregisterCallback<MouseEnterEvent>(evt => OnDifficultyCardHover(Difficulty.Normal));
 
             if (hardCard != null)
-                hardCard.UnregisterCallback<ClickEvent>(evt => OnDifficultyCardClicked(Difficulty.Hard));
+                hardCard.UnregisterCallback<MouseEnterEvent>(evt => OnDifficultyCardHover(Difficulty.Hard));
         }
 
         #region Button Click Handlers
@@ -131,7 +137,7 @@ namespace LostSpells.UI
             SceneManager.LoadScene("GameModeSelection");
         }
 
-        private void OnDifficultyCardClicked(Difficulty difficulty)
+        private void OnDifficultyCardHover(Difficulty difficulty)
         {
             selectedDifficulty = difficulty;
             UpdateUI();
