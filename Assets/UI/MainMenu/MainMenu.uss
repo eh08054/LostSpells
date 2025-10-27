@@ -4,20 +4,48 @@
 .main-menu {
     width: 100%;
     height: 100%;
+    position: relative;
+}
+
+/* 배경 레이어 (하늘) */
+.background-layer {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-image: url("project://database/Assets/Gothicvania-Town/Art/Environment/Background/background.png");
+    -unity-background-scale-mode: scale-and-crop;
+}
+
+/* 중경 레이어 (건물) */
+.middleground-layer {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-image: url("project://database/Assets/Gothicvania-Town/Art/Environment/Background/middleground.png");
+    -unity-background-scale-mode: scale-and-crop;
+}
+
+/* UI 컨텐츠 (맨 앞) */
+.ui-content {
+    position: absolute;
+    width: 100%;
+    height: 100%;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background-color: var(--color-white);
 }
 
 /* 게임 타이틀 */
 .game-title {
     font-size: 84px;
-    color: var(--color-black);
+    color: rgb(255, 255, 255);
     -unity-font-style: bold;
     -unity-text-align: middle-center;
     letter-spacing: 8px;
     margin-bottom: 100px;
+    text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.8);
+    -unity-text-outline-width: 2px;
+    -unity-text-outline-color: rgba(0, 0, 0, 0.5);
 }
 
 /* 메뉴 버튼 컨테이너 */
@@ -56,15 +84,23 @@
     transition-duration: 0.15s;
 }
 
+/* 버튼 포커스 상태 - 선택 시 흰색 배경 제거 */
+.menu-button:focus {
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+}
+
 /* 버튼 호버 상태 */
 .menu-button:hover {
     scale: 1.02;
+    background-color: rgba(0, 0, 0, 0);
 }
 
 /* 버튼 눌림 상태 - 이미지를 어둡게 */
 .menu-button:active {
     -unity-background-image-tint-color: rgb(180, 180, 180);
     scale: 0.98;
+    background-color: rgba(0, 0, 0, 0);
 }
 
 /* ===== 팝업 스타일 ===== */
@@ -84,10 +120,10 @@
 .popup-container {
     width: 400px;
     min-height: 250px;
-    background-color: rgb(255, 255, 255);
-    border-width: 3px;
-    border-color: rgb(0, 0, 0);
-    padding: 30px;
+    background-image: url("project://database/Assets/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/UI%20board%20Large%20%20parchment.png");
+    -unity-background-scale-mode: stretch-to-fill;
+    border-width: 0;
+    padding: 40px;
     flex-direction: column;
     align-items: center;
     justify-content: space-between;
@@ -96,7 +132,7 @@
 /* 팝업 제목 */
 .popup-title {
     font-size: 36px;
-    color: rgb(0, 0, 0);
+    color: rgb(60, 30, 10);
     -unity-font-style: bold;
     -unity-text-align: middle-center;
     margin-bottom: 20px;
@@ -105,7 +141,7 @@
 /* 팝업 메시지 */
 .popup-message {
     font-size: 18px;
-    color: rgb(60, 60, 60);
+    color: rgb(80, 50, 30);
     -unity-text-align: middle-center;
     margin-bottom: 30px;
 }

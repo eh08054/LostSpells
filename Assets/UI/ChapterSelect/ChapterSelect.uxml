@@ -7,11 +7,19 @@
     <!-- 전체 화면 컨테이너 -->
     <ui:VisualElement name="ChapterSelect" class="screen-container">
 
-        <!-- 상단 헤더 바 -->
-        <ui:VisualElement name="HeaderBar" class="header-bar">
+        <!-- 배경 레이어 (맨 뒤) -->
+        <ui:VisualElement name="BackgroundLayer" class="background-layer"/>
+
+        <!-- 중경 레이어 (건물들) -->
+        <ui:VisualElement name="MiddlegroundLayer" class="middleground-layer"/>
+
+        <!-- UI 컨텐츠 (맨 앞) -->
+        <ui:VisualElement name="UIContent" class="ui-content">
+            <!-- 상단 헤더 바 -->
+            <ui:VisualElement name="HeaderBar" class="header-bar">
             <!-- 왼쪽 영역 -->
             <ui:VisualElement name="HeaderLeft" class="header-side header-left">
-                <ui:Button text="&lt;" name="BackButton" class="back-button"/>
+                <ui:Button text="" name="BackButton" class="back-button"/>
             </ui:VisualElement>
 
             <!-- 중앙 제목 -->
@@ -85,6 +93,7 @@
             <!-- 하단 액션 버튼 -->
             <ui:Button text="Start Chapter" name="ActionButton" class="action-button"/>
 
+        </ui:VisualElement>
         </ui:VisualElement>
 
     </ui:VisualElement>

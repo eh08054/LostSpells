@@ -5,10 +5,18 @@
 
     <ui:VisualElement name="StoryMode" class="screen-container">
 
-        <!-- 헤더 -->
-        <ui:VisualElement name="HeaderBar" class="header-bar">
+        <!-- 배경 레이어 (맨 뒤) -->
+        <ui:VisualElement name="BackgroundLayer" class="background-layer"/>
+
+        <!-- 중경 레이어 (건물들) -->
+        <ui:VisualElement name="MiddlegroundLayer" class="middleground-layer"/>
+
+        <!-- UI 컨텐츠 (맨 앞) -->
+        <ui:VisualElement name="UIContent" class="ui-content">
+            <!-- 헤더 -->
+            <ui:VisualElement name="HeaderBar" class="header-bar">
             <ui:VisualElement name="HeaderLeft" class="header-side header-left">
-                <ui:Button text="&lt;" name="BackButton" class="back-button"/>
+                <ui:Button text="" name="BackButton" class="back-button"/>
             </ui:VisualElement>
 
             <ui:Label text="Story Mode" name="HeaderTitle" class="header-title"/>
@@ -57,6 +65,7 @@
 
             </ui:VisualElement>
 
+        </ui:VisualElement>
         </ui:VisualElement>
 
     </ui:VisualElement>
