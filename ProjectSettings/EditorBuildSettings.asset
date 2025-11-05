@@ -26,6 +26,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/UI/EndlessMode/EndlessMode.unity
     guid: 511d0fdf451ca4148a6a60e69e3f75f1
+  - enabled: 1
+    path: Assets/UI/InGame/InGame.unity
+    guid: cebfee55856e0ac468df7ab91711d7e0
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   m_UseUCBPForAssetBundles: 0

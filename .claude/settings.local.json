@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c:*)",
+      "Bash(if not exist \"Assets\\UI\\EndlessMode\" mkdir \"Assets\\UI\\EndlessMode\")",
+      "Bash(cat:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nAdd UI system with multiple screens and quit confirmation popup\n\n- Add complete UI system using UI Toolkit\n  - MainMenu: Main menu with Play, Options, Store, Quit buttons\n  - GameModeSelection: Story Mode, Chapter Select, Endless Mode\n  - ChapterSelect: 7 Deadly Sins themed chapter selection\n  - EndlessMode: Difficulty selection (Easy, Normal, Hard) with simple black & white design\n  - Options: Settings screen placeholder\n  - Store: Store screen placeholder\n  - StoryMode: Story mode screen placeholder\n\n- Add quit confirmation popup to MainMenu\n  - Shows popup when Quit button is clicked\n  - \"Are you sure you want to quit?\" message\n  - Quit and Cancel buttons with reduced width\n\n- Update ChapterSelect header title to \"Chapter Select\"\n\n- Add UI art assets\n  - Fantasy Wooden GUI Free (buttons, boards, UI elements)\n  - 2D Casual UI (icons and elements)\n  - Gothicvania Cemetery Artwork (characters and environment)\n\n- Add common UI stylesheet (Common.uss) for shared styles\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git push:*)",
+      "Bash(git add:*)",
+      "Bash(set GIT_TERMINAL_PROMPT=1:*)",
+      "Bash(git commit:*)",
+      "Bash(git checkout:*)",
+      "Bash(git pull:*)",
+      "Bash(git restore:*)",
+      "Bash(git fetch:*)",
+      "Bash(rm:*)",
+      "Bash(NUL)",
+      "Bash(for dir in ChapterSelect Common EndlessMode GameModeSelection MainMenu Options Store StoryMode Templates)",
+      "Bash(do echo \"=== $dir ===\")",
+      "Bash(ls:*)",
+      "Bash(done)",
+      "Bash(dir:*)",
+      "Bash(findstr:*)",
+      "Bash(if not exist \"Assets\\Scripts\\Editor\" mkdir \"Assets\\Scripts\\Editor\")",
+      "Bash(find:*)",
+      "Bash(del /f NUL 2)",
+      "Bash(nul)",
+      "Bash(del /f NUL.meta 2)",
+      "Bash(.gitignore)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

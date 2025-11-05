@@ -232,30 +232,59 @@ namespace LostSpells.UI
         /// </summary>
         public static void ResetToDefaults()
         {
-            // Audio
+            ResetAudioToDefaults();
+            ResetGraphicsToDefaults();
+            ResetLanguageToDefaults();
+            ResetGameToDefaults();
+            Save();
+        }
+
+        /// <summary>
+        /// 오디오 설정을 기본값으로 초기화합니다
+        /// </summary>
+        public static void ResetAudioToDefaults()
+        {
             MasterVolume = 80f;
             BGMVolume = 80f;
             SFXVolume = 80f;
             VoiceThreshold = 70f;
+            // MicrophoneDevice는 초기화하지 않음 (하드웨어 설정)
+        }
 
-            // Graphics
+        /// <summary>
+        /// 그래픽 설정을 기본값으로 초기화합니다
+        /// </summary>
+        public static void ResetGraphicsToDefaults()
+        {
             ResolutionIndex = 0;
             ScreenMode = ScreenMode.Fullscreen;
             VSync = true;
             Brightness = 50f;
             Contrast = 50f;
 
-            // Language
+            // 즉시 적용
+            ApplyResolution(0);
+            ApplyScreenMode(ScreenMode.Fullscreen);
+        }
+
+        /// <summary>
+        /// 언어 설정을 기본값으로 초기화합니다
+        /// </summary>
+        public static void ResetLanguageToDefaults()
+        {
             GameLanguage = Language.English;
             VoiceLanguage = Language.English;
             Subtitle = true;
+        }
 
-            // Game
+        /// <summary>
+        /// 게임 설정을 기본값으로 초기화합니다
+        /// </summary>
+        public static void ResetGameToDefaults()
+        {
             Difficulty = Difficulty.Normal;
             ScreenShake = true;
             HitEffect = true;
-
-            Save();
         }
 
         /// <summary>

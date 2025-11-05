@@ -1,4 +1,6 @@
-/* Endless Mode - 최소 스타일 */
+/* ========================================
+   Endless Mode - 최고 기록 순위표
+   ======================================== */
 
 /* 배경 레이어 (하늘) */
 .background-layer {
@@ -26,119 +28,148 @@
     flex-direction: column;
 }
 
-/* 버튼 컨테이너 */
-.difficulty-container {
-    flex-direction: row;
-    justify-content: center;
+/* ========== 메인 컨텐츠 영역 ========== */
+.content-area {
+    width: 100%;
+    flex-grow: 1;
+    padding: 16px 64px 20px 64px;
+    flex-direction: column;
     align-items: center;
+    justify-content: flex-start;
 }
 
-/* 난이도 카드 */
-.difficulty-card {
-    width: 250px;
-    min-height: 300px;
-    margin: 10px;
-    padding: 20px;
+/* ========== 순위표 제목 ========== */
+.ranking-title {
+    font-size: 36px;
+    color: rgb(255, 255, 255);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    margin-top: 0;
+    margin-bottom: 16px;
+    flex-shrink: 0;
+}
+
+/* 순위 리스트 컨테이너 */
+.ranking-list-container {
+    width: 100%;
+    max-width: 700px;
+    flex-direction: column;
+    align-items: stretch;
+    flex-shrink: 0;
+}
+
+/* ========== 순위 항목 카드 ========== */
+.ranking-item {
+    width: 100%;
+    height: 70px;
+    flex-shrink: 0;
+    margin-bottom: 10px;
+    padding: 12px 24px;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
     background-image: url("project://database/Assets/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/UI%20board%20Large%20%20parchment.png");
     -unity-background-scale-mode: stretch-to-fill;
     -unity-background-image-tint-color: rgb(255, 255, 255);
+    background-color: transparent;
     border-width: 0;
-    transition-property: scale, -unity-background-image-tint-color;
-    transition-duration: 0.2s;
-}
-
-/* 호버 효과 - 마우스 올리면 커짐 */
-.difficulty-card:hover {
-    scale: 1.08;
-}
-
-/* 선택된 카드 - 색상만 변경 (크기는 변하지 않음) */
-.difficulty-card.selected-card {
-    -unity-background-image-tint-color: rgb(255, 230, 150);
-}
-
-/* 선택된 카드도 호버 시 커짐 */
-.difficulty-card.selected-card:hover {
-    scale: 1.08;
-}
-
-/* 카드 헤더 */
-.card-header {
-    margin-bottom: 10px;
-    padding-bottom: 10px;
-}
-
-/* 난이도 라벨 */
-.difficulty-label {
-    font-size: 28px;
-    color: rgb(60, 30, 10);
-    -unity-font-style: bold;
-    -unity-text-align: middle-center;
-}
-
-/* 카드 본문 */
-.card-body {
-    flex-direction: column;
-}
-
-/* 난이도 설명 */
-.difficulty-description {
-    font-size: 14px;
-    color: rgb(80, 50, 30);
-    -unity-font-style: italic;
-    -unity-text-align: middle-center;
-    margin-bottom: 10px;
-}
-
-/* 통계 컨테이너 */
-.stats-container {
-    flex-direction: column;
-    margin-top: 10px;
-    padding: 10px;
-    background-color: rgba(139, 69, 19, 0.1);
-}
-
-/* 통계 라벨 */
-.stats-label {
-    font-size: 12px;
-    color: rgb(100, 60, 30);
-    -unity-font-style: bold;
-    -unity-text-align: middle-center;
-    margin-top: 5px;
-}
-
-/* 통계 값 */
-.stats-value {
-    font-size: 20px;
-    color: rgb(139, 69, 19);
-    -unity-font-style: bold;
-    -unity-text-align: middle-center;
-    margin-bottom: 5px;
-}
-
-/* 하단 액션 버튼 */
-.action-button {
-    width: 250px;
-    height: 60px;
-    margin-top: 30px;
-    background-image: url("project://database/Assets/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/TextBTN_Medium.png");
-    -unity-background-scale-mode: stretch-to-fill;
-    background-color: rgba(0, 0, 0, 0);
-    border-width: 0;
-    color: rgb(240, 220, 180);
-    font-size: 20px;
-    -unity-font-style: bold;
-    -unity-text-align: middle-center;
-    align-self: center;
-    transition-property: scale;
+    transition-property: -unity-background-image-tint-color, scale;
     transition-duration: 0.15s;
 }
 
-.action-button:hover {
-    scale: 1.05;
+.ranking-item:hover {
+    -unity-background-image-tint-color: rgb(255, 250, 240);
+    scale: 1.02;
 }
 
-.action-button:active {
-    background-image: url("project://database/Assets/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/TextBTN_Medium_Pressed.png");
-    scale: 0.98;
+/* 1-3등 특별 색상 */
+.ranking-item-gold {
+    -unity-background-image-tint-color: rgb(255, 240, 200);
+}
+
+.ranking-item-silver {
+    -unity-background-image-tint-color: rgb(240, 240, 250);
+}
+
+.ranking-item-bronze {
+    -unity-background-image-tint-color: rgb(255, 230, 210);
+}
+
+/* ========== 순위 정보 ========== */
+.ranking-rank {
+    font-size: 32px;
+    color: rgb(80, 60, 40);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    width: 60px;
+    flex-shrink: 0;
+}
+
+.ranking-info {
+    flex-direction: column;
+    flex-grow: 1;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 0 12px;
+}
+
+.ranking-wave {
+    font-size: 22px;
+    color: rgb(80, 60, 40);
+    -unity-font-style: bold;
+}
+
+.ranking-date {
+    font-size: 15px;
+    color: rgb(100, 80, 60);
+    -unity-font-style: italic;
+    -unity-text-align: middle-right;
+    width: 140px;
+    flex-shrink: 0;
+    margin-right: 20px;
+}
+
+/* 빈 순위 항목 (기록 없음) */
+.ranking-item-empty {
+    -unity-background-image-tint-color: rgb(230, 230, 230);
+}
+
+.ranking-empty-text {
+    font-size: 22px;
+    color: rgb(120, 100, 80);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    flex-grow: 1;
+}
+
+/* ========== 플레이 버튼 ========== */
+.play-button {
+    min-width: 250px;
+    height: 70px;
+    flex-shrink: 0;
+    background-image: url("project://database/Assets/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/TextBTN_Big.png");
+    -unity-background-scale-mode: stretch-to-fill;
+    background-color: transparent;
+    border-width: 0;
+    padding: 0 20px;
+
+    /* 텍스트 스타일 - 다른 화면과 동일하게 */
+    color: rgb(240, 220, 180);
+    font-size: 26px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+
+    transition-property: scale;
+    transition-duration: 0.15s;
+    margin-top: 16px;
+    margin-bottom: 0;
+}
+
+.play-button:hover {
+    scale: 1.08;
+}
+
+.play-button:active {
+    scale: 0.95;
 }

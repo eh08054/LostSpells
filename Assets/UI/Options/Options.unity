@@ -119,6 +119,74 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &259927844
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 259927846}
+  - component: {fileID: 259927845}
+  m_Layer: 0
+  m_Name: GameManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &259927845
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 259927844}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d28a47211145b5747a90d7a54954303c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LostSpells.Systems.GameManager
+  currentSlot: 1
+  playerData:
+    level: 1
+    currentExp: 0
+    maxExp: 100
+    currentHP: 100
+    maxHP: 100
+    currentMP: 50
+    maxMP: 50
+    diamonds: 0
+    reviveStones: 3
+    currentWave: 1
+    currentChapter: 1
+    chapterName: Pride
+    keyBindings:
+      toggleSidebarKey: 3
+      pauseMenuKey: 60
+      moveLeftKey: 15
+      moveRightKey: 18
+      jumpKey: 1
+      skill1Key: 31
+      skill2Key: 37
+      skill3Key: 19
+      skill4Key: 32
+--- !u!4 &259927846
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 259927844}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &260581647
 GameObject:
   m_ObjectHideFlags: 0
@@ -330,3 +398,4 @@ SceneRoots:
   m_Roots:
   - {fileID: 260581650}
   - {fileID: 1910464364}
+  - {fileID: 259927846}

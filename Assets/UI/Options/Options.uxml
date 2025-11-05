@@ -43,7 +43,12 @@
             <ui:ScrollView name="RightPanel" class="right-panel">
                 <!-- 오디오 설정 패널 -->
                 <ui:VisualElement name="AudioPanel" class="settings-panel">
-                    <ui:Label text="Audio Settings" name="AudioPanelTitle" class="panel-title"/>
+                    <ui:VisualElement class="panel-header">
+                        <ui:Label text="Audio Settings" name="AudioPanelTitle" class="panel-title"/>
+                        <ui:VisualElement class="reset-button-container">
+                            <ui:Button text="Reset" name="AudioResetButton" class="reset-button"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
 
                     <ui:VisualElement class="setting-row">
                         <ui:Label text="Master Volume" name="MasterLabel" class="setting-label"/>
@@ -93,7 +98,12 @@
 
                 <!-- 그래픽 설정 패널 -->
                 <ui:VisualElement name="GraphicsPanel" class="settings-panel" style="display: none;">
-                    <ui:Label text="Graphics Settings" name="GraphicsPanelTitle" class="panel-title"/>
+                    <ui:VisualElement class="panel-header">
+                        <ui:Label text="Graphics Settings" name="GraphicsPanelTitle" class="panel-title"/>
+                        <ui:VisualElement class="reset-button-container">
+                            <ui:Button text="Reset" name="GraphicsResetButton" class="reset-button"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
 
                     <ui:VisualElement class="setting-row">
                         <ui:Label text="Resolution" name="ResolutionLabel" class="setting-label"/>
@@ -136,7 +146,12 @@
 
                 <!-- 언어 설정 패널 -->
                 <ui:VisualElement name="LanguagePanel" class="settings-panel" style="display: none;">
-                    <ui:Label text="Language Settings" name="LanguagePanelTitle" class="panel-title"/>
+                    <ui:VisualElement class="panel-header">
+                        <ui:Label text="Language Settings" name="LanguagePanelTitle" class="panel-title"/>
+                        <ui:VisualElement class="reset-button-container">
+                            <ui:Button text="Reset" name="LanguageResetButton" class="reset-button"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
 
                     <ui:VisualElement class="setting-row">
                         <ui:Label text="Game Language" name="GameLanguageLabel" class="setting-label"/>
@@ -159,7 +174,12 @@
 
                 <!-- 게임 설정 패널 -->
                 <ui:VisualElement name="GamePanel" class="settings-panel" style="display: none;">
-                    <ui:Label text="Game Settings" name="GamePanelTitle" class="panel-title"/>
+                    <ui:VisualElement class="panel-header">
+                        <ui:Label text="Game Settings" name="GamePanelTitle" class="panel-title"/>
+                        <ui:VisualElement class="reset-button-container">
+                            <ui:Button text="Reset" name="GameResetButton" class="reset-button"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
 
                     <ui:VisualElement class="setting-row">
                         <ui:Label text="Difficulty" name="DifficultyLabel" class="setting-label"/>

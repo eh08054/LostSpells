@@ -32,90 +32,44 @@
 .story-content {
     width: 100%;
     flex-grow: 1;
-    padding: 32px;
+    padding: 32px 64px;
     align-items: center;
     justify-content: center;
 }
 
-/* ========== 카드 슬라이더 컨테이너 ========== */
-.card-slider-container {
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
+/* ========== 스크롤 뷰 ========== */
+.slot-scroll-view {
     width: 100%;
-    max-width: 1200px;
-}
-
-/* ========== 화살표 네비게이션 버튼 ========== */
-.nav-arrow-btn {
-    width: 120px;
-    height: 400px;
-    flex-shrink: 0;
-    margin-left: 16px;
-    margin-right: 16px;
-    background-color: transparent;
-    border-width: 0;
-    padding: 0;
-    overflow: hidden;
-    transition-property: scale;
-    transition-duration: 0.15s;
-}
-
-.nav-arrow-btn:hover {
-    scale: 1.03;
-}
-
-.nav-arrow-btn:active {
-    scale: 0.98;
-}
-
-.nav-arrow-bg {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    width: 400px;
-    height: 120px;
-    translate: -50% -50%;
-    background-image: url("project://database/Assets/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/IRONY%20TITLE%20%20Large.png");
-    -unity-background-scale-mode: stretch-to-fill;
-    rotate: 90deg;
-}
-
-/* 오른쪽 버튼 이미지 반대 방향 회전 */
-.next-btn .nav-arrow-bg {
-    rotate: -90deg;
-}
-
-.nav-arrow-text {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    color: rgb(255, 255, 255);
-    font-size: 64px;
-    -unity-font-style: bold;
-    -unity-text-align: middle-center;
-    -unity-text-outline-width: 2px;
-    -unity-text-outline-color: rgb(40, 30, 20);
-}
-
-/* ========== 슬롯 표시 영역 ========== */
-.current-slot-display {
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    max-width: 800px;
     flex-grow: 1;
-    max-width: 500px;
+}
+
+/* 스크롤바 숨기기 */
+.slot-scroll-view > .unity-scroll-view__content-and-vertical-scroll-container > .unity-scroller--vertical {
+    width: 0;
+    visibility: hidden;
+}
+
+.slot-scroll-view > .unity-scroll-view__horizontal-scroller {
+    height: 0;
+    visibility: hidden;
+}
+
+/* 스크롤 뷰 내부 컨테이너 */
+.slot-list-container {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px;
 }
 
 /* ========== 슬롯 카드 ========== */
 .slot-card {
-    width: 500px;
-    height: 500px;
+    width: 100%;
+    height: 200px;
     flex-shrink: 0;
-    padding: 32px;
-    flex-direction: column;
+    padding: 24px 48px;
+    margin-bottom: 16px;
+    flex-direction: row;
     justify-content: space-between;
     align-items: center;
     background-image: url("project://database/Assets/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/UI%20board%20Large%20%20parchment.png");
@@ -129,7 +83,22 @@
 
 .slot-card:hover {
     -unity-background-image-tint-color: rgb(255, 250, 240);
-    scale: 1.01;
+    scale: 1.02;
+}
+
+/* 빈 슬롯 카드 (클릭 가능) */
+.empty-slot-card {
+    justify-content: center;
+    align-items: center;
+}
+
+.empty-slot-card:hover {
+    -unity-background-image-tint-color: rgb(240, 255, 240);
+    scale: 1.05;
+}
+
+.empty-slot-card:active {
+    scale: 0.98;
 }
 
 /* ========== 슬롯 정보 ========== */
@@ -137,69 +106,96 @@
     flex-direction: column;
     flex-grow: 1;
     justify-content: center;
-    align-items: center;
-    width: 100%;
+    align-items: flex-start;
+    padding-right: 16px;
 }
 
-.slot-number {
-    font-size: 36px;
+.slot-name {
+    font-size: 24px;
     color: rgb(80, 60, 40);
     -unity-font-style: bold;
-    margin-bottom: 20px;
-    -unity-text-align: middle-center;
+    margin-bottom: 8px;
+    -unity-text-align: middle-left;
 }
 
-.slot-chapter {
-    font-size: 22px;
-    color: rgb(60, 40, 20);
+.editable-label {
+    padding: 2px 4px;
+    border-radius: 3px;
+    transition-property: background-color;
+    transition-duration: 0.1s;
+}
+
+.editable-label:hover {
+    background-color: rgba(200, 180, 160, 0.2);
+}
+
+.slot-name-input {
+    font-size: 24px;
+    color: rgb(80, 60, 40);
     -unity-font-style: bold;
-    margin-bottom: 16px;
-    -unity-text-align: middle-center;
-    white-space: normal;
-    width: 100%;
+    margin-bottom: 8px;
+    padding: 2px 4px;
+    background-color: transparent;
+    border-color: transparent;
+    border-width: 0;
+}
+
+/* TextField 내부 입력 영역도 투명하게 */
+.slot-name-input > .unity-text-field__input {
+    background-color: transparent;
+    border-width: 0;
+    padding: 0;
 }
 
 .slot-progress {
     font-size: 18px;
-    color: rgb(100, 80, 60);
-    margin-bottom: 12px;
-    -unity-text-align: middle-center;
+    color: rgb(60, 40, 20);
+    -unity-font-style: bold;
+    margin-bottom: 6px;
+    -unity-text-align: middle-left;
 }
 
 .slot-date {
-    font-size: 16px;
+    font-size: 14px;
     color: rgb(120, 100, 80);
     -unity-font-style: italic;
-    -unity-text-align: middle-center;
+    -unity-text-align: middle-left;
 }
 
 .empty-label {
-    font-size: 32px;
-    color: rgb(150, 130, 110);
-    -unity-font-style: italic;
+    font-size: 28px;
+    color: rgb(120, 100, 80);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
 }
 
-/* ========== 슬롯 하단 버튼 영역 ========== */
-.bottom-buttons {
-    flex-direction: row;
-    justify-content: center;
+/* 빈 슬롯 정보 영역 */
+.empty-slot-info {
     align-items: center;
-    width: 100%;
+    justify-content: center;
+    padding-right: 0;
+}
+
+/* ========== 슬롯 버튼 영역 ========== */
+.bottom-buttons {
+    flex-direction: column;
+    justify-content: center;
+    align-items: stretch;
     flex-shrink: 0;
+    width: 200px;
 }
 
 .action-btn {
-    width: 220px;
+    width: 100%;
     height: 60px;
     flex-shrink: 0;
-    margin-left: 10px;
-    margin-right: 10px;
+    margin-bottom: 12px;
     background-image: url("project://database/Assets/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/TextBTN_Big.png");
     -unity-background-scale-mode: stretch-to-fill;
     background-color: transparent;
     border-width: 0;
     color: rgb(255, 255, 255);
-    font-size: 18px;
+    font-size: 16px;
     -unity-font-style: bold;
     -unity-text-align: middle-center;
     -unity-text-outline-width: 1px;

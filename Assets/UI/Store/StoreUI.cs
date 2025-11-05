@@ -1,6 +1,9 @@
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.SceneManagement;
+using LostSpells.Systems;
+using LostSpells.Data;
+using LostSpells.Data.Save;
 
 namespace LostSpells.UI
 {
@@ -42,9 +45,10 @@ namespace LostSpells.UI
         private Button buyReviveStone100;
         private Button buyReviveStone500;
 
-        // 임시 데이터 (실제로는 게임 매니저에서 관리)
-        private int currentDiamonds = 0;
-        private int currentReviveStones = 0;
+        // 현재 슬롯 및 화폐 데이터
+        private int currentSlot;
+        private int currentDiamonds;
+        private int currentReviveStones;
 
         private void Awake()
         {
@@ -61,7 +65,8 @@ namespace LostSpells.UI
             // 이벤트 등록
             RegisterEvents();
 
-            // 초기화
+            // 초기화 - SaveSystem에서 현재 슬롯의 데이터 불러오기
+            LoadCurrencyData();
             UpdateCurrencyDisplay();
             ShowPanel(diamondPanel);
         }
@@ -69,6 +74,10 @@ namespace LostSpells.UI
         private void OnDisable()
         {
             UnregisterEvents();
+
+            // 상점을 나갈 때 자동 저장
+            SaveCurrencyData();
+            Debug.Log("[Store] 상점 종료 - 데이터 자동 저장");
         }
 
         #region UI Element Finding
@@ -170,33 +179,54 @@ namespace LostSpells.UI
 
         private void OnBuyDiamond(int amount, int price)
         {
-            Debug.Log($"다이아 구매 시도: {amount}개, 가격: ₩{price:N0}");
-
             // TODO: 실제 결제 로직 구현
-            // 결제가 성공하면:
+            // 결제가 성공하면 다이아 추가
             currentDiamonds += amount;
             UpdateCurrencyDisplay();
-
-            Debug.Log($"다이아 구매 완료! 현재 보유: {currentDiamonds}개");
         }
 
         private void OnBuyReviveStone(int amount, int cost)
         {
             if (currentDiamonds >= cost)
             {
+                // 다이아 차감 및 부활석 추가
                 currentDiamonds -= cost;
                 currentReviveStones += amount;
                 UpdateCurrencyDisplay();
-
-                Debug.Log($"부활석 구매 완료! {amount}개 구매, 다이아 {cost}개 소모");
             }
             else
             {
-                Debug.Log($"다이아가 부족합니다! 필요: {cost}개, 보유: {currentDiamonds}개");
                 // TODO: 다이아 부족 메시지 표시
             }
         }
 
+        /// <summary>
+        /// SaveSystem에서 현재 슬롯의 화폐 정보 불러오기
+        /// </summary>
+        private void LoadCurrencyData()
+        {
+            currentSlot = GameStateManager.CurrentSlot;
+            string prefix = $"Slot{currentSlot}_";
+
+            currentDiamonds = PlayerPrefs.GetInt(prefix + "PlayerDiamonds", 0);
+            currentReviveStones = PlayerPrefs.GetInt(prefix + "PlayerReviveStones", 0);
+        }
+
+        /// <summary>
+        /// 현재 슬롯의 화폐 정보를 PlayerPrefs에 저장
+        /// </summary>
+        private void SaveCurrencyData()
+        {
+            string prefix = $"Slot{currentSlot}_";
+
+            PlayerPrefs.SetInt(prefix + "PlayerDiamonds", currentDiamonds);
+            PlayerPrefs.SetInt(prefix + "PlayerReviveStones", currentReviveStones);
+            PlayerPrefs.Save();
+        }
+
+        /// <summary>
+        /// UI에 화폐 정보 표시
+        /// </summary>
         private void UpdateCurrencyDisplay()
         {
             if (headerDiamondsLabel != null)
@@ -204,6 +234,15 @@ namespace LostSpells.UI
 
             if (headerReviveStonesLabel != null)
                 headerReviveStonesLabel.text = currentReviveStones.ToString("N0");
+        }
+
+        /// <summary>
+        /// 모든 데이터를 UI에 반영 (에디터에서 데이터 변경 시 호출)
+        /// </summary>
+        public void RefreshAllData()
+        {
+            LoadCurrencyData();
+            UpdateCurrencyDisplay();
         }
 
         #endregion

@@ -43,15 +43,17 @@
 
 /* 화살표 버튼 */
 .nav-arrow-btn {
-    width: 100px;
-    height: 320px;
+    width: 80px;
+    height: 80px;
     flex-shrink: 0;
-    margin-left: 16px;
-    margin-right: 16px;
-    background-color: transparent;
+    margin-left: 24px;
+    margin-right: 24px;
+    background-image: url("project://database/Assets/2D%20Casual%20UI/Sprite/GUI.png#GUI_33");
+    -unity-background-scale-mode: scale-to-fit;
+    background-color: rgba(0, 0, 0, 0);
     border-width: 0;
-    padding: 0;
-    overflow: hidden;
+    transition-property: scale;
+    transition-duration: 0.15s;
 }
 
 .nav-arrow-btn:disabled {
@@ -59,41 +61,27 @@
 }
 
 .nav-arrow-btn:hover {
-    scale: 1.05;
+    scale: 1.1;
 }
 
 .nav-arrow-btn:active {
-    scale: 0.95;
+    scale: 0.9;
 }
 
-.nav-arrow-bg {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    width: 320px;
-    height: 100px;
-    translate: -50% -50%;
-    background-image: url("project://database/Assets/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/IRONY%20TITLE%20%20Large.png");
-    -unity-background-scale-mode: stretch-to-fill;
-    rotate: 90deg;
+/* 왼쪽 버튼 - 180도 회전 (뒤로가기 방향) */
+.prev-btn {
+    rotate: 180deg;
 }
 
-.next-btn .nav-arrow-bg {
-    rotate: -90deg;
+/* 오른쪽 버튼 - 회전 없음 (앞으로가기 방향) */
+.next-btn {
+    rotate: 0deg;
 }
 
+/* 배경과 텍스트 요소 숨김 (더 이상 사용 안 함) */
+.nav-arrow-bg,
 .nav-arrow-text {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    color: rgb(255, 255, 255);
-    font-size: 64px;
-    -unity-font-style: bold;
-    -unity-text-align: middle-center;
-    -unity-text-outline-width: 2px;
-    -unity-text-outline-color: rgb(40, 30, 20);
+    display: none;
 }
 
 /* 챕터 카드 기본 */
@@ -195,7 +183,6 @@
     background-image: url("project://database/Assets/2D%20Casual%20UI/Sprite/GUI.png#GUI_0");
     -unity-background-scale-mode: scale-to-fit;
     display: none;
-    z-index: 10;
 }
 
 /* 챕터 진행 상황 */

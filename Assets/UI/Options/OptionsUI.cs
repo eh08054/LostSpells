@@ -69,6 +69,12 @@ namespace LostSpells.UI
             // 기타 버튼 초기화
             root.Q<Button>("BackButton")?.RegisterCallback<ClickEvent>(_ => OnBackButtonClicked());
             root.Q<Button>("KeybindButton")?.RegisterCallback<ClickEvent>(_ => OnKeybindButtonClicked());
+
+            // 기본값 버튼 초기화
+            root.Q<Button>("AudioResetButton")?.RegisterCallback<ClickEvent>(_ => OnResetAudio());
+            root.Q<Button>("GraphicsResetButton")?.RegisterCallback<ClickEvent>(_ => OnResetGraphics());
+            root.Q<Button>("LanguageResetButton")?.RegisterCallback<ClickEvent>(_ => OnResetLanguage());
+            root.Q<Button>("GameResetButton")?.RegisterCallback<ClickEvent>(_ => OnResetGame());
         }
 
         #region Initialization
@@ -432,6 +438,34 @@ namespace LostSpells.UI
         {
             // TODO: 키바인드 설정 팝업 열기
             Debug.Log("키바인드 설정 열기");
+        }
+
+        private void OnResetAudio()
+        {
+            OptionsData.ResetAudioToDefaults();
+            LoadSettings();  // UI 새로고침
+            Debug.Log("[Options] 오디오 설정이 기본값으로 초기화되었습니다");
+        }
+
+        private void OnResetGraphics()
+        {
+            OptionsData.ResetGraphicsToDefaults();
+            LoadSettings();  // UI 새로고침
+            Debug.Log("[Options] 그래픽 설정이 기본값으로 초기화되었습니다");
+        }
+
+        private void OnResetLanguage()
+        {
+            OptionsData.ResetLanguageToDefaults();
+            LoadSettings();  // UI 새로고침
+            Debug.Log("[Options] 언어 설정이 기본값으로 초기화되었습니다");
+        }
+
+        private void OnResetGame()
+        {
+            OptionsData.ResetGameToDefaults();
+            LoadSettings();  // UI 새로고침
+            Debug.Log("[Options] 게임 설정이 기본값으로 초기화되었습니다");
         }
 
         #endregion

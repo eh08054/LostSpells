@@ -27,43 +27,12 @@
         <!-- 메인 컨텐츠 -->
         <ui:VisualElement name="ContentArea" class="story-content">
 
-            <!-- 카드 슬라이더 컨테이너 -->
-            <ui:VisualElement name="CardSliderContainer" class="card-slider-container">
-
-                <!-- 왼쪽 화살표 -->
-                <ui:Button name="PrevButton" class="nav-arrow-btn prev-btn">
-                    <ui:VisualElement class="nav-arrow-bg"/>
-                    <ui:Label text="&lt;" class="nav-arrow-text"/>
-                </ui:Button>
-
-                <!-- 현재 슬롯 표시 영역 -->
-                <ui:VisualElement name="CurrentSlotDisplay" class="current-slot-display">
-
-                    <!-- 슬롯 카드 (버튼 포함) -->
-                    <ui:VisualElement name="CurrentSlot" class="slot-card">
-                        <ui:VisualElement class="slot-info">
-                            <ui:Label text="SLOT 1" name="SlotNumber" class="slot-number"/>
-                            <ui:Label text="Chapter 3: The Dark Forest" name="SlotChapter" class="slot-chapter"/>
-                            <ui:Label text="Level 15  •  12 hours played" name="SlotProgress" class="slot-progress"/>
-                            <ui:Label text="Last played: 2025-10-26 14:30" name="SlotDate" class="slot-date"/>
-                        </ui:VisualElement>
-
-                        <!-- 버튼 영역 -->
-                        <ui:VisualElement name="BottomButtons" class="bottom-buttons">
-                            <ui:Button text="Continue" name="ActionButton" class="action-btn primary-action-btn"/>
-                            <ui:Button text="Delete" name="DeleteButton" class="action-btn delete-action-btn"/>
-                        </ui:VisualElement>
-                    </ui:VisualElement>
-
+            <!-- 스크롤 가능한 슬롯 리스트 -->
+            <ui:ScrollView name="SlotScrollView" class="slot-scroll-view">
+                <ui:VisualElement name="SlotListContainer" class="slot-list-container">
+                    <!-- 슬롯들이 동적으로 추가됨 -->
                 </ui:VisualElement>
-
-                <!-- 오른쪽 화살표 -->
-                <ui:Button name="NextButton" class="nav-arrow-btn next-btn">
-                    <ui:VisualElement class="nav-arrow-bg"/>
-                    <ui:Label text="&gt;" class="nav-arrow-text"/>
-                </ui:Button>
-
-            </ui:VisualElement>
+            </ui:ScrollView>
 
         </ui:VisualElement>
         </ui:VisualElement>

@@ -74,6 +74,7 @@ namespace LostSpells.UI
 
         private void OnStoryModeButtonClicked()
         {
+            // 스토리 모드 씬으로 이동
             SceneManager.LoadScene("StoryMode");
         }
 

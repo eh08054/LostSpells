@@ -1,11 +1,13 @@
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.SceneManagement;
+using LostSpells.Systems;
+using LostSpells.Data.Save;
 
 namespace LostSpells.UI
 {
     /// <summary>
-    /// 챕터 선택 UI 컨트롤러 - 7대죄악 챕터 관리
+    /// 챕터 선택 UI 컨트롤러 - 7대죄악 챕터 관리 (GameManager 없이 SaveSystem 직접 사용)
     /// </summary>
     [RequireComponent(typeof(UIDocument))]
     public class ChapterSelectUI : MonoBehaviour
@@ -62,19 +64,19 @@ namespace LostSpells.UI
         private Label rightChapterStatus;
         private VisualElement rightChapterLock;
 
-        // 챕터 데이터 (7대죄악)
+        // 챕터 데이터 (7대죄악) - 챕터명은 ChapterProgressSystem에서 가져옴
         private ChapterData[] chapters = new ChapterData[]
         {
-            new ChapterData(1, "Pride", true, 0),      // 교만 - 처음엔 해금됨
-            new ChapterData(2, "Greed", false),        // 탐욕
-            new ChapterData(3, "Lust", false),         // 색욕
-            new ChapterData(4, "Envy", false),         // 질투
-            new ChapterData(5, "Gluttony", false),     // 탐식
-            new ChapterData(6, "Wrath", false),        // 분노
-            new ChapterData(7, "Sloth", false)         // 나태
+            new ChapterData(1, ChapterProgressSystem.GetChapterName(1), true, 0),   // Pride (교만) - 처음엔 해금됨
+            new ChapterData(2, ChapterProgressSystem.GetChapterName(2), false),     // Greed (탐욕)
+            new ChapterData(3, ChapterProgressSystem.GetChapterName(3), false),     // Lust (색욕)
+            new ChapterData(4, ChapterProgressSystem.GetChapterName(4), false),     // Envy (질투)
+            new ChapterData(5, ChapterProgressSystem.GetChapterName(5), false),     // Gluttony (폭식)
+            new ChapterData(6, ChapterProgressSystem.GetChapterName(6), false),     // Wrath (분노)
+            new ChapterData(7, ChapterProgressSystem.GetChapterName(7), false)      // Sloth (나태)
         };
 
-        private int centerIndex = 1; // 중앙 카드 인덱스 (1부터 시작해서 양쪽에 카드가 있도록)
+        private int centerIndex = 0; // 중앙 카드 인덱스 (0부터 시작 - 챕터 1이 중앙에)
 
         private void Awake()
         {
@@ -127,15 +129,33 @@ namespace LostSpells.UI
                 nextButton.clicked += OnNextButtonClicked;
 
             if (leftChapter != null)
+            {
                 leftChapter.RegisterCallback<ClickEvent>(evt => OnSideChapterClicked(-1));
+            }
+            else
+            {
+                Debug.LogError("[ChapterSelect] leftChapter가 null입니다!");
+            }
 
             if (centerChapter != null)
+            {
                 centerChapter.RegisterCallback<ClickEvent>(evt => OnSideChapterClicked(0));
+            }
+            else
+            {
+                Debug.LogError("[ChapterSelect] centerChapter가 null입니다!");
+            }
 
             if (rightChapter != null)
+            {
                 rightChapter.RegisterCallback<ClickEvent>(evt => OnSideChapterClicked(1));
+            }
+            else
+            {
+                Debug.LogError("[ChapterSelect] rightChapter가 null입니다!");
+            }
 
-            // TODO: 저장된 진행 상황 불러오기
+            // 저장된 진행 상황 불러오기
             LoadChapterProgress();
 
             // 초기 표시
@@ -173,7 +193,7 @@ namespace LostSpells.UI
 
         private void OnPrevButtonClicked()
         {
-            if (centerIndex > 1)
+            if (centerIndex > 0)
             {
                 centerIndex--;
                 UpdateChapterDisplay();
@@ -182,7 +202,7 @@ namespace LostSpells.UI
 
         private void OnNextButtonClicked()
         {
-            if (centerIndex < chapters.Length - 2)
+            if (centerIndex < chapters.Length - 1)
             {
                 centerIndex++;
                 UpdateChapterDisplay();
@@ -192,11 +212,22 @@ namespace LostSpells.UI
         private void OnSideChapterClicked(int direction)
         {
             // direction: -1 = 왼쪽 카드 클릭, 0 = 중앙 카드 클릭, +1 = 오른쪽 카드 클릭
-            int targetIndex = centerIndex + direction;
+
+            // 화면에 표시된 중앙 카드의 실제 인덱스 계산 (UpdateChapterDisplay와 동일한 로직)
+            int displayCenterIndex = centerIndex;
+            if (centerIndex == 0)
+                displayCenterIndex = 1;
+            if (centerIndex == chapters.Length - 1)
+                displayCenterIndex = chapters.Length - 2;
+
+            int targetIndex = displayCenterIndex + direction;
 
             // 범위 확인
             if (targetIndex < 0 || targetIndex >= chapters.Length)
+            {
+                Debug.LogWarning($"[ChapterSelect] 범위 벗어남 - targetIndex: {targetIndex}");
                 return;
+            }
 
             ChapterData selectedChapter = chapters[targetIndex];
 
@@ -218,17 +249,15 @@ namespace LostSpells.UI
                     completeInfo = $", 진행도: {selectedChapter.currentStage}/{selectedChapter.totalStages}, 완료 여부: 시작 안 함";
                 }
             }
-            Debug.Log($"[ChapterSelect] 챕터 {selectedChapter.chapterNumber} - {selectedChapter.chapterName}, 상태: {statusInfo}{completeInfo}");
 
-            // 중앙 카드가 아니고 해금된 카드라면 중앙으로 이동
-            if (direction != 0 && selectedChapter.isUnlocked)
+            // 어떤 카드든 클릭하면 - 해금되어 있으면 바로 게임 시작
+            if (selectedChapter.isUnlocked)
             {
-                // 범위 확인 (중앙은 항상 1~5 사이여야 양쪽에 카드가 보임)
-                if (targetIndex >= 1 && targetIndex <= chapters.Length - 2)
-                {
-                    centerIndex = targetIndex;
-                    UpdateChapterDisplay();
-                }
+                StartChapter(selectedChapter.chapterNumber);
+            }
+            else
+            {
+                Debug.LogWarning($"[ChapterSelect] 챕터 {selectedChapter.chapterNumber}는 잠겨있습니다!");
             }
         }
 
@@ -238,8 +267,19 @@ namespace LostSpells.UI
 
         private void UpdateChapterDisplay()
         {
-            int leftIndex = centerIndex - 1;
-            int rightIndex = centerIndex + 1;
+            // 화면에 항상 3장의 카드를 표시하기 위해 중앙 카드의 실제 표시 위치 조정
+            int displayCenterIndex = centerIndex;
+
+            // 첫 페이지에서도 3장 표시 (챕터 1, 2, 3)
+            if (centerIndex == 0)
+                displayCenterIndex = 1;
+
+            // 마지막 페이지에서도 3장 표시 (챕터 5, 6, 7)
+            if (centerIndex == chapters.Length - 1)
+                displayCenterIndex = chapters.Length - 2;
+
+            int leftIndex = displayCenterIndex - 1;
+            int rightIndex = displayCenterIndex + 1;
 
             // 왼쪽 카드 (항상 표시)
             UpdateChapterCard(leftIndex, leftChapter,
@@ -248,7 +288,7 @@ namespace LostSpells.UI
             leftChapter.style.display = DisplayStyle.Flex;
 
             // 중앙 카드 (항상 표시)
-            UpdateChapterCard(centerIndex, centerChapter,
+            UpdateChapterCard(displayCenterIndex, centerChapter,
                 centerChapterNumber, centerChapterTitle, centerChapterProgress,
                 centerChapterStatus, centerChapterLock);
             centerChapter.style.display = DisplayStyle.Flex;
@@ -260,13 +300,13 @@ namespace LostSpells.UI
             rightChapter.style.display = DisplayStyle.Flex;
 
             // 화살표 버튼 활성화/비활성화
-            // centerIndex가 1일 때 왼쪽 끝 (챕터 1,2,3)
-            // centerIndex가 chapters.Length - 2일 때 오른쪽 끝 (챕터 5,6,7)
+            // centerIndex가 0일 때 왼쪽 끝
+            // centerIndex가 chapters.Length - 1일 때 오른쪽 끝
             if (prevButton != null)
-                prevButton.SetEnabled(centerIndex > 1);
+                prevButton.SetEnabled(centerIndex > 0);
 
             if (nextButton != null)
-                nextButton.SetEnabled(centerIndex < chapters.Length - 2);
+                nextButton.SetEnabled(centerIndex < chapters.Length - 1);
         }
 
         private void UpdateChapterCard(int index, VisualElement card, Label numberLabel, Label titleLabel,
@@ -298,18 +338,29 @@ namespace LostSpells.UI
             if (titleLabel != null)
                 titleLabel.text = data.chapterName;
 
-            // 진행 상황
+            // 레벨 및 웨이브 정보 표시
             if (progressLabel != null)
             {
-                if (data.isCompleted)
+                if (data.isUnlocked)
                 {
-                    progressLabel.text = "COMPLETED!";
-                    progressLabel.style.color = new StyleColor(new Color(0.8f, 0.6f, 0.2f));
+                    // SaveSystem에서 현재 슬롯 데이터 가져오기
+                    int currentSlot = GameStateManager.CurrentSlot;
+                    if (GameStateManager.IsSlotUsed(currentSlot))
+                    {
+                        var playerData = GameStateManager.GetSlotData(currentSlot);
+                        progressLabel.text = $"Lv.{playerData.level}  |  Wave {playerData.currentWave}";
+                        progressLabel.style.color = new StyleColor(new Color(0.4f, 0.24f, 0.12f));
+                    }
+                    else
+                    {
+                        progressLabel.text = "Lv.1  |  Wave 1";
+                        progressLabel.style.color = new StyleColor(new Color(0.4f, 0.24f, 0.12f));
+                    }
                 }
                 else
                 {
-                    progressLabel.text = $"Progress: {data.currentStage}/{data.totalStages}";
-                    progressLabel.style.color = new StyleColor(new Color(0.4f, 0.24f, 0.12f));
+                    progressLabel.text = "Locked";
+                    progressLabel.style.color = new StyleColor(new Color(0.5f, 0.5f, 0.5f));
                 }
             }
 
@@ -350,12 +401,19 @@ namespace LostSpells.UI
 
         private void LoadChapterProgress()
         {
-            // TODO: PlayerPrefs 또는 세이브 시스템에서 진행 상황 불러오기
-            // 예시: 테스트용으로 첫 번째 챕터만 해금
+            // SaveSystem에서 직접 현재 슬롯의 챕터 진행 상황 불러오기
+            int currentSlot = GameStateManager.CurrentSlot;
+            var chapterProgressList = SaveSystem.GetAllChapterProgress(currentSlot, 7);
 
-            // 테스트: 챕터 1은 진행 중, 챕터 2는 해금됨
-            // chapters[0].currentStage = 3;
-            // chapters[1].isUnlocked = true;
+            // 불러온 데이터로 chapters 배열 업데이트
+            for (int i = 0; i < chapterProgressList.Count && i < chapters.Length; i++)
+            {
+                var progressInfo = chapterProgressList[i];
+                chapters[i].isUnlocked = progressInfo.isUnlocked;
+                chapters[i].isCompleted = progressInfo.isCompleted;
+                chapters[i].currentStage = progressInfo.currentStage;
+                chapters[i].totalStages = progressInfo.totalStages;
+            }
         }
 
         public void UnlockNextChapter(int completedChapterIndex)
@@ -372,8 +430,70 @@ namespace LostSpells.UI
 
                 UpdateChapterDisplay();
 
-                // TODO: 진행 상황 저장
+                // SaveSystem을 통해 진행 상황 저장
+                int chapterNumber = completedChapterIndex + 1; // 챕터는 1부터 시작
+                int currentSlot = GameStateManager.CurrentSlot;
+
+                SaveSystem.SaveChapterProgress(
+                    currentSlot,
+                    chapterNumber,
+                    chapters[completedChapterIndex].isUnlocked,
+                    chapters[completedChapterIndex].isCompleted,
+                    chapters[completedChapterIndex].currentStage,
+                    chapters[completedChapterIndex].totalStages
+                );
+
+                // 다음 챕터 해금 상태도 저장
+                if (completedChapterIndex + 1 < chapters.Length)
+                {
+                    SaveSystem.SaveChapterProgress(
+                        currentSlot,
+                        chapterNumber + 1,
+                        chapters[completedChapterIndex + 1].isUnlocked,
+                        chapters[completedChapterIndex + 1].isCompleted,
+                        chapters[completedChapterIndex + 1].currentStage,
+                        chapters[completedChapterIndex + 1].totalStages
+                    );
+                }
             }
+        }
+
+        /// <summary>
+        /// 챕터 진행 상황 업데이트 및 저장
+        /// </summary>
+        public void UpdateChapterProgress(int chapterIndex, int currentStage)
+        {
+            if (chapterIndex >= 0 && chapterIndex < chapters.Length)
+            {
+                chapters[chapterIndex].currentStage = currentStage;
+
+                // 진행 상황 저장
+                int chapterNumber = chapterIndex + 1; // 챕터는 1부터 시작
+                int currentSlot = GameStateManager.CurrentSlot;
+
+                SaveSystem.SaveChapterProgress(
+                    currentSlot,
+                    chapterNumber,
+                    chapters[chapterIndex].isUnlocked,
+                    chapters[chapterIndex].isCompleted,
+                    chapters[chapterIndex].currentStage,
+                    chapters[chapterIndex].totalStages
+                );
+
+                UpdateChapterDisplay();
+            }
+        }
+
+        private void StartChapter(int chapterNumber)
+        {
+            Debug.Log($"[ChapterSelect] 챕터 {chapterNumber} 시작");
+
+            // 선택된 챕터 설정
+            GameStateManager.SelectedChapter = chapterNumber;
+            GameStateManager.CurrentGameMode = GameMode.ChapterSelect;
+
+            // InGame 씬으로 이동
+            SceneManager.LoadScene("InGame");
         }
 
         #endregion

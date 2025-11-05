@@ -1,58 +1,52 @@
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.SceneManagement;
+using LostSpells.Data;
+using LostSpells.Systems;
+using LostSpells.Data.Save;
+using System.Collections.Generic;
 
 namespace LostSpells.UI
 {
     /// <summary>
-    /// Endless Mode UI 컨트롤러 - 난이도 선택 및 무한 모드 시작
+    /// Endless Mode UI 컨트롤러 - 최고 기록 순위표 및 무한 모드 시작
     /// </summary>
     [RequireComponent(typeof(UIDocument))]
     public class EndlessModeUI : MonoBehaviour
     {
-        public enum Difficulty
-        {
-            Easy,
-            Normal,
-            Hard
-        }
-
         [System.Serializable]
-        public class DifficultyStats
+        public class EndlessModeRecord
         {
-            public int bestScore;
-            public int bestWave;
+            public int wave;         // 웨이브 수
+            public int level;        // 레벨
+            public string date;      // 플레이 날짜
 
-            public DifficultyStats()
+            public EndlessModeRecord()
             {
-                bestScore = 0;
-                bestWave = 0;
+                wave = 0;
+                level = 0;
+                date = "";
+            }
+
+            public EndlessModeRecord(int wave, int level, string date)
+            {
+                this.wave = wave;
+                this.level = level;
+                this.date = date;
             }
         }
 
         private UIDocument uiDocument;
+        private VisualElement root;
         private Button backButton;
+        private Button playButton;
+        private VisualElement rankingListContainer;
 
-        // 난이도 카드들
-        private VisualElement easyCard;
-        private VisualElement normalCard;
-        private VisualElement hardCard;
+        // 순위 데이터 (1-10등)
+        private List<EndlessModeRecord> rankings = new List<EndlessModeRecord>();
 
-        // 통계 라벨들
-        private Label easyBestScore;
-        private Label easyBestWave;
-        private Label normalBestScore;
-        private Label normalBestWave;
-        private Label hardBestScore;
-        private Label hardBestWave;
-
-        // 난이도별 통계 데이터
-        private DifficultyStats easyStats = new DifficultyStats();
-        private DifficultyStats normalStats = new DifficultyStats();
-        private DifficultyStats hardStats = new DifficultyStats();
-
-        // 현재 선택된 난이도
-        private Difficulty selectedDifficulty = Difficulty.Normal;
+        // UI 초기화 완료 여부
+        public bool IsUIInitialized => rankingListContainer != null;
 
         private void Awake()
         {
@@ -61,49 +55,11 @@ namespace LostSpells.UI
 
         private void OnEnable()
         {
-            var root = uiDocument.rootVisualElement;
+            root = uiDocument.rootVisualElement;
+            InitializeUI();
 
-            // UI 요소 찾기
-            backButton = root.Q<Button>("BackButton");
-
-            // 난이도 카드들
-            easyCard = root.Q<VisualElement>("EasyCard");
-            normalCard = root.Q<VisualElement>("NormalCard");
-            hardCard = root.Q<VisualElement>("HardCard");
-
-            // 통계 라벨들
-            easyBestScore = root.Q<Label>("EasyBestScore");
-            easyBestWave = root.Q<Label>("EasyBestWave");
-            normalBestScore = root.Q<Label>("NormalBestScore");
-            normalBestWave = root.Q<Label>("NormalBestWave");
-            hardBestScore = root.Q<Label>("HardBestScore");
-            hardBestWave = root.Q<Label>("HardBestWave");
-
-            // 이벤트 등록
-            if (backButton != null)
-                backButton.clicked += OnBackButtonClicked;
-
-            // 난이도 카드 호버 이벤트 (마우스 올리면 선택)
-            if (easyCard != null)
-            {
-                easyCard.RegisterCallback<MouseEnterEvent>(evt => OnDifficultyCardHover(Difficulty.Easy));
-            }
-
-            if (normalCard != null)
-            {
-                normalCard.RegisterCallback<MouseEnterEvent>(evt => OnDifficultyCardHover(Difficulty.Normal));
-            }
-
-            if (hardCard != null)
-            {
-                hardCard.RegisterCallback<MouseEnterEvent>(evt => OnDifficultyCardHover(Difficulty.Hard));
-            }
-
-            // 저장된 통계 불러오기
-            LoadStats();
-
-            // 초기 UI 업데이트
-            UpdateUI();
+            LoadRankings();
+            RenderRankings();
         }
 
         private void OnDisable()
@@ -111,168 +67,199 @@ namespace LostSpells.UI
             // 이벤트 해제
             if (backButton != null)
                 backButton.clicked -= OnBackButtonClicked;
-
-            if (easyCard != null)
-                easyCard.UnregisterCallback<MouseEnterEvent>(evt => OnDifficultyCardHover(Difficulty.Easy));
-
-            if (normalCard != null)
-                normalCard.UnregisterCallback<MouseEnterEvent>(evt => OnDifficultyCardHover(Difficulty.Normal));
-
-            if (hardCard != null)
-                hardCard.UnregisterCallback<MouseEnterEvent>(evt => OnDifficultyCardHover(Difficulty.Hard));
+            if (playButton != null)
+                playButton.clicked -= OnPlayButtonClicked;
         }
 
-        #region Button Click Handlers
+        private void InitializeUI()
+        {
+            // 버튼 참조
+            backButton = root.Q<Button>("BackButton");
+            playButton = root.Q<Button>("PlayButton");
+
+            // 순위 리스트 컨테이너
+            rankingListContainer = root.Q<VisualElement>("RankingListContainer");
+
+            // 이벤트 등록
+            if (backButton != null)
+                backButton.clicked += OnBackButtonClicked;
+            if (playButton != null)
+                playButton.clicked += OnPlayButtonClicked;
+        }
+
+        /// <summary>
+        /// 저장된 순위 데이터 불러오기
+        /// </summary>
+        private void LoadRankings()
+        {
+            rankings.Clear();
+            rankings = SaveSystem.GetEndlessModeRankings();
+
+            // 순위가 5개 미만이면 빈 슬롯으로 채움
+            while (rankings.Count < 5)
+            {
+                rankings.Add(new EndlessModeRecord(0, 0, ""));
+            }
+        }
+
+        /// <summary>
+        /// 순위표 렌더링
+        /// </summary>
+        private void RenderRankings()
+        {
+            if (rankingListContainer == null)
+                return;
+
+            // 기존 항목 제거
+            rankingListContainer.Clear();
+
+            // 1-5등 순위 항목 생성
+            for (int i = 0; i < rankings.Count && i < 5; i++)
+            {
+                CreateRankingItem(rankings[i], i + 1);
+            }
+        }
+
+        /// <summary>
+        /// 개별 순위 항목 생성
+        /// </summary>
+        private void CreateRankingItem(EndlessModeRecord record, int displayRank)
+        {
+            // 항목 컨테이너
+            var item = new VisualElement();
+            item.AddToClassList("ranking-item");
+
+            // 기록이 있는 경우
+            if (record.wave > 0)
+            {
+                // 1-3등 특별 스타일
+                if (displayRank == 1)
+                    item.AddToClassList("ranking-item-gold");
+                else if (displayRank == 2)
+                    item.AddToClassList("ranking-item-silver");
+                else if (displayRank == 3)
+                    item.AddToClassList("ranking-item-bronze");
+
+                // 순위 번호
+                var rankLabel = new Label($"{displayRank}");
+                rankLabel.AddToClassList("ranking-rank");
+                item.Add(rankLabel);
+
+                // 정보 컨테이너
+                var infoContainer = new VisualElement();
+                infoContainer.AddToClassList("ranking-info");
+
+                // 웨이브 정보
+                var waveLabel = new Label($"Wave {record.wave}");
+                waveLabel.AddToClassList("ranking-wave");
+                infoContainer.Add(waveLabel);
+
+                item.Add(infoContainer);
+
+                // 날짜
+                var dateLabel = new Label(record.date);
+                dateLabel.AddToClassList("ranking-date");
+                item.Add(dateLabel);
+            }
+            else
+            {
+                // 기록이 없는 경우
+                item.AddToClassList("ranking-item-empty");
+
+                // 순위 번호
+                var rankLabel = new Label($"{displayRank}");
+                rankLabel.AddToClassList("ranking-rank");
+                item.Add(rankLabel);
+
+                // 빈 텍스트
+                var emptyLabel = new Label("기록 없음");
+                emptyLabel.AddToClassList("ranking-empty-text");
+                item.Add(emptyLabel);
+            }
+
+            rankingListContainer.Add(item);
+        }
+
+        #region Event Handlers
 
         private void OnBackButtonClicked()
         {
             SceneManager.LoadScene("GameModeSelection");
         }
 
-        private void OnDifficultyCardHover(Difficulty difficulty)
+        private void OnPlayButtonClicked()
         {
-            selectedDifficulty = difficulty;
-            UpdateUI();
+            // 무한 모드 설정
+            GameStateManager.CurrentGameMode = GameMode.EndlessMode;
+            GameStateManager.CurrentSlot = -1; // 무한 모드는 슬롯 사용 안 함
 
-            Debug.Log($"[EndlessMode] {difficulty} 난이도 선택됨");
+            // InGame 씬으로 이동
+            SceneManager.LoadScene("InGame");
         }
 
         #endregion
 
-        #region UI Update
+        #region Public Methods
 
-        private void UpdateUI()
+        /// <summary>
+        /// 게임 종료 시 순위 업데이트
+        /// </summary>
+        public void UpdateRanking(int wave, int level)
         {
-            // 모든 카드에서 선택 표시 제거
-            easyCard?.RemoveFromClassList("selected-card");
-            normalCard?.RemoveFromClassList("selected-card");
-            hardCard?.RemoveFromClassList("selected-card");
+            // SaveSystem에 저장 (자동으로 순위 정렬됨)
+            string currentDate = System.DateTime.Now.ToString("yyyy-MM-dd HH:mm");
+            SaveSystem.SaveEndlessModeRanking(wave, level, currentDate);
 
-            // 선택된 카드에 selected-card 클래스 추가
-            switch (selectedDifficulty)
-            {
-                case Difficulty.Easy:
-                    easyCard?.AddToClassList("selected-card");
-                    break;
-                case Difficulty.Normal:
-                    normalCard?.AddToClassList("selected-card");
-                    break;
-                case Difficulty.Hard:
-                    hardCard?.AddToClassList("selected-card");
-                    break;
-            }
-
-            // 통계 업데이트
-            UpdateStatsDisplay();
+            // UI 새로고침
+            RefreshRankingsUI();
         }
 
-        private void UpdateStatsDisplay()
+        /// <summary>
+        /// 랭킹 UI 새로고침 (외부에서 호출 가능)
+        /// </summary>
+        public void RefreshRankingsUI()
         {
-            // Easy 통계
-            if (easyBestScore != null)
-                easyBestScore.text = easyStats.bestScore.ToString();
-            if (easyBestWave != null)
-                easyBestWave.text = easyStats.bestWave.ToString();
+            LoadRankings();
+            RenderRankings();
+        }
 
-            // Normal 통계
-            if (normalBestScore != null)
-                normalBestScore.text = normalStats.bestScore.ToString();
-            if (normalBestWave != null)
-                normalBestWave.text = normalStats.bestWave.ToString();
+        /// <summary>
+        /// Inspector 데이터로 랭킹 UI 새로고침
+        /// </summary>
+        public void RefreshRankingsUIWithData(List<EndlessModeRecord> customRankings)
+        {
+            rankings.Clear();
+            rankings.AddRange(customRankings);
 
-            // Hard 통계
-            if (hardBestScore != null)
-                hardBestScore.text = hardStats.bestScore.ToString();
-            if (hardBestWave != null)
-                hardBestWave.text = hardStats.bestWave.ToString();
+            // 순위가 5개 미만이면 빈 슬롯으로 채움
+            while (rankings.Count < 5)
+            {
+                rankings.Add(new EndlessModeRecord(0, 0, ""));
+            }
+
+            RenderRankings();
         }
 
         #endregion
 
-        #region Data Management
+        #region Debug / Test Methods
 
-        private DifficultyStats GetCurrentStats()
+        /// <summary>
+        /// 테스트용 샘플 데이터 생성 (기록이 없을 경우에만)
+        /// </summary>
+        private void CreateSampleDataIfNeeded()
         {
-            switch (selectedDifficulty)
+            // 기존 데이터가 있는지 확인
+            var existingData = SaveSystem.GetEndlessModeRankings();
+
+            if (existingData.Count == 0)
             {
-                case Difficulty.Easy:
-                    return easyStats;
-                case Difficulty.Normal:
-                    return normalStats;
-                case Difficulty.Hard:
-                    return hardStats;
-                default:
-                    return normalStats;
-            }
-        }
-
-        private void LoadStats()
-        {
-            // TODO: PlayerPrefs 또는 세이브 시스템에서 통계 불러오기
-            // 예시:
-            // easyStats.bestScore = PlayerPrefs.GetInt("EndlessMode_Easy_BestScore", 0);
-            // easyStats.bestWave = PlayerPrefs.GetInt("EndlessMode_Easy_BestWave", 0);
-
-            // 테스트용 더미 데이터
-            // easyStats.bestScore = 1250;
-            // easyStats.bestWave = 15;
-            // normalStats.bestScore = 3500;
-            // normalStats.bestWave = 25;
-            // hardStats.bestScore = 7800;
-            // hardStats.bestWave = 40;
-        }
-
-        public void SaveStats(Difficulty difficulty, int score, int wave)
-        {
-            DifficultyStats stats = null;
-            string difficultyName = "";
-
-            switch (difficulty)
-            {
-                case Difficulty.Easy:
-                    stats = easyStats;
-                    difficultyName = "Easy";
-                    break;
-                case Difficulty.Normal:
-                    stats = normalStats;
-                    difficultyName = "Normal";
-                    break;
-                case Difficulty.Hard:
-                    stats = hardStats;
-                    difficultyName = "Hard";
-                    break;
-            }
-
-            if (stats != null)
-            {
-                bool updated = false;
-
-                // 최고 점수 갱신
-                if (score > stats.bestScore)
-                {
-                    stats.bestScore = score;
-                    updated = true;
-                }
-
-                // 최고 웨이브 갱신
-                if (wave > stats.bestWave)
-                {
-                    stats.bestWave = wave;
-                    updated = true;
-                }
-
-                if (updated)
-                {
-                    Debug.Log($"[EndlessMode] {difficultyName} 난이도 기록 갱신!");
-                    Debug.Log($"[EndlessMode] 점수: {stats.bestScore}, 웨이브: {stats.bestWave}");
-
-                    // TODO: PlayerPrefs에 저장
-                    // PlayerPrefs.SetInt($"EndlessMode_{difficultyName}_BestScore", stats.bestScore);
-                    // PlayerPrefs.SetInt($"EndlessMode_{difficultyName}_BestWave", stats.bestWave);
-                    // PlayerPrefs.Save();
-
-                    UpdateStatsDisplay();
-                }
+                // 샘플 데이터 생성
+                SaveSystem.SaveEndlessModeRanking(50, 10, "2025-01-15 14:30");
+                SaveSystem.SaveEndlessModeRanking(42, 8, "2025-01-14 10:20");
+                SaveSystem.SaveEndlessModeRanking(38, 7, "2025-01-13 16:45");
+                SaveSystem.SaveEndlessModeRanking(35, 6, "2025-01-12 09:15");
+                SaveSystem.SaveEndlessModeRanking(30, 5, "2025-01-11 18:00");
             }
         }
 

@@ -1,0 +1,156 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements"
+        editor-extension-mode="False">
+    <!-- USS 스타일시트 -->
+    <Style src="project://database/Assets/UI/Common/Common.uss"/>
+    <Style src="project://database/Assets/UI/InGame/InGame.uss"/>
+
+    <!-- 전체 화면 컨테이너 -->
+    <ui:VisualElement name="InGame" class="screen-container">
+
+        <!-- 배경 레이어 (맨 뒤) -->
+        <ui:VisualElement name="BackgroundLayer" class="background-layer"/>
+
+        <!-- 중경 레이어 (건물들) -->
+        <ui:VisualElement name="MiddlegroundLayer" class="middleground-layer"/>
+
+        <!-- UI 컨텐츠 (맨 앞) -->
+        <ui:VisualElement name="UIContent" class="ui-content">
+            <!-- 상단 HUD 바 -->
+            <ui:VisualElement name="HUDBar" class="hud-bar">
+
+            <!-- 왼쪽 영역: 메뉴 버튼 + 챕터 정보 -->
+            <ui:VisualElement name="LeftSection" class="left-section">
+                <ui:Button text="" name="MenuButton" class="menu-button"/>
+                <ui:Label text="Chapter 1 - Pride" name="ChapterInfo" class="chapter-info"/>
+            </ui:VisualElement>
+
+            <!-- 중앙 영역: 웨이브 정보 -->
+            <ui:VisualElement name="CenterSection" class="center-section">
+                <ui:Label text="Wave 1" name="WaveInfo" class="wave-info"/>
+            </ui:VisualElement>
+
+            <!-- 오른쪽 영역: 아이템 (상점 스타일) -->
+            <ui:VisualElement name="RightSection" class="right-section">
+                <!-- 다이아몬드 -->
+                <ui:VisualElement class="header-currency-bar">
+                    <ui:VisualElement class="currency-icon-large diamond-icon"/>
+                    <ui:VisualElement class="currency-bar-content">
+                        <ui:Label text="0" name="DiamondCount" class="currency-amount"/>
+                        <ui:VisualElement class="currency-plus-button"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <!-- 부활석 -->
+                <ui:VisualElement class="header-currency-bar">
+                    <ui:VisualElement class="currency-icon-large revive-stone-icon"/>
+                    <ui:VisualElement class="currency-bar-content">
+                        <ui:Label text="0" name="ReviveStoneCount" class="currency-amount"/>
+                        <ui:VisualElement class="currency-plus-button"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            </ui:VisualElement>
+
+            <!-- 게임 플레이 영역 -->
+            <ui:VisualElement name="GameplayArea" class="gameplay-area">
+
+                <!-- 왼쪽 사이드바 -->
+                <ui:VisualElement name="LeftSidebar" class="left-sidebar">
+                    <!-- 플레이어 정보 패널 -->
+                    <ui:VisualElement name="PlayerInfoPanel" class="sidebar-panel player-info-panel">
+                        <ui:VisualElement name="PlayerInfoContent" class="player-info-content">
+                            <!-- 레벨 박스 -->
+                            <ui:VisualElement name="LevelBox" class="level-box">
+                                <ui:VisualElement name="ExpBar" class="exp-bar"/>
+                                <ui:Label text="15" name="PlayerLevel" class="level-value"/>
+                            </ui:VisualElement>
+
+                            <!-- HP/MP 바 컨테이너 -->
+                            <ui:VisualElement name="StatsContainer" class="stats-container">
+                                <!-- HP 바 -->
+                                <ui:VisualElement name="HPBarContainer" class="stat-bar-container">
+                                    <ui:Label text="HP" class="stat-label"/>
+                                    <ui:VisualElement name="HPBarBackground" class="stat-bar-bg">
+                                        <ui:VisualElement name="HPBar" class="stat-bar hp-bar"/>
+                                        <ui:Label text="100 / 100" name="HPText" class="stat-text"/>
+                                    </ui:VisualElement>
+                                </ui:VisualElement>
+
+                                <!-- MP 바 -->
+                                <ui:VisualElement name="MPBarContainer" class="stat-bar-container">
+                                    <ui:Label text="MP" class="stat-label"/>
+                                    <ui:VisualElement name="MPBarBackground" class="stat-bar-bg">
+                                        <ui:VisualElement name="MPBar" class="stat-bar mp-bar"/>
+                                        <ui:Label text="80 / 80" name="MPText" class="stat-text"/>
+                                    </ui:VisualElement>
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+
+                    <!-- 스킬 창 패널 -->
+                    <ui:VisualElement name="SkillPanel" class="sidebar-panel">
+                        <!-- 스킬 카테고리 버튼들 -->
+                        <ui:VisualElement name="SkillCategoryButtons" class="skill-category-buttons">
+                            <ui:Button text="공격형" name="AttackSkillButton" class="skill-category-button"/>
+                            <ui:Button text="방어형" name="DefenseSkillButton" class="skill-category-button"/>
+                            <ui:Button text="보조형" name="SupportSkillButton" class="skill-category-button"/>
+                        </ui:VisualElement>
+
+                        <!-- 공격형 스킬 목록 -->
+                        <ui:VisualElement name="AttackSkillList" class="skill-list">
+                            <ui:VisualElement class="skill-item">
+                                <ui:Label text="Lv.4" class="skill-level"/>
+                                <ui:Label text="Fireball" class="skill-name"/>
+                            </ui:VisualElement>
+
+                            <ui:VisualElement class="skill-item">
+                                <ui:Label text="Lv.3" class="skill-level"/>
+                                <ui:Label text="Lightning Bolt" class="skill-name"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+
+                        <!-- 방어형 스킬 목록 (초기에는 숨김) -->
+                        <ui:VisualElement name="DefenseSkillList" class="skill-list hidden">
+                            <ui:VisualElement class="skill-item">
+                                <ui:Label text="Lv.2" class="skill-level"/>
+                                <ui:Label text="Ice Shield" class="skill-name"/>
+                            </ui:VisualElement>
+
+                            <ui:VisualElement class="skill-item">
+                                <ui:Label text="Lv.1" class="skill-level"/>
+                                <ui:Label text="Stone Armor" class="skill-name"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+
+                        <!-- 보조형 스킬 목록 (초기에는 숨김) -->
+                        <ui:VisualElement name="SupportSkillList" class="skill-list hidden">
+                            <ui:VisualElement class="skill-item">
+                                <ui:Label text="Lv.1" class="skill-level"/>
+                                <ui:Label text="Healing Wave" class="skill-name"/>
+                            </ui:VisualElement>
+
+                            <ui:VisualElement class="skill-item">
+                                <ui:Label text="Lv.2" class="skill-level"/>
+                                <ui:Label text="Mana Regeneration" class="skill-name"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+
+                    <!-- 메뉴 팝업 (기본 숨김) -->
+                    <ui:VisualElement name="MenuPopup" class="menu-popup" style="display: none;">
+                        <ui:Label text="Menu" class="menu-title"/>
+                        <ui:Button text="Resume" name="ResumeButton" class="menu-popup-button"/>
+                        <ui:Button text="Settings" name="SettingsButton" class="menu-popup-button"/>
+                        <ui:Button text="Store" name="StoreButton" class="menu-popup-button"/>
+                        <ui:Button text="Main Menu" name="MainMenuButton" class="menu-popup-button"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+            </ui:VisualElement>
+
+        </ui:VisualElement>
+
+    </ui:VisualElement>
+</ui:UXML>

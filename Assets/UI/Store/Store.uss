@@ -106,8 +106,6 @@
 /* 좌측 패널 - 카테고리 버튼 */
 .left-panel {
     width: 280px;
-    border-right-width: 2px;
-    border-right-color: var(--color-black);
     padding: var(--spacing-large);
 }
 

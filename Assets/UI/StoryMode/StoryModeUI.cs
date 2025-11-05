@@ -2,6 +2,9 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.SceneManagement;
 using System.Collections.Generic;
+using LostSpells.Systems;
+using LostSpells.Data;
+using LostSpells.Data.Save;
 
 namespace LostSpells.UI
 {
@@ -11,25 +14,37 @@ namespace LostSpells.UI
     [RequireComponent(typeof(UIDocument))]
     public class StoryModeUI : MonoBehaviour
     {
+        [Header("Settings")]
+        [Tooltip("자동으로 빈 슬롯을 마지막에 추가")]
+        [SerializeField] private bool autoAddEmptySlot = true;
+
+        [Header("Components")]
+        [Tooltip("SlotInfo 컴포넌트 (자동 검색)")]
+        [SerializeField] private SlotInfoComponent slotInfoComponent;
+
         private UIDocument uiDocument;
         private VisualElement root;
-        private VisualElement currentSlotDisplay;
-        private Label slotNumber;
-        private Label slotChapter;
-        private Label slotProgress;
-        private Label slotDate;
-        private Button actionButton;
-        private Button deleteButton;
-        private Button prevButton;
-        private Button nextButton;
+        private VisualElement slotListContainer;
 
-        // 슬롯 데이터 리스트 (동적으로 관리, Add New Slot 포함)
-        private List<SaveSlotData> slotDataList = new List<SaveSlotData>();
-        private int currentSlotIndex = 0;
+        // 슬롯 데이터 리스트 (빈 슬롯은 isUsed = false)
+        private List<SaveSlotInfo> slotDataList = new List<SaveSlotInfo>();
+
+        // 마지막 슬롯 카운트 (변경 감지용)
+        private int lastSlotCount = -1;
 
         private void Awake()
         {
             uiDocument = GetComponent<UIDocument>();
+
+            // SlotInfoComponent 자동 검색
+            if (slotInfoComponent == null)
+            {
+                GameObject gameManager = GameObject.Find("GameManager");
+                if (gameManager != null)
+                {
+                    slotInfoComponent = gameManager.GetComponent<SlotInfoComponent>();
+                }
+            }
         }
 
         private void OnEnable()
@@ -37,7 +52,79 @@ namespace LostSpells.UI
             root = uiDocument.rootVisualElement;
             InitializeUI();
             LoadSaveData();
-            UpdateCurrentSlotDisplay();
+            RenderAllSlots();
+
+            // 초기 슬롯 카운트 저장
+            lastSlotCount = slotDataList.FindAll(s => s.isUsed).Count;
+
+            // 1초마다 변경사항 확인 후 필요시에만 UI 새로고침
+            InvokeRepeating(nameof(RefreshSlotData), 1f, 1f);
+        }
+
+        private void OnDisable()
+        {
+            CancelInvoke(nameof(RefreshSlotData));
+        }
+
+        /// <summary>
+        /// 주기적으로 슬롯 데이터 새로고침 (변경사항이 있을 때만)
+        /// </summary>
+        private void RefreshSlotData()
+        {
+            // SaveSystem에서 사용 중인 슬롯 데이터 확인
+            List<SaveSlotInfo> savedSlots = SaveSystem.GetAllSlots();
+            int currentSlotCount = 0;
+            foreach (var slot in savedSlots)
+            {
+                if (slot.isUsed) currentSlotCount++;
+            }
+
+            // 슬롯 개수가 변경된 경우 UI 새로고침
+            if (currentSlotCount != lastSlotCount)
+            {
+                lastSlotCount = currentSlotCount;
+                LoadSaveData();
+                RenderAllSlots();
+                return;
+            }
+
+            // 개수가 같아도 데이터가 변경되었는지 확인
+            if (HasSlotDataChanged(savedSlots))
+            {
+                LoadSaveData();
+                RenderAllSlots();
+            }
+        }
+
+        /// <summary>
+        /// 슬롯 데이터가 변경되었는지 확인
+        /// </summary>
+        private bool HasSlotDataChanged(List<SaveSlotInfo> savedSlots)
+        {
+            // 현재 표시 중인 슬롯과 저장된 슬롯 비교 (빈 슬롯 제외)
+            var currentUsedSlots = slotDataList.FindAll(s => s.isUsed);
+
+            if (currentUsedSlots.Count != savedSlots.Count)
+                return true;
+
+            for (int i = 0; i < currentUsedSlots.Count; i++)
+            {
+                var current = currentUsedSlots[i];
+                var saved = savedSlots.Find(s => s.slotNumber == current.slotNumber);
+
+                if (saved == null) return true;
+
+                // 각 필드 비교
+                if (current.slotName != saved.slotName ||
+                    current.chapterNumber != saved.chapterNumber ||
+                    current.chapterName != saved.chapterName ||
+                    current.lastPlayed != saved.lastPlayed)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void InitializeUI()
@@ -47,184 +134,239 @@ namespace LostSpells.UI
             if (backButton != null)
                 backButton.clicked += OnBackButtonClicked;
 
-            // UI 요소 참조
-            currentSlotDisplay = root.Q<VisualElement>("CurrentSlotDisplay");
-            slotNumber = root.Q<Label>("SlotNumber");
-            slotChapter = root.Q<Label>("SlotChapter");
-            slotProgress = root.Q<Label>("SlotProgress");
-            slotDate = root.Q<Label>("SlotDate");
-
-            actionButton = root.Q<Button>("ActionButton");
-            deleteButton = root.Q<Button>("DeleteButton");
-            prevButton = root.Q<Button>("PrevButton");
-            nextButton = root.Q<Button>("NextButton");
-
-            // 버튼 이벤트 등록
-            if (actionButton != null)
-                actionButton.clicked += OnActionButtonClicked;
-
-            if (deleteButton != null)
-                deleteButton.clicked += OnDeleteButtonClicked;
-
-            if (prevButton != null)
-                prevButton.clicked += OnPrevButtonClicked;
-
-            if (nextButton != null)
-                nextButton.clicked += OnNextButtonClicked;
+            // 슬롯 리스트 컨테이너 참조
+            slotListContainer = root.Q<VisualElement>("SlotListContainer");
         }
 
         private void LoadSaveData()
         {
-            // TODO: 실제 세이브 데이터 로드
-            // 임시 데이터
             slotDataList.Clear();
-            slotDataList.Add(new SaveSlotData
-            {
-                slotNumber = 1,
-                isEmpty = false,
-                chapterName = "Chapter 3: The Dark Forest",
-                level = 15,
-                hoursPlayed = 12,
-                lastPlayed = "2025-10-26 14:30"
-            });
-            slotDataList.Add(new SaveSlotData
-            {
-                slotNumber = 2,
-                isEmpty = false,
-                chapterName = "Chapter 1: The Beginning",
-                level = 5,
-                hoursPlayed = 3,
-                lastPlayed = "2025-10-25 09:15"
-            });
 
-            // 항상 맨 끝에 빈 슬롯 하나 추가
-            EnsureEmptySlotAtEnd();
+            // SaveSystem에서 데이터 불러오기
+            List<SaveSlotInfo> savedSlots = SaveSystem.GetAllSlots();
+
+            // 모든 사용 중인 슬롯 추가
+            foreach (var slotInfo in savedSlots)
+            {
+                if (slotInfo.isUsed)
+                {
+                    slotDataList.Add(slotInfo);
+                }
+            }
+
+            // 설정에 따라 빈 슬롯 자동 추가
+            if (autoAddEmptySlot)
+            {
+                EnsureEmptySlotAtEnd();
+            }
         }
 
         private void EnsureEmptySlotAtEnd()
         {
-            // 마지막 슬롯이 빈 슬롯인지 확인
-            if (slotDataList.Count == 0 || !slotDataList[slotDataList.Count - 1].isEmpty)
+            // 마지막 슬롯이 빈 슬롯인지 확인 (isUsed가 false인 슬롯)
+            if (slotDataList.Count == 0 || slotDataList[slotDataList.Count - 1].isUsed)
             {
-                slotDataList.Add(new SaveSlotData
+                // 빈 슬롯 번호 찾기 (1부터 시작해서 사용되지 않은 첫 번째 번호)
+                List<int> usedSlotNumbers = new List<int>();
+                foreach (var slot in slotDataList)
                 {
-                    slotNumber = slotDataList.Count + 1,
-                    isEmpty = true
+                    if (slot.isUsed)
+                    {
+                        usedSlotNumbers.Add(slot.slotNumber);
+                    }
+                }
+                usedSlotNumbers.Sort();
+
+                int nextSlotNumber = 1;
+                while (usedSlotNumbers.Contains(nextSlotNumber))
+                {
+                    nextSlotNumber++;
+                }
+
+                // 빈 슬롯 추가 (isUsed = false)
+                slotDataList.Add(new SaveSlotInfo
+                {
+                    slotNumber = nextSlotNumber,
+                    isUsed = false,
+                    slotName = "",
+                    level = 0,
+                    chapterNumber = 0,
+                    chapterName = "",
+                    currentWave = 0,
+                    lastPlayed = ""
                 });
             }
         }
 
-        private void UpdateCurrentSlotDisplay()
+        /// <summary>
+        /// 모든 슬롯을 스크롤 뷰에 렌더링
+        /// </summary>
+        private void RenderAllSlots()
         {
-            if (currentSlotDisplay == null) return;
+            if (slotListContainer == null) return;
 
-            // 슬롯 번호 재정렬
+            // 기존 슬롯 카드 모두 제거
+            slotListContainer.Clear();
+
+            // 각 슬롯에 대한 카드 생성 (인덱스와 함께)
             for (int i = 0; i < slotDataList.Count; i++)
             {
-                slotDataList[i].slotNumber = i + 1;
+                // 빈 슬롯이 아닌 경우에만 인덱스를 1부터 시작
+                int displayIndex = i + 1;
+                CreateSlotCard(slotDataList[i], displayIndex);
             }
-
-            // 인덱스 범위 체크
-            if (currentSlotIndex < 0) currentSlotIndex = 0;
-            if (currentSlotIndex >= slotDataList.Count) currentSlotIndex = slotDataList.Count - 1;
-
-            // 현재 슬롯 표시
-            SaveSlotData currentSlot = slotDataList[currentSlotIndex];
-            ShowSlotData(currentSlot);
-
-            // 화살표 버튼 활성화/비활성화
-            // 왼쪽: 첫 번째 슬롯이 아니면 활성화
-            if (prevButton != null)
-                prevButton.SetEnabled(currentSlotIndex > 0);
-
-            // 오른쪽: 현재 슬롯이 빈 슬롯이면 비활성화 (빈 슬롯은 항상 마지막)
-            if (nextButton != null)
-                nextButton.SetEnabled(!currentSlot.isEmpty && currentSlotIndex < slotDataList.Count - 1);
         }
 
-        private void ShowSlotData(SaveSlotData data)
+        /// <summary>
+        /// 개별 슬롯 카드 생성
+        /// </summary>
+        /// <param name="slotData">슬롯 데이터</param>
+        /// <param name="displayIndex">UI에 표시할 슬롯 인덱스 (1부터 시작)</param>
+        private void CreateSlotCard(SaveSlotInfo slotData, int displayIndex)
         {
-            var slotCard = root.Q<VisualElement>("CurrentSlot");
-            if (slotCard != null)
+            // 슬롯 카드 컨테이너
+            var slotCard = new VisualElement();
+            slotCard.AddToClassList("slot-card");
+
+            // 클로저를 위해 로컬 변수에 복사
+            int capturedSlotNumber = slotData.slotNumber;
+            bool capturedIsEmpty = !slotData.isUsed;
+            int capturedDisplayIndex = displayIndex;
+
+            if (!slotData.isUsed)  // 빈 슬롯
             {
-                slotCard.RemoveFromClassList("add-new-slot-card");
-                slotCard.style.display = DisplayStyle.Flex;
-            }
+                // 빈 슬롯: 카드 전체를 클릭 가능하게
+                slotCard.AddToClassList("empty-slot-card");
 
-            if (data.isEmpty)
-            {
-                // 빈 슬롯: "Empty Slot"만 중앙에 표시
-                if (slotNumber != null)
-                    slotNumber.style.display = DisplayStyle.None;
+                // 슬롯 정보 영역 (가운데 정렬)
+                var slotInfo = new VisualElement();
+                slotInfo.AddToClassList("slot-info");
+                slotInfo.AddToClassList("empty-slot-info");
 
-                if (slotChapter != null)
+                var emptyLabel = new Label("+ New Slot");
+                emptyLabel.AddToClassList("empty-label");
+                slotInfo.Add(emptyLabel);
+
+                slotCard.Add(slotInfo);
+
+                // 카드 전체에 클릭 이벤트
+                slotCard.RegisterCallback<ClickEvent>(evt =>
                 {
-                    slotChapter.text = "Empty Slot";
-                    slotChapter.RemoveFromClassList("slot-chapter");
-                    slotChapter.AddToClassList("empty-label");
-                    slotChapter.style.display = DisplayStyle.Flex;
-                }
-
-                if (slotProgress != null)
-                    slotProgress.style.display = DisplayStyle.None;
-
-                if (slotDate != null)
-                    slotDate.style.display = DisplayStyle.None;
-
-                // 버튼 텍스트: New Game
-                if (actionButton != null)
-                {
-                    actionButton.text = "New Game";
-                    actionButton.style.display = DisplayStyle.Flex;
-                }
-
-                // Delete 버튼 숨김 (빈 슬롯은 삭제 불가)
-                if (deleteButton != null)
-                    deleteButton.style.display = DisplayStyle.None;
+                    OnAddNewSlot(capturedSlotNumber);
+                });
             }
             else
             {
-                // 저장된 슬롯
-                if (slotNumber != null)
-                {
-                    slotNumber.text = $"SLOT {data.slotNumber}";
-                    slotNumber.style.display = DisplayStyle.Flex;
-                }
+                // 저장된 슬롯: 상세 정보와 버튼 표시
+                var slotInfo = new VisualElement();
+                slotInfo.AddToClassList("slot-info");
 
-                if (slotChapter != null)
-                {
-                    slotChapter.text = data.chapterName;
-                    slotChapter.AddToClassList("slot-chapter");
-                    slotChapter.RemoveFromClassList("empty-label");
-                    slotChapter.style.display = DisplayStyle.Flex;
-                }
+                // 슬롯 이름 (클릭하여 편집 가능)
+                // 빈 문자열이면 "Slot {인덱스}" 표시, 아니면 슬롯 이름 표시
+                string displayName = string.IsNullOrEmpty(slotData.slotName) ? $"Slot {capturedDisplayIndex}" : slotData.slotName;
+                var slotNameLabel = new Label(displayName);
+                slotNameLabel.AddToClassList("slot-name");
+                slotNameLabel.AddToClassList("editable-label");
 
-                if (slotProgress != null)
+                // 슬롯 이름 클릭 시 TextField로 전환
+                slotNameLabel.RegisterCallback<ClickEvent>(evt =>
                 {
-                    slotProgress.text = $"Level {data.level}  •  {data.hoursPlayed} hours played";
-                    slotProgress.AddToClassList("slot-progress");
-                    slotProgress.RemoveFromClassList("empty-label");
-                    slotProgress.style.display = DisplayStyle.Flex;
-                }
+                    var textField = new TextField();
+                    // 편집 시작할 때는 실제 저장된 슬롯 이름에서 시작 (빈 문자열일 수 있음)
+                    textField.value = slotData.slotName;
+                    textField.AddToClassList("slot-name-input");
 
-                if (slotDate != null)
+                    // TextField에서 포커스를 잃으면 저장하고 UI 새로고침
+                    textField.RegisterCallback<BlurEvent>(blurEvt =>
+                    {
+                        string newName = textField.value.Trim();
+                        if (newName != slotData.slotName)
+                        {
+                            SaveSystem.SaveSlotName(capturedSlotNumber, newName);
+
+                            // SlotInfoComponent 동기화
+                            if (slotInfoComponent != null)
+                            {
+                                slotInfoComponent.LoadSlotInfo();
+                            }
+
+                            // 전체 UI 즉시 새로고침
+                            LoadSaveData();
+                            RenderAllSlots();
+                        }
+                        else
+                        {
+                            // 변경사항이 없으면 그냥 Label로 되돌리기
+                            slotInfo.Remove(textField);
+                            slotInfo.Insert(0, slotNameLabel);
+                        }
+                    });
+
+                    // Enter 키로도 저장 가능
+                    textField.RegisterCallback<KeyDownEvent>(keyEvt =>
+                    {
+                        if (keyEvt.keyCode == KeyCode.Return || keyEvt.keyCode == KeyCode.KeypadEnter)
+                        {
+                            textField.Blur();
+                        }
+                        else if (keyEvt.keyCode == KeyCode.Escape)
+                        {
+                            textField.value = slotData.slotName;
+                            textField.Blur();
+                        }
+                    });
+
+                    slotInfo.Remove(slotNameLabel);
+                    slotInfo.Insert(0, textField);
+                    textField.Focus();
+                    textField.SelectAll();
+                });
+
+                slotInfo.Add(slotNameLabel);
+
+                // 진행상황 (챕터 번호와 이름)
+                var progressLabel = new Label($"Chapter {slotData.chapterNumber}: {slotData.chapterName}");
+                progressLabel.AddToClassList("slot-progress");
+                slotInfo.Add(progressLabel);
+
+                // 마지막 플레이 시간
+                var dateLabel = new Label(slotData.lastPlayed);
+                dateLabel.AddToClassList("slot-date");
+                slotInfo.Add(dateLabel);
+
+                slotCard.Add(slotInfo);
+
+                // 버튼 영역
+                var buttonContainer = new VisualElement();
+                buttonContainer.AddToClassList("bottom-buttons");
+
+                // Continue 버튼
+                var continueButton = new Button();
+                continueButton.AddToClassList("action-btn");
+                continueButton.text = "Continue";
+                continueButton.clicked += () =>
                 {
-                    slotDate.text = $"Last played: {data.lastPlayed}";
-                    slotDate.style.display = DisplayStyle.Flex;
-                }
+                    OnContinueGame(capturedSlotNumber);
+                };
+                buttonContainer.Add(continueButton);
 
-                // 버튼 텍스트: Continue
-                if (actionButton != null)
+                // Delete 버튼
+                var deleteButton = new Button();
+                deleteButton.AddToClassList("action-btn");
+                deleteButton.text = "Delete";
+                deleteButton.clicked += () =>
                 {
-                    actionButton.text = "Continue";
-                    actionButton.style.display = DisplayStyle.Flex;
-                }
+                    OnDeleteSlot(capturedSlotNumber);
+                };
+                buttonContainer.Add(deleteButton);
 
-                // Delete 버튼 표시
-                if (deleteButton != null)
-                    deleteButton.style.display = DisplayStyle.Flex;
+                slotCard.Add(buttonContainer);
             }
+
+            // 슬롯 카드를 리스트 컨테이너에 추가
+            slotListContainer.Add(slotCard);
         }
+
 
         #region 이벤트 핸들러
 
@@ -233,137 +375,87 @@ namespace LostSpells.UI
             SceneManager.LoadScene("GameModeSelection");
         }
 
-        private void OnActionButtonClicked()
+        private void OnAddNewSlot(int slotNumber)
         {
-            if (currentSlotIndex >= slotDataList.Count) return;
-
-            SaveSlotData currentSlot = slotDataList[currentSlotIndex];
-
-            if (currentSlot.isEmpty)
+            // 새 게임 초기 데이터 생성
+            PlayerData newPlayerData = new PlayerData
             {
-                OnNewGame(currentSlot.slotNumber);
-            }
-            else
+                level = 1,
+                currentExp = 0,
+                maxExp = 100,
+                currentHP = 100,
+                maxHP = 100,
+                currentMP = 50,
+                maxMP = 50,
+                diamonds = 0,
+                reviveStones = 0,
+                currentChapter = 1,
+                chapterName = ChapterProgressSystem.GetChapterName(1),
+                currentWave = 1
+            };
+
+            // SaveSystem에 저장
+            SaveSystem.SaveGame(slotNumber, newPlayerData);
+
+            // 챕터 1 해금
+            SaveSystem.SaveChapterProgress(slotNumber, 1, true, false, 0, 10);
+
+            // SlotInfoComponent 동기화
+            if (slotInfoComponent != null)
             {
-                OnContinueGame(currentSlot.slotNumber);
-            }
-        }
-
-        private void OnDeleteButtonClicked()
-        {
-            if (currentSlotIndex >= slotDataList.Count) return;
-
-            SaveSlotData currentSlot = slotDataList[currentSlotIndex];
-
-            // 빈 슬롯은 삭제 불가
-            if (currentSlot.isEmpty)
-            {
-                Debug.Log("빈 슬롯은 삭제할 수 없습니다.");
-                return;
+                slotInfoComponent.LoadSlotInfo();
             }
 
-            OnDeleteSlot(currentSlot.slotNumber);
+            // UI 새로고침
+            LoadSaveData();
+            RenderAllSlots();
         }
 
         private void OnDeleteSlot(int slotNumber)
         {
-            Debug.Log($"슬롯 {slotNumber} 삭제");
-
             // TODO: 삭제 확인 다이얼로그 표시
 
             // 슬롯 찾기
             int index = slotDataList.FindIndex(s => s.slotNumber == slotNumber);
-            if (index >= 0 && !slotDataList[index].isEmpty)
+            if (index >= 0 && slotDataList[index].isUsed)
             {
-                slotDataList.RemoveAt(index);
+                // SaveSystem에서 슬롯 삭제
+                SaveSystem.DeleteSlot(slotNumber);
 
-                // 인덱스 조정
-                if (currentSlotIndex >= slotDataList.Count)
-                {
-                    currentSlotIndex = slotDataList.Count - 1;
-                }
-                if (currentSlotIndex < 0)
-                {
-                    currentSlotIndex = 0;
-                }
+                slotDataList.RemoveAt(index);
 
                 // 빈 슬롯이 마지막에 있는지 확인
                 EnsureEmptySlotAtEnd();
 
-                UpdateCurrentSlotDisplay();
+                // SlotInfoComponent 동기화
+                if (slotInfoComponent != null)
+                {
+                    slotInfoComponent.LoadSlotInfo();
+                }
 
-                // TODO: 실제 세이브 파일 삭제
+                // UI 다시 렌더링
+                RenderAllSlots();
             }
         }
 
         private void OnContinueGame(int slotNumber)
         {
-            Debug.Log($"게임 계속하기: 슬롯 {slotNumber}");
-            // TODO: 해당 슬롯의 세이브 데이터 로드
-            // TODO: 게임 씬으로 전환
-        }
+            // 현재 슬롯 설정
+            GameStateManager.CurrentSlot = slotNumber;
+            SaveSystem.CurrentSlot = slotNumber;
 
-        private void OnNewGame(int slotNumber)
-        {
-            Debug.Log($"새 게임 시작: 슬롯 {slotNumber}");
-
-            // TODO: 새 게임 시작 확인
-            // TODO: 게임 씬으로 전환하고 새 세이브 생성
-
-            // 임시: 빈 슬롯을 저장된 슬롯으로 변경 (데모용)
-            int index = slotDataList.FindIndex(s => s.slotNumber == slotNumber);
-            if (index >= 0 && slotDataList[index].isEmpty)
+            // SlotInfoComponent 동기화
+            if (slotInfoComponent != null)
             {
-                slotDataList[index].isEmpty = false;
-                slotDataList[index].chapterName = "Chapter 1: New Beginning";
-                slotDataList[index].level = 1;
-                slotDataList[index].hoursPlayed = 0;
-                slotDataList[index].lastPlayed = System.DateTime.Now.ToString("yyyy-MM-dd HH:mm");
-
-                // 새로운 빈 슬롯 추가
-                EnsureEmptySlotAtEnd();
-
-                UpdateCurrentSlotDisplay();
+                slotInfoComponent.selectedSlot = slotNumber;
+                slotInfoComponent.LoadSlotInfo();
             }
+
+            // 게임 씬으로 전환
+            SceneManager.LoadScene("InGame");
         }
 
-        private void OnPrevButtonClicked()
-        {
-            if (currentSlotIndex > 0)
-            {
-                currentSlotIndex--;
-                UpdateCurrentSlotDisplay();
-            }
-        }
-
-        private void OnNextButtonClicked()
-        {
-            // 빈 슬롯이 아니고, 마지막 슬롯이 아니면 다음으로 이동
-            if (currentSlotIndex < slotDataList.Count - 1)
-            {
-                SaveSlotData currentSlot = slotDataList[currentSlotIndex];
-                if (!currentSlot.isEmpty)
-                {
-                    currentSlotIndex++;
-                    UpdateCurrentSlotDisplay();
-                }
-            }
-        }
 
         #endregion
-    }
-
-    /// <summary>
-    /// 세이브 슬롯 데이터
-    /// </summary>
-    [System.Serializable]
-    public class SaveSlotData
-    {
-        public int slotNumber;
-        public bool isEmpty;
-        public string chapterName;
-        public int level;
-        public int hoursPlayed;
-        public string lastPlayed;
     }
 }
