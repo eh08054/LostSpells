@@ -173,16 +173,18 @@ namespace LostSpells.Systems
 
         private void Update()
         {
-            // 스페이스바 입력 처리
+            // 키바인딩에서 음성 녹음 키 가져오기
             if (Keyboard.current != null)
             {
-                // 스페이스바를 누르면 녹음 시작
-                if (Keyboard.current.spaceKey.wasPressedThisFrame)
+                Key voiceRecordKey = GetVoiceRecordKey();
+
+                // 음성 녹음 키를 누르면 녹음 시작
+                if (Keyboard.current[voiceRecordKey].wasPressedThisFrame)
                 {
                     StartVoiceRecording();
                 }
-                // 스페이스바를 떼면 녹음 중지
-                else if (Keyboard.current.spaceKey.wasReleasedThisFrame)
+                // 음성 녹음 키를 떼면 녹음 중지
+                else if (Keyboard.current[voiceRecordKey].wasReleasedThisFrame)
                 {
                     StopVoiceRecording();
                 }
@@ -192,6 +194,50 @@ namespace LostSpells.Systems
             if (isRecording && Time.time - recordingStartTime >= maxRecordingTime)
             {
                 StopVoiceRecording();
+            }
+        }
+
+        /// <summary>
+        /// SaveData에서 음성 녹음 키 가져오기
+        /// </summary>
+        private Key GetVoiceRecordKey()
+        {
+            var saveData = SaveManager.Instance?.GetCurrentSaveData();
+            if (saveData != null && saveData.keyBindings != null && saveData.keyBindings.ContainsKey("VoiceRecord"))
+            {
+                string keyString = saveData.keyBindings["VoiceRecord"];
+                return ParseKey(keyString, Key.Space);
+            }
+
+            // 기본값: Space
+            return Key.Space;
+        }
+
+        /// <summary>
+        /// 키 문자열을 Key enum으로 변환 (Options의 GetKeyDisplayName 역함수)
+        /// </summary>
+        private Key ParseKey(string keyString, Key defaultKey)
+        {
+            // 특수 키 매핑 (Options의 GetKeyDisplayName과 반대)
+            switch (keyString)
+            {
+                case "Space": return Key.Space;
+                case "LShift": return Key.LeftShift;
+                case "RShift": return Key.RightShift;
+                case "LCtrl": return Key.LeftCtrl;
+                case "RCtrl": return Key.RightCtrl;
+                case "LAlt": return Key.LeftAlt;
+                case "RAlt": return Key.RightAlt;
+                case "Tab": return Key.Tab;
+                case "Enter": return Key.Enter;
+                case "Backspace": return Key.Backspace;
+                default:
+                    // 일반 키는 Enum.TryParse 시도
+                    if (System.Enum.TryParse<Key>(keyString, true, out Key key))
+                    {
+                        return key;
+                    }
+                    return defaultKey;
             }
         }
 

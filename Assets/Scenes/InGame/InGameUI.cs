@@ -106,14 +106,61 @@ namespace LostSpells.UI
 
         private void Update()
         {
-            // Tab 키로 스킬창 토글
-            if (Keyboard.current != null && Keyboard.current.tabKey.wasPressedThisFrame)
+            // 키바인딩에서 스킬 패널 키 가져오기
+            if (Keyboard.current != null)
             {
-                ToggleSkillPanel();
+                Key skillPanelKey = GetSkillPanelKey();
+                if (Keyboard.current[skillPanelKey].wasPressedThisFrame)
+                {
+                    ToggleSkillPanel();
+                }
             }
 
             // 플레이어 상태 업데이트
             UpdatePlayerStats();
+        }
+
+        /// <summary>
+        /// SaveData에서 스킬 패널 키 가져오기
+        /// </summary>
+        private Key GetSkillPanelKey()
+        {
+            if (saveData != null && saveData.keyBindings != null && saveData.keyBindings.ContainsKey("SkillPanel"))
+            {
+                string keyString = saveData.keyBindings["SkillPanel"];
+                return ParseKey(keyString, Key.Tab);
+            }
+
+            // 기본값: Tab
+            return Key.Tab;
+        }
+
+        /// <summary>
+        /// 키 문자열을 Key enum으로 변환 (Options의 GetKeyDisplayName 역함수)
+        /// </summary>
+        private Key ParseKey(string keyString, Key defaultKey)
+        {
+            // 특수 키 매핑 (Options의 GetKeyDisplayName과 반대)
+            switch (keyString)
+            {
+                case "Space": return Key.Space;
+                case "LShift": return Key.LeftShift;
+                case "RShift": return Key.RightShift;
+                case "LCtrl": return Key.LeftCtrl;
+                case "RCtrl": return Key.RightCtrl;
+                case "LAlt": return Key.LeftAlt;
+                case "RAlt": return Key.RightAlt;
+                case "Tab": return Key.Tab;
+                case "Enter": return Key.Enter;
+                case "Backspace": return Key.Backspace;
+                default:
+                    // 일반 키는 Enum.TryParse 시도
+                    if (System.Enum.TryParse<Key>(keyString, true, out Key key))
+                    {
+                        return key;
+                    }
+                    return defaultKey;
+            }
         }
 
         private void OnEnable()
@@ -732,6 +779,16 @@ namespace LostSpells.UI
             {
                 ShowSidebars();
                 Debug.Log($"[InGameUI] {scene.name} 씬 언로드됨 - 사이드바 다시 표시");
+
+                // Options에서 언어가 변경되었을 수 있으므로 UI 업데이트
+                if (scene.name == "Options")
+                {
+                    // LocalizationManager 이벤트 재구독
+                    LocalizationManager.Instance.OnLanguageChanged += UpdateLocalization;
+                    // 현재 언어로 UI 업데이트
+                    UpdateLocalization();
+                    Debug.Log("[InGameUI] 언어 설정 다시 적용");
+                }
             }
         }
 

@@ -101,22 +101,27 @@ namespace LostSpells.Components
             // 넉백 중에는 이동 불가
             if (isKnockedBack) return;
 
-            // A, D 키로 좌우 이동 (새 Input System 사용)
+            // 키바인딩에서 이동 키 가져오기
+            Key moveLeftKey = GetMoveLeftKey();
+            Key moveRightKey = GetMoveRightKey();
+            Key jumpKey = GetJumpKey();
+
+            // 좌우 이동 (새 Input System 사용)
             float horizontal = 0f;
 
             if (Keyboard.current != null)
             {
-                if (Keyboard.current.aKey.isPressed)
+                if (Keyboard.current[moveLeftKey].isPressed)
                 {
                     horizontal = -1f;
                 }
-                else if (Keyboard.current.dKey.isPressed)
+                else if (Keyboard.current[moveRightKey].isPressed)
                 {
                     horizontal = 1f;
                 }
 
-                // W 키로 점프 (땅에 있을 때만)
-                if (Keyboard.current.wKey.wasPressedThisFrame && isGrounded)
+                // 점프 (땅에 있을 때만)
+                if (Keyboard.current[jumpKey].wasPressedThisFrame && isGrounded)
                 {
                     Vector2 velocity = rb.linearVelocity;
                     velocity.y = jumpForce;
@@ -411,6 +416,84 @@ namespace LostSpells.Components
         public Transform GetSkillCastPoint()
         {
             return skillCastPoint;
+        }
+
+        // ========== 키 바인딩 ==========
+
+        /// <summary>
+        /// SaveData에서 왼쪽 이동 키 가져오기
+        /// </summary>
+        private Key GetMoveLeftKey()
+        {
+            var saveData = LostSpells.Data.SaveManager.Instance?.GetCurrentSaveData();
+            if (saveData != null && saveData.keyBindings != null && saveData.keyBindings.ContainsKey("MoveLeft"))
+            {
+                string keyString = saveData.keyBindings["MoveLeft"];
+                return ParseKey(keyString, Key.A);
+            }
+
+            // 기본값: A
+            return Key.A;
+        }
+
+        /// <summary>
+        /// SaveData에서 오른쪽 이동 키 가져오기
+        /// </summary>
+        private Key GetMoveRightKey()
+        {
+            var saveData = LostSpells.Data.SaveManager.Instance?.GetCurrentSaveData();
+            if (saveData != null && saveData.keyBindings != null && saveData.keyBindings.ContainsKey("MoveRight"))
+            {
+                string keyString = saveData.keyBindings["MoveRight"];
+                return ParseKey(keyString, Key.D);
+            }
+
+            // 기본값: D
+            return Key.D;
+        }
+
+        /// <summary>
+        /// SaveData에서 점프 키 가져오기
+        /// </summary>
+        private Key GetJumpKey()
+        {
+            var saveData = LostSpells.Data.SaveManager.Instance?.GetCurrentSaveData();
+            if (saveData != null && saveData.keyBindings != null && saveData.keyBindings.ContainsKey("Jump"))
+            {
+                string keyString = saveData.keyBindings["Jump"];
+                return ParseKey(keyString, Key.W);
+            }
+
+            // 기본값: W
+            return Key.W;
+        }
+
+        /// <summary>
+        /// 키 문자열을 Key enum으로 변환 (Options의 GetKeyDisplayName 역함수)
+        /// </summary>
+        private Key ParseKey(string keyString, Key defaultKey)
+        {
+            // 특수 키 매핑 (Options의 GetKeyDisplayName과 반대)
+            switch (keyString)
+            {
+                case "Space": return Key.Space;
+                case "LShift": return Key.LeftShift;
+                case "RShift": return Key.RightShift;
+                case "LCtrl": return Key.LeftCtrl;
+                case "RCtrl": return Key.RightCtrl;
+                case "LAlt": return Key.LeftAlt;
+                case "RAlt": return Key.RightAlt;
+                case "Tab": return Key.Tab;
+                case "Enter": return Key.Enter;
+                case "Backspace": return Key.Backspace;
+                default:
+                    // 일반 키는 Enum.TryParse 시도
+                    if (System.Enum.TryParse<Key>(keyString, true, out Key key))
+                    {
+                        return key;
+                    }
+                    return defaultKey;
+            }
         }
     }
 }

@@ -50,32 +50,12 @@ namespace LostSpells.Systems
             gameObject.hideFlags = HideFlags.DontSave;
 #endif
 
-            // 씬 언로드 시 이벤트 정리
-            SceneManager.sceneUnloaded += OnSceneUnloaded;
-
             InitializeLocalizationData();
             LoadSavedLanguage();
         }
 
-        private void OnSceneUnloaded(Scene scene)
-        {
-            // 씬이 언로드될 때 모든 이벤트 리스너 정리
-            if (OnLanguageChanged != null)
-            {
-                // 모든 구독자 제거
-                System.Delegate[] delegates = OnLanguageChanged.GetInvocationList();
-                foreach (var d in delegates)
-                {
-                    OnLanguageChanged -= (Action)d;
-                }
-            }
-        }
-
         void OnDestroy()
         {
-            // SceneManager 이벤트 해제
-            SceneManager.sceneUnloaded -= OnSceneUnloaded;
-
             // 도메인 재로드 전에 모든 이벤트 리스너 정리
             if (OnLanguageChanged != null)
             {
@@ -95,9 +75,6 @@ namespace LostSpells.Systems
 
         void OnApplicationQuit()
         {
-            // SceneManager 이벤트 해제
-            SceneManager.sceneUnloaded -= OnSceneUnloaded;
-
             // 애플리케이션 종료 시 모든 리스너 정리
             if (OnLanguageChanged != null)
             {
