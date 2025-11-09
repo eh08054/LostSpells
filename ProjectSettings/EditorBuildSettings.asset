@@ -6,28 +6,25 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/UI/MainMenu/MainMenu.unity
+    path: Assets/Scenes/MainMenu/MainMenu.unity
     guid: de465f6a575e04443af05ba44de20999
   - enabled: 1
-    path: Assets/UI/GameModeSelection/GameModeSelection.unity
+    path: Assets/Scenes/GameModeSelection/GameModeSelection.unity
     guid: b253b6387ddb51d4793f970211f38abc
   - enabled: 1
-    path: Assets/UI/Options/Options.unity
+    path: Assets/Scenes/Options/Options.unity
     guid: 6c5cbd5f8ca825d49bf8b87e25a93750
   - enabled: 1
-    path: Assets/UI/Store/Store.unity
+    path: Assets/Scenes/Store/Store.unity
     guid: 54ed0fa9fba490546b60e05cbe4a494b
   - enabled: 1
-    path: Assets/UI/StoryMode/StoryMode.unity
+    path: Assets/Scenes/StoryMode/StoryMode.unity
     guid: c5fe898aaa827fc42bddb06ee3d67b9e
   - enabled: 1
-    path: Assets/UI/ChapterSelect/ChapterSelect.unity
-    guid: c4e5429ae28621d47b7e8496026420d9
-  - enabled: 1
-    path: Assets/UI/EndlessMode/EndlessMode.unity
+    path: Assets/Scenes/EndlessMode/EndlessMode.unity
     guid: 511d0fdf451ca4148a6a60e69e3f75f1
   - enabled: 1
-    path: Assets/UI/InGame/InGame.unity
+    path: Assets/Scenes/InGame/InGame.unity
     guid: cebfee55856e0ac468df7ab91711d7e0
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}

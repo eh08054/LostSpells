@@ -1,0 +1,44 @@
+{
+  "chapters": [
+    {
+      "chapterId": 0,
+      "chapterName": "Tutorial",
+      "chapterNameKo": "튜토리얼"
+    },
+    {
+      "chapterId": 1,
+      "chapterName": "Pride",
+      "chapterNameKo": "교만"
+    },
+    {
+      "chapterId": 2,
+      "chapterName": "Greed",
+      "chapterNameKo": "탐욕"
+    },
+    {
+      "chapterId": 3,
+      "chapterName": "Lust",
+      "chapterNameKo": "색욕"
+    },
+    {
+      "chapterId": 4,
+      "chapterName": "Envy",
+      "chapterNameKo": "질투"
+    },
+    {
+      "chapterId": 5,
+      "chapterName": "Gluttony",
+      "chapterNameKo": "폭식"
+    },
+    {
+      "chapterId": 6,
+      "chapterName": "Wrath",
+      "chapterNameKo": "분노"
+    },
+    {
+      "chapterId": 7,
+      "chapterName": "Sloth",
+      "chapterNameKo": "나태"
+    }
+  ]
+}

@@ -1,224 +1,97 @@
 using UnityEngine;
 using LostSpells.Data;
-using LostSpells.Data.Save;
-using System.Collections.Generic;
 
 namespace LostSpells.Systems
 {
     /// <summary>
-    /// 게임 상태 관리 (Static 클래스)
-    /// - 현재 슬롯, 게임 모드, 선택된 챕터/난이도 관리
-    /// - 슬롯 데이터 캐싱
+    /// 게임 상태 관리 싱글톤
+    /// 씬 간에 유지되어야 하는 게임 상태 정보를 관리
     /// </summary>
-    public static class GameStateManager
+    public class GameStateManager : MonoBehaviour
     {
-        // 현재 게임 상태
-        private static int currentSlot = 1;
-        private static GameMode currentGameMode = GameMode.StoryMode;
-        private static int selectedChapter = 1;
-        private static DifficultyLevel selectedDifficulty = DifficultyLevel.Normal;
-
-        // 슬롯 데이터 캐시
-        private static Dictionary<int, PlayerData> slotDataCache = new Dictionary<int, PlayerData>();
-
-        /// <summary>
-        /// 현재 선택된 슬롯 번호 (1, 2, 3)
-        /// </summary>
-        public static int CurrentSlot
+        private static GameStateManager instance;
+        public static GameStateManager Instance
         {
-            get => currentSlot;
-            set
+            get
             {
-                if (value < 1 || value > 3)
+                if (instance == null)
                 {
-                    Debug.LogWarning($"[GameStateManager] 잘못된 슬롯 번호: {value}. 1-3 사이여야 합니다.");
-                    return;
+                    GameObject go = new GameObject("GameStateManager");
+                    instance = go.AddComponent<GameStateManager>();
+                    DontDestroyOnLoad(go);
                 }
-                currentSlot = value;
-                SaveSystem.CurrentSlot = value;
-                Debug.Log($"[GameStateManager] 현재 슬롯 변경: {value}");
+                return instance;
             }
         }
 
-        /// <summary>
-        /// 현재 게임 모드
-        /// </summary>
-        public static GameMode CurrentGameMode
+        // 현재 선택된 챕터 정보
+        private int currentChapterId = -1;
+        private int currentWaveNumber = 1;
+
+        private void Awake()
         {
-            get => currentGameMode;
-            set
+            if (instance != null && instance != this)
             {
-                currentGameMode = value;
-                Debug.Log($"[GameStateManager] 게임 모드 변경: {value}");
+                Destroy(gameObject);
+                return;
             }
+
+            instance = this;
+            DontDestroyOnLoad(gameObject);
         }
 
         /// <summary>
-        /// 선택된 챕터 번호 (1-7)
+        /// 챕터 시작 - 선택한 챕터 정보 저장
         /// </summary>
-        public static int SelectedChapter
+        public void StartChapter(int chapterId)
         {
-            get => selectedChapter;
-            set
-            {
-                selectedChapter = Mathf.Clamp(value, 1, 7);
-                Debug.Log($"[GameStateManager] 선택된 챕터: {selectedChapter}");
-            }
+            currentChapterId = chapterId;
+            currentWaveNumber = 1; // 웨이브 초기화
+            Debug.Log($"챕터 {chapterId} 시작");
         }
 
         /// <summary>
-        /// 선택된 난이도 (EndlessMode용)
+        /// 현재 챕터 ID 가져오기
         /// </summary>
-        public static DifficultyLevel SelectedDifficulty
+        public int GetCurrentChapterId()
         {
-            get => selectedDifficulty;
-            set
-            {
-                selectedDifficulty = value;
-                Debug.Log($"[GameStateManager] 선택된 난이도: {value}");
-            }
+            return currentChapterId;
         }
 
         /// <summary>
-        /// 특정 슬롯의 데이터 가져오기 (캐싱)
+        /// 현재 챕터 데이터 가져오기
         /// </summary>
-        public static PlayerData GetSlotData(int slot)
+        public ChapterData GetCurrentChapterData()
         {
-            if (slot < 1 || slot > 3)
-            {
-                Debug.LogError($"[GameStateManager] 잘못된 슬롯 번호: {slot}");
+            if (currentChapterId < 0)
                 return null;
-            }
 
-            // 캐시에 있으면 반환
-            if (slotDataCache.ContainsKey(slot))
-            {
-                return slotDataCache[slot];
-            }
-
-            // 없으면 로드
-            PlayerData data = new PlayerData();
-            if (SaveSystem.LoadGame(slot, ref data))
-            {
-                slotDataCache[slot] = data;
-                return data;
-            }
-
-            // 로드 실패시 기본값 반환
-            return data;
+            return DataManager.Instance.GetChapterData(currentChapterId);
         }
 
         /// <summary>
-        /// 현재 슬롯의 데이터 가져오기
+        /// 현재 웨이브 번호 설정
         /// </summary>
-        public static PlayerData GetCurrentSlotData()
+        public void SetCurrentWave(int waveNumber)
         {
-            return GetSlotData(currentSlot);
+            currentWaveNumber = waveNumber;
         }
 
         /// <summary>
-        /// 슬롯 데이터 저장
+        /// 현재 웨이브 번호 가져오기
         /// </summary>
-        public static void SaveSlotData(int slot, PlayerData data)
+        public int GetCurrentWave()
         {
-            if (slot < 1 || slot > 3)
-            {
-                Debug.LogError($"[GameStateManager] 잘못된 슬롯 번호: {slot}");
-                return;
-            }
-
-            SaveSystem.SaveGame(slot, data);
-            slotDataCache[slot] = data;
-            Debug.Log($"[GameStateManager] 슬롯 {slot} 저장 완료");
+            return currentWaveNumber;
         }
 
         /// <summary>
-        /// 현재 슬롯 데이터 저장
+        /// 게임 상태 초기화
         /// </summary>
-        public static void SaveCurrentSlotData(PlayerData data)
+        public void ResetGameState()
         {
-            SaveSlotData(currentSlot, data);
+            currentChapterId = -1;
+            currentWaveNumber = 1;
         }
-
-        /// <summary>
-        /// 슬롯 삭제
-        /// </summary>
-        public static void DeleteSlot(int slot)
-        {
-            if (slot < 1 || slot > 3)
-            {
-                Debug.LogError($"[GameStateManager] 잘못된 슬롯 번호: {slot}");
-                return;
-            }
-
-            SaveSystem.DeleteSlot(slot);
-            if (slotDataCache.ContainsKey(slot))
-            {
-                slotDataCache.Remove(slot);
-            }
-            Debug.Log($"[GameStateManager] 슬롯 {slot} 삭제 완료");
-        }
-
-        /// <summary>
-        /// 슬롯 캐시 새로고침
-        /// </summary>
-        public static void RefreshSlotCache(int slot)
-        {
-            if (slot < 1 || slot > 3)
-            {
-                Debug.LogError($"[GameStateManager] 잘못된 슬롯 번호: {slot}");
-                return;
-            }
-
-            if (slotDataCache.ContainsKey(slot))
-            {
-                slotDataCache.Remove(slot);
-            }
-
-            GetSlotData(slot); // 다시 로드하여 캐싱
-        }
-
-        /// <summary>
-        /// 모든 슬롯 캐시 초기화
-        /// </summary>
-        public static void ClearAllCache()
-        {
-            slotDataCache.Clear();
-            Debug.Log("[GameStateManager] 모든 슬롯 캐시 초기화");
-        }
-
-        /// <summary>
-        /// 슬롯 사용 여부 확인
-        /// </summary>
-        public static bool IsSlotUsed(int slot)
-        {
-            if (slot < 1 || slot > 3)
-            {
-                Debug.LogError($"[GameStateManager] 잘못된 슬롯 번호: {slot}");
-                return false;
-            }
-
-            return SaveSystem.IsSlotUsed(slot);
-        }
-    }
-
-    /// <summary>
-    /// 게임 모드 열거형
-    /// </summary>
-    public enum GameMode
-    {
-        StoryMode,
-        ChapterSelect,
-        EndlessMode
-    }
-
-    /// <summary>
-    /// 난이도 열거형
-    /// </summary>
-    public enum DifficultyLevel
-    {
-        Easy,
-        Normal,
-        Hard
     }
 }

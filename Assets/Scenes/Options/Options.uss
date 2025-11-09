@@ -1,0 +1,544 @@
+/* 옵션 화면 전용 스타일 */
+
+/* 배경 레이어 (하늘) */
+.background-layer {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-image: url("project://database/Assets/Gothicvania-Town/Art/Environment/Background/background.png");
+    -unity-background-scale-mode: scale-and-crop;
+}
+
+/* 중경 레이어 (건물) */
+.middleground-layer {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-image: url("project://database/Assets/Gothicvania-Town/Art/Environment/Background/middleground.png");
+    -unity-background-scale-mode: scale-and-crop;
+}
+
+/* UI 컨텐츠 (맨 앞) */
+.ui-content {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+}
+
+/* ========== 공통 변수 ========== */
+:root {
+    --label-width: 300px;
+    --control-width: 366px;  /* 모든 컨트롤의 통일된 너비 */
+    --control-height: 32px;
+    --value-label-width: 50px;
+}
+
+/* ========== 레이아웃 오버라이드 ========== */
+
+/* 컨텐츠 영역의 패딩 제거 (옵션 화면에서만) */
+.options-content {
+    flex-direction: row;
+    align-items: stretch;
+    padding: 0;  /* Common.uss의 padding 오버라이드 */
+    justify-content: flex-start;  /* center 오버라이드 */
+}
+
+/* 왼쪽 패널 - 카테고리 버튼들 */
+.left-panel {
+    width: 200px;
+    min-height: 100%;
+    background-color: rgba(0, 0, 0, 0);
+    padding-left: var(--spacing-large);
+    padding-right: var(--spacing-large);
+    padding-bottom: var(--spacing-large);
+    padding-top: 120px;  /* 오른쪽 패널 헤더와 첫 번째 항목 사이 정렬 */
+}
+
+/* 오른쪽 패널 - 스크롤 영역 */
+.right-panel {
+    flex-grow: 1;
+    background-color: rgba(0, 0, 0, 0);
+}
+
+/* ScrollView 기본 패딩 제거 */
+.right-panel > .unity-scroll-view__content-container {
+    padding: 0;
+}
+
+/* 설정 패널 */
+.settings-panel {
+    padding: var(--spacing-xlarge);
+}
+
+/* 설정 행 */
+.setting-row {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: var(--spacing-large);
+    min-height: 40px;
+}
+
+/* ========== 텍스트 스타일 ========== */
+
+/* 패널 헤더 (타이틀 + 기본값 버튼) */
+.panel-header {
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: var(--spacing-xlarge);
+}
+
+.panel-title {
+    font-size: 32px;
+    color: rgb(255, 255, 255);
+    -unity-font-style: bold;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    margin-bottom: 0;  /* panel-header에서 margin 관리 */
+    width: var(--label-width);
+    margin-right: var(--spacing-large);
+    flex-shrink: 0;
+}
+
+.setting-label {
+    width: var(--label-width);
+    margin-right: var(--spacing-large);
+    font-size: var(--font-size-medium);
+    color: rgb(255, 255, 255);
+    -unity-font-style: bold;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.slider-value-label {
+    width: var(--value-label-width);
+    margin-left: var(--spacing-medium);
+    font-size: var(--font-size-medium);
+    color: rgb(255, 255, 255);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+    flex-shrink: 0;
+}
+
+/* ========== 카테고리 버튼 ========== */
+.category-button {
+    min-height: 60px;
+    margin-bottom: var(--spacing-medium);
+    padding: var(--spacing-medium);
+
+    /* Fantasy Wooden GUI TextBTN_Big 배경 */
+    background-image: url("project://database/Assets/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/TextBTN_Big.png");
+    -unity-background-scale-mode: stretch-to-fill;
+    -unity-background-image-tint-color: rgb(255, 255, 255);
+
+    /* 기본 버튼 배경 제거 */
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+
+    /* 텍스트 스타일 */
+    color: rgb(240, 220, 180);
+    font-size: var(--font-size-medium);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+
+    /* 트랜지션 효과 */
+    transition-property: -unity-background-image-tint-color, scale;
+    transition-duration: 0.15s;
+}
+
+.category-button:hover {
+    scale: 1.02;
+}
+
+.category-button:active {
+    -unity-background-image-tint-color: rgb(180, 180, 180);
+    scale: 0.98;
+}
+
+.category-button.selected {
+    -unity-background-image-tint-color: rgb(255, 230, 150);
+    scale: 1.05;
+}
+
+/* ========== 컨트롤 공통 ========== */
+.custom-slider,
+.setting-dropdown,
+.toggle-button-group,
+.setting-button {
+    width: var(--control-width);
+    height: var(--control-height);
+}
+
+/* ========== 슬라이더 ========== */
+.slider-track {
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    border-width: var(--border-width);
+    border-color: rgba(255, 255, 255, 0.3);
+    overflow: hidden;
+}
+
+.slider-fill {
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.8);
+}
+
+/* ========== 드롭다운 ========== */
+.setting-dropdown {
+    background-color: var(--color-white);
+    border-width: var(--border-width);
+    border-color: var(--color-black);
+    padding: 0;
+}
+
+.setting-dropdown > .unity-base-field__input {
+    height: var(--control-height);
+    background-color: var(--color-white);
+    border-width: 0;
+    padding: 0;
+    margin: 0;
+    align-items: center;
+}
+
+.setting-dropdown .unity-base-popup-field__text {
+    color: var(--color-black);
+    font-size: var(--font-size-medium);
+    padding-left: 8px;
+    padding-right: 8px;
+    margin: 0;
+    background-color: transparent;
+    border-width: 0;
+    -unity-text-align: middle-left;
+    flex-grow: 1;
+    min-height: 20px;
+    visibility: visible;
+    opacity: 1;
+}
+
+.setting-dropdown .unity-base-popup-field__arrow {
+    background-color: transparent;
+    border-width: 0;
+    -unity-background-image-tint-color: var(--color-black);
+}
+
+/* 드롭다운 팝업 */
+.unity-base-dropdown__container-outer {
+    border-width: var(--border-width);
+    border-color: var(--color-black);
+    border-top-width: 0;
+    background-color: var(--color-white);
+    margin-top: -1px;
+}
+
+.unity-base-dropdown__item {
+    padding: 6px 8px;
+    background-color: var(--color-white);
+    color: var(--color-black);
+    font-size: var(--font-size-medium);
+    min-height: var(--control-height);
+    border-width: 0;
+}
+
+.unity-base-dropdown__item:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.unity-base-dropdown__item--selected {
+    background-color: rgba(0, 0, 0, 0.1);
+    -unity-font-style: bold;
+}
+
+/* ========== 토글 버튼 ========== */
+.toggle-button-group {
+    flex-direction: row;
+}
+
+.toggle-button {
+    flex-grow: 1;
+    width: 150px;
+    height: var(--control-height);
+    background-color: var(--color-white);
+    border-width: var(--border-width);
+    border-color: var(--color-black);
+    color: var(--color-black);
+    font-size: var(--font-size-medium);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    transition-property: background-color;
+    transition-duration: 0.15s;
+}
+
+.toggle-button-left {
+    border-right-width: 0;
+}
+
+.toggle-button-right {
+    border-left-width: var(--border-width);
+}
+
+.toggle-button:hover {
+    background-color: var(--color-gray-light);
+}
+
+.toggle-button.active {
+    background-color: var(--color-black);
+    color: var(--color-white);
+}
+
+/* ========== 설정 버튼 ========== */
+.setting-button {
+    background-color: var(--color-white);
+    border-width: var(--border-width);
+    border-color: var(--color-black);
+    color: var(--color-black);
+    font-size: var(--font-size-medium);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    transition-property: background-color;
+    transition-duration: 0.15s;
+}
+
+.setting-button:hover {
+    background-color: var(--color-gray-light);
+}
+
+.setting-button:active {
+    background-color: var(--color-gray-medium);
+}
+
+/* ========== 기본값 버튼 ========== */
+.reset-button-container {
+    width: var(--control-width);
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.reset-button {
+    width: 100px;
+    height: 36px;
+    background-color: var(--color-white);
+    border-width: var(--border-width);
+    border-color: var(--color-black);
+    color: var(--color-black);
+    font-size: var(--font-size-medium);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    flex-shrink: 0;
+    transition-property: background-color, scale;
+    transition-duration: 0.15s;
+}
+
+.reset-button:hover {
+    background-color: var(--color-gray-light);
+    scale: 1.02;
+}
+
+.reset-button:active {
+    background-color: var(--color-gray-medium);
+    scale: 0.98;
+}
+
+/* ========== 슬라이더 스타일 ========== */
+.setting-slider {
+    width: var(--control-width);
+    height: var(--control-height);
+}
+
+.setting-slider .unity-base-slider__tracker {
+    height: 8px;
+    background-color: rgba(0, 0, 0, 0.6);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.setting-slider .unity-base-slider__dragger {
+    width: 20px;
+    height: 20px;
+    background-color: var(--color-white);
+    border-width: var(--border-width);
+    border-color: var(--color-black);
+    border-radius: 10px;
+}
+
+.setting-slider .unity-base-slider__dragger:hover {
+    background-color: var(--color-gray-light);
+}
+
+/* ========== Configure 버튼 ========== */
+.configure-button {
+    width: var(--control-width);
+    height: var(--control-height);
+    background-color: var(--color-white);
+    border-width: var(--border-width);
+    border-color: var(--color-black);
+    color: var(--color-black);
+    font-size: var(--font-size-medium);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    transition-property: background-color, scale;
+    transition-duration: 0.15s;
+}
+
+.configure-button:hover {
+    background-color: var(--color-gray-light);
+    scale: 1.02;
+}
+
+.configure-button:active {
+    background-color: var(--color-gray-medium);
+    scale: 0.98;
+}
+
+/* ========== 서버 상태 컨테이너 ========== */
+.server-status-container {
+    flex-direction: row;
+    align-items: center;
+    width: var(--control-width);
+}
+
+.server-status-text {
+    width: auto;
+    margin-right: 10px;
+    flex-grow: 1;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.server-check-button {
+    width: 100px;
+    height: var(--control-height);
+}
+
+/* ========== 모델 관리 버튼 컨테이너 ========== */
+.model-buttons-container {
+    flex-direction: row;
+    justify-content: space-between;
+    width: var(--control-width);
+}
+
+.model-download-button {
+    width: 48%;
+    height: var(--control-height);
+}
+
+.model-delete-button {
+    width: 48%;
+    height: var(--control-height);
+}
+
+/* ========== 섹션 토글 버튼 ========== */
+.section-toggle {
+    width: 30px;
+    height: 30px;
+
+    background-image: url("project://database/Assets/2D%20Casual%20UI/Sprite/GUI.png#GUI_33");
+    -unity-background-scale-mode: scale-to-fit;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    rotate: 0deg;
+
+    transition-property: scale, rotate;
+    transition-duration: 0.15s;
+}
+
+.section-toggle:hover {
+    scale: 1.1;
+}
+
+.section-toggle:active {
+    scale: 0.9;
+}
+
+/* ========== 키 바인딩 영역 ========== */
+.section-title {
+    font-size: 24px;
+    color: rgb(255, 255, 255);
+    -unity-font-style: bold;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    margin-top: var(--spacing-large);
+    margin-bottom: var(--spacing-medium);
+}
+
+.keybinding-section {
+    margin-top: var(--spacing-large);
+    padding: var(--spacing-medium);
+    background-color: rgba(0, 0, 0, 0.3);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.scene-title {
+    font-size: 20px;
+    color: rgb(255, 220, 150);
+    -unity-font-style: bold;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+    margin-bottom: var(--spacing-medium);
+}
+
+.keybinding-row {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: var(--spacing-small);
+    min-height: 36px;
+}
+
+.keybinding-label {
+    width: 200px;
+    margin-right: var(--spacing-medium);
+    font-size: var(--font-size-medium);
+    color: rgb(255, 255, 255);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.key-button {
+    width: 150px;
+    height: 32px;
+    background-color: rgba(50, 50, 50, 0.8);
+    border-width: var(--border-width);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: rgb(255, 255, 255);
+    font-size: var(--font-size-medium);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    transition-property: background-color, scale;
+    transition-duration: 0.15s;
+}
+
+.key-button:hover {
+    background-color: rgba(80, 80, 80, 0.9);
+    scale: 1.02;
+}
+
+.key-button:active {
+    background-color: rgba(30, 30, 30, 0.9);
+    scale: 0.98;
+}
+
+/* ========== 닫기 버튼 ========== */
+.close-button {
+    width: 150px;
+    height: 40px;
+    background-color: var(--color-white);
+    border-width: var(--border-width);
+    border-color: var(--color-black);
+    color: var(--color-black);
+    font-size: var(--font-size-medium);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    margin-top: var(--spacing-large);
+    align-self: center;
+    transition-property: background-color, scale;
+    transition-duration: 0.15s;
+}
+
+.close-button:hover {
+    background-color: var(--color-gray-light);
+    scale: 1.02;
+}
+
+.close-button:active {
+    background-color: var(--color-gray-medium);
+    scale: 0.98;
+}

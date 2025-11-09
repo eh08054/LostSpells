@@ -1,0 +1,79 @@
+{
+  "skills": [
+    {
+      "skillId": "fireball",
+      "skillName": "파이어 볼",
+      "skillNameEn": "Fireball",
+      "skillDescription": "화염구를 발사하여 적에게 피해를 입힙니다.",
+      "skillDescriptionEn": "Launches a fireball to damage enemies.",
+      "skillType": 0,
+      "cooldown": 5.0,
+      "manaCost": 20.0,
+      "damage": 50.0,
+      "range": 10.0,
+      "iconPath": "Icons/Fireball",
+      "effectPrefabPath": "Prefabs/Skills/Fireball",
+      "voiceKeyword": "파이어 볼"
+    },
+    {
+      "skillId": "thunderbolt",
+      "skillName": "썬더볼트",
+      "skillNameEn": "Thunderbolt",
+      "skillDescription": "번개를 소환하여 가장 가까운 적을 공격합니다.",
+      "skillDescriptionEn": "Summons lightning to strike the nearest enemy.",
+      "skillType": 0,
+      "cooldown": 8.0,
+      "manaCost": 30.0,
+      "damage": 80.0,
+      "range": 5.0,
+      "iconPath": "Icons/Thunderbolt",
+      "effectPrefabPath": "Prefabs/Skills/Thunderbolt",
+      "voiceKeyword": "썬더볼트"
+    },
+    {
+      "skillId": "icespear",
+      "skillName": "아이스 스피어",
+      "skillNameEn": "Ice Spear",
+      "skillDescription": "얼음 창을 발사하여 적을 관통합니다.",
+      "skillDescriptionEn": "Launches an ice spear that pierces through enemies.",
+      "skillType": 0,
+      "cooldown": 6.0,
+      "manaCost": 25.0,
+      "damage": 60.0,
+      "range": 12.0,
+      "iconPath": "Icons/IceSpear",
+      "effectPrefabPath": "Prefabs/Skills/IceSpear",
+      "voiceKeyword": "아이스스피어"
+    },
+    {
+      "skillId": "magicshield",
+      "skillName": "매직실드",
+      "skillNameEn": "Magic Shield",
+      "skillDescription": "마법 보호막을 생성하여 일정 시간 동안 피해를 막습니다.",
+      "skillDescriptionEn": "Creates a magic shield that blocks damage for a duration.",
+      "skillType": 1,
+      "cooldown": 12.0,
+      "manaCost": 40.0,
+      "damage": 0.0,
+      "range": 0.0,
+      "iconPath": "Icons/MagicShield",
+      "effectPrefabPath": "Prefabs/Skills/MagicShield",
+      "voiceKeyword": "매직실드"
+    },
+    {
+      "skillId": "cure",
+      "skillName": "큐어",
+      "skillNameEn": "Cure",
+      "skillDescription": "체력을 즉시 회복합니다.",
+      "skillDescriptionEn": "Instantly restores health.",
+      "skillType": 1,
+      "cooldown": 10.0,
+      "manaCost": 35.0,
+      "damage": 0.0,
+      "range": 0.0,
+      "iconPath": "Icons/Cure",
+      "effectPrefabPath": "Prefabs/Skills/Cure",
+      "voiceKeyword": "큐어"
+    }
+  ]
+}

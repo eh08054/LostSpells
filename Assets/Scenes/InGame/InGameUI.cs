@@ -1,0 +1,863 @@
+using UnityEngine;
+using UnityEngine.UIElements;
+using UnityEngine.SceneManagement;
+using UnityEngine.InputSystem;
+using LostSpells.Data;
+using LostSpells.Systems;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace LostSpells.UI
+{
+    /// <summary>
+    /// 인게임 UI - 챕터 정보 표시 및 게임 UI 관리
+    /// </summary>
+    [RequireComponent(typeof(UIDocument))]
+    public class InGameUI : MonoBehaviour
+    {
+        private UIDocument uiDocument;
+        private Button menuButton;
+        private Button resumeButton;
+        private Button settingsButton;
+        private Button storeButton;
+        private Button mainMenuButton;
+
+        private Label chapterInfoLabel;
+        private Label waveInfoLabel;
+        private VisualElement menuPopup;
+
+        // 화폐 표시 Label
+        private Label diamondCountLabel;
+        private Label reviveStoneCountLabel;
+
+        // 음성인식 결과 표시
+        private Label voiceRecognitionText;
+
+        // 플레이어 상태창
+        private Label playerLevelLabel;
+        private VisualElement expBar;
+        private VisualElement hpBar;
+        private Label hpText;
+        private VisualElement mpBar;
+        private Label mpText;
+
+        // 사이드바 관련
+        private VisualElement leftSidebar;
+        private VisualElement rightSidebar;
+
+        // 스킬창 관련
+        private VisualElement skillPanel;
+        private Button allSkillButton;
+        private Button attackSkillButton;
+        private Button defenseSkillButton;
+        private ScrollView allSkillScrollView;
+        private ScrollView attackSkillScrollView;
+        private ScrollView defenseSkillScrollView;
+        private VisualElement allSkillList;
+        private VisualElement attackSkillList;
+        private VisualElement defenseSkillList;
+
+        private SkillType? currentSkillCategory = null; // null이면 All 탭
+        private Dictionary<string, float> skillAccuracyMap = new Dictionary<string, float>();
+
+        private PlayerSaveData saveData;
+        private EnemySpawner enemySpawner;
+        private VoiceRecognitionManager voiceRecognitionManager;
+        private LostSpells.Components.PlayerComponent playerComponent;
+
+        private void Awake()
+        {
+            uiDocument = GetComponent<UIDocument>();
+        }
+
+        private void Start()
+        {
+            // EnemySpawner 찾기
+            enemySpawner = FindFirstObjectByType<EnemySpawner>();
+
+            // VoiceRecognitionManager 찾기
+            voiceRecognitionManager = FindFirstObjectByType<VoiceRecognitionManager>();
+
+            // PlayerComponent 찾기
+            playerComponent = FindFirstObjectByType<LostSpells.Components.PlayerComponent>();
+            if (playerComponent == null)
+            {
+                Debug.LogWarning("[InGameUI] PlayerComponent를 찾을 수 없습니다!");
+            }
+
+            // 첫 웨이브 시작
+            if (enemySpawner != null)
+            {
+                int currentWave = GameStateManager.Instance.GetCurrentWave();
+                enemySpawner.StartWave(currentWave);
+                Debug.Log($"Wave {currentWave} 시작!");
+            }
+            else
+            {
+                Debug.LogWarning("EnemySpawner를 찾을 수 없습니다!");
+            }
+
+            // 스킬 목록 로드
+            LoadSkills();
+
+            // 로컬라이제이션 적용 (Start 이후에 호출하여 모든 UI가 준비된 후 적용)
+            UpdateLocalization();
+        }
+
+        private void Update()
+        {
+            // Tab 키로 스킬창 토글
+            if (Keyboard.current != null && Keyboard.current.tabKey.wasPressedThisFrame)
+            {
+                ToggleSkillPanel();
+            }
+
+            // 플레이어 상태 업데이트
+            UpdatePlayerStats();
+        }
+
+        private void OnEnable()
+        {
+            var root = uiDocument.rootVisualElement;
+
+            // UI 요소 찾기
+            menuButton = root.Q<Button>("MenuButton");
+            chapterInfoLabel = root.Q<Label>("ChapterInfo");
+            waveInfoLabel = root.Q<Label>("WaveInfo");
+            menuPopup = root.Q<VisualElement>("MenuPopup");
+
+            // 화폐 표시 Label
+            diamondCountLabel = root.Q<Label>("DiamondCount");
+            reviveStoneCountLabel = root.Q<Label>("ReviveStoneCount");
+
+            // 음성인식 결과 표시
+            voiceRecognitionText = root.Q<Label>("VoiceRecognitionText");
+
+            // 플레이어 상태창 UI 요소
+            playerLevelLabel = root.Q<Label>("PlayerLevel");
+            expBar = root.Q<VisualElement>("ExpBar");
+            hpBar = root.Q<VisualElement>("HPBar");
+            hpText = root.Q<Label>("HPText");
+            mpBar = root.Q<VisualElement>("MPBar");
+            mpText = root.Q<Label>("MPText");
+
+            // 사이드바 UI 요소
+            leftSidebar = root.Q<VisualElement>("LeftSidebar");
+            rightSidebar = root.Q<VisualElement>("RightSidebar");
+
+            // 스킬창 UI 요소
+            skillPanel = root.Q<VisualElement>("SkillPanel");
+            allSkillButton = root.Q<Button>("AllSkillButton");
+            attackSkillButton = root.Q<Button>("AttackSkillButton");
+            defenseSkillButton = root.Q<Button>("DefenseSkillButton");
+
+            // ScrollView 요소 (표시/숨김 제어용)
+            allSkillScrollView = root.Q<ScrollView>("AllSkillScrollView");
+            attackSkillScrollView = root.Q<ScrollView>("AttackSkillScrollView");
+            defenseSkillScrollView = root.Q<ScrollView>("DefenseSkillScrollView");
+
+            // 내부 스킬 리스트 (스킬 아이템 추가용)
+            allSkillList = root.Q<VisualElement>("AllSkillList");
+            attackSkillList = root.Q<VisualElement>("AttackSkillList");
+            defenseSkillList = root.Q<VisualElement>("DefenseSkillList");
+
+            // 메뉴 팝업 버튼들
+            resumeButton = root.Q<Button>("ResumeButton");
+            settingsButton = root.Q<Button>("SettingsButton");
+            storeButton = root.Q<Button>("StoreButton");
+            mainMenuButton = root.Q<Button>("MainMenuButton");
+
+            // 이벤트 등록
+            if (menuButton != null)
+                menuButton.clicked += OnMenuButtonClicked;
+
+            if (resumeButton != null)
+                resumeButton.clicked += OnResumeButtonClicked;
+
+            if (settingsButton != null)
+                settingsButton.clicked += OnSettingsButtonClicked;
+
+            if (storeButton != null)
+                storeButton.clicked += OnStoreButtonClicked;
+
+            if (mainMenuButton != null)
+                mainMenuButton.clicked += OnMainMenuButtonClicked;
+
+            // 스킬 카테고리 버튼 이벤트
+            if (allSkillButton != null)
+                allSkillButton.clicked += () => SwitchSkillCategory(null); // null = All
+
+            if (attackSkillButton != null)
+                attackSkillButton.clicked += () => SwitchSkillCategory(SkillType.Attack);
+
+            if (defenseSkillButton != null)
+                defenseSkillButton.clicked += () => SwitchSkillCategory(SkillType.Defense);
+
+            // 저장 데이터 가져오기
+            saveData = SaveManager.Instance.GetCurrentSaveData();
+
+            // 챕터 정보 표시
+            UpdateChapterInfo();
+
+            // 화폐 정보 표시
+            UpdateCurrencyDisplay();
+
+            // Localization 이벤트 등록 (실제 적용은 Start에서)
+            LocalizationManager.Instance.OnLanguageChanged += UpdateLocalization;
+
+            // Additive 씬 언로드 감지 (Options/Store에서 돌아올 때)
+            SceneManager.sceneUnloaded += OnSceneUnloaded;
+        }
+
+        private void OnDisable()
+        {
+            if (menuButton != null)
+                menuButton.clicked -= OnMenuButtonClicked;
+
+            if (resumeButton != null)
+                resumeButton.clicked -= OnResumeButtonClicked;
+
+            if (settingsButton != null)
+                settingsButton.clicked -= OnSettingsButtonClicked;
+
+            if (storeButton != null)
+                storeButton.clicked -= OnStoreButtonClicked;
+
+            if (mainMenuButton != null)
+                mainMenuButton.clicked -= OnMainMenuButtonClicked;
+
+            if (allSkillButton != null)
+                allSkillButton.clicked -= () => SwitchSkillCategory(null);
+
+            if (attackSkillButton != null)
+                attackSkillButton.clicked -= () => SwitchSkillCategory(SkillType.Attack);
+
+            if (defenseSkillButton != null)
+                defenseSkillButton.clicked -= () => SwitchSkillCategory(SkillType.Defense);
+
+            // Localization 이벤트 해제
+            UnregisterLocalizationEvents();
+
+            // Additive 씬 언로드 이벤트 해제
+            SceneManager.sceneUnloaded -= OnSceneUnloaded;
+        }
+
+        private void OnDestroy()
+        {
+            UnregisterLocalizationEvents();
+        }
+
+        private void UnregisterLocalizationEvents()
+        {
+            if (LocalizationManager.Instance != null)
+            {
+                try
+                {
+                    LocalizationManager.Instance.OnLanguageChanged -= UpdateLocalization;
+                }
+                catch (System.Exception)
+                {
+                    // 이미 해제된 경우 무시
+                }
+            }
+        }
+
+        /// <summary>
+        /// 스킬 목록 로드
+        /// </summary>
+        private void LoadSkills()
+        {
+            var allSkills = DataManager.Instance.GetAllSkillData();
+
+            if (allSkills == null || allSkills.Count == 0)
+            {
+                Debug.LogWarning("[InGameUI] 스킬 데이터가 없습니다!");
+                return;
+            }
+
+            // 카테고리별로 스킬 분류
+            var attackSkills = allSkills.Where(s => s.skillType == SkillType.Attack).ToList();
+            var defenseSkills = allSkills.Where(s => s.skillType == SkillType.Defense).ToList();
+
+            // All 리스트 채우기 (카테고리별로 그룹화)
+            PopulateAllSkillList(allSkillList, attackSkills, defenseSkills);
+
+            // 각 카테고리별 리스트 채우기
+            PopulateSkillList(attackSkillList, attackSkills);
+            PopulateSkillList(defenseSkillList, defenseSkills);
+
+            // 초기 카테고리 표시 (All 탭)
+            SwitchSkillCategory(currentSkillCategory);
+
+            Debug.Log($"[InGameUI] 스킬 로드 완료: Attack={attackSkills.Count}, Defense={defenseSkills.Count}");
+        }
+
+        /// <summary>
+        /// 스킬 리스트 UI 생성
+        /// </summary>
+        private void PopulateSkillList(VisualElement container, List<SkillData> skills)
+        {
+            if (container == null) return;
+
+            container.Clear();
+
+            foreach (var skill in skills)
+            {
+                // 스킬 아이템 컨테이너
+                var skillItem = new VisualElement();
+                skillItem.AddToClassList("skill-item");
+
+                // 스킬명 (현재 언어에 맞게)
+                var skillName = new Label(skill.GetLocalizedName());
+                skillName.AddToClassList("skill-name");
+
+                // 정확도 (기본값 0%, 나중에 음성인식 결과로 업데이트)
+                var accuracy = new Label("0%");
+                accuracy.AddToClassList("skill-accuracy");
+                accuracy.name = $"Accuracy_{skill.voiceKeyword}";
+
+                skillItem.Add(skillName);
+                skillItem.Add(accuracy);
+                container.Add(skillItem);
+
+                // 정확도 맵 초기화
+                if (!string.IsNullOrEmpty(skill.voiceKeyword))
+                {
+                    skillAccuracyMap[skill.voiceKeyword] = 0f;
+                }
+            }
+        }
+
+        /// <summary>
+        /// All 탭 UI 생성 (카테고리별로 그룹화)
+        /// </summary>
+        private void PopulateAllSkillList(VisualElement container, List<SkillData> attackSkills, List<SkillData> defenseSkills)
+        {
+            if (container == null) return;
+
+            container.Clear();
+
+            // Attack 섹션
+            if (attackSkills.Count > 0)
+            {
+                var attackHeader = new Label(LocalizationManager.Instance.GetText("skill_category_attack"));
+                attackHeader.AddToClassList("skill-category-header");
+                container.Add(attackHeader);
+
+                foreach (var skill in attackSkills)
+                {
+                    AddSkillItem(container, skill);
+                }
+            }
+
+            // Defense 섹션
+            if (defenseSkills.Count > 0)
+            {
+                var defenseHeader = new Label(LocalizationManager.Instance.GetText("skill_category_defense"));
+                defenseHeader.AddToClassList("skill-category-header");
+                container.Add(defenseHeader);
+
+                foreach (var skill in defenseSkills)
+                {
+                    AddSkillItem(container, skill);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 스킬 아이템 추가 (공통 로직)
+        /// </summary>
+        private void AddSkillItem(VisualElement container, SkillData skill)
+        {
+            var skillItem = new VisualElement();
+            skillItem.AddToClassList("skill-item");
+
+            var skillName = new Label(skill.GetLocalizedName());
+            skillName.AddToClassList("skill-name");
+
+            var accuracy = new Label("0%");
+            accuracy.AddToClassList("skill-accuracy");
+            accuracy.name = $"Accuracy_{skill.voiceKeyword}";
+
+            skillItem.Add(skillName);
+            skillItem.Add(accuracy);
+            container.Add(skillItem);
+
+            if (!string.IsNullOrEmpty(skill.voiceKeyword))
+            {
+                skillAccuracyMap[skill.voiceKeyword] = 0f;
+            }
+        }
+
+        /// <summary>
+        /// Tab으로 스킬창 토글
+        /// </summary>
+        private void ToggleSkillPanel()
+        {
+            if (rightSidebar != null)
+            {
+                bool isHidden = rightSidebar.ClassListContains("sidebar-hidden");
+
+                if (isHidden)
+                {
+                    rightSidebar.RemoveFromClassList("sidebar-hidden");
+                    Debug.Log("[InGameUI] 스킬창 열기");
+                }
+                else
+                {
+                    rightSidebar.AddToClassList("sidebar-hidden");
+                    Debug.Log("[InGameUI] 스킬창 닫기");
+                }
+            }
+        }
+
+        /// <summary>
+        /// 스킬 카테고리 전환
+        /// </summary>
+        private void SwitchSkillCategory(SkillType? category)
+        {
+            currentSkillCategory = category;
+
+            // 모든 ScrollView 숨기기
+            if (allSkillScrollView != null)
+                allSkillScrollView.style.display = DisplayStyle.None;
+            if (attackSkillScrollView != null)
+                attackSkillScrollView.style.display = DisplayStyle.None;
+            if (defenseSkillScrollView != null)
+                defenseSkillScrollView.style.display = DisplayStyle.None;
+
+            // 선택된 카테고리만 표시
+            if (category == null)
+            {
+                // All 탭
+                if (allSkillScrollView != null)
+                    allSkillScrollView.style.display = DisplayStyle.Flex;
+            }
+            else
+            {
+                switch (category.Value)
+                {
+                    case SkillType.Attack:
+                        if (attackSkillScrollView != null)
+                            attackSkillScrollView.style.display = DisplayStyle.Flex;
+                        break;
+                    case SkillType.Defense:
+                        if (defenseSkillScrollView != null)
+                            defenseSkillScrollView.style.display = DisplayStyle.Flex;
+                        break;
+                }
+            }
+
+            // 음성인식 매니저에 현재 카테고리 스킬 전달
+            UpdateVoiceRecognitionSkills();
+
+            Debug.Log($"[InGameUI] 스킬 카테고리 변경: {(category == null ? "All" : category.ToString())}");
+        }
+
+        /// <summary>
+        /// 현재 선택된 카테고리의 스킬만 음성인식 대상으로 설정
+        /// </summary>
+        private void UpdateVoiceRecognitionSkills()
+        {
+            if (voiceRecognitionManager == null)
+            {
+                // VoiceRecognitionManager가 없어도 게임 플레이는 가능
+                return;
+            }
+
+            var currentSkills = GetCurrentCategorySkills();
+            if (currentSkills != null && currentSkills.Count > 0)
+            {
+                voiceRecognitionManager.SetActiveSkills(currentSkills);
+            }
+        }
+
+        /// <summary>
+        /// 현재 카테고리의 스킬 목록 가져오기
+        /// </summary>
+        public List<SkillData> GetCurrentCategorySkills()
+        {
+            var allSkills = DataManager.Instance.GetAllSkillData();
+            if (allSkills == null) return new List<SkillData>();
+
+            // All 탭 (null)이면 모든 스킬 반환
+            if (currentSkillCategory == null)
+                return allSkills;
+
+            return allSkills.Where(s => s.skillType == currentSkillCategory.Value).ToList();
+        }
+
+        /// <summary>
+        /// 음성인식 정확도 업데이트 (VoiceRecognitionManager에서 호출)
+        /// </summary>
+        public void UpdateSkillAccuracy(Dictionary<string, float> accuracyScores)
+        {
+            foreach (var kvp in accuracyScores)
+            {
+                string keyword = kvp.Key;
+                float score = kvp.Value;
+
+                // 정확도 맵 업데이트
+                skillAccuracyMap[keyword] = score;
+            }
+
+            // 현재 표시 중인 ScrollView에서만 UI 업데이트
+            ScrollView currentScrollView = GetCurrentScrollView();
+            if (currentScrollView != null)
+            {
+                UpdateAccuracyLabelsInScrollView(currentScrollView, accuracyScores);
+            }
+        }
+
+        /// <summary>
+        /// 현재 활성화된 ScrollView 가져오기
+        /// </summary>
+        private ScrollView GetCurrentScrollView()
+        {
+            if (currentSkillCategory == null && allSkillScrollView != null && allSkillScrollView.style.display == DisplayStyle.Flex)
+                return allSkillScrollView;
+
+            if (currentSkillCategory == SkillType.Attack && attackSkillScrollView != null && attackSkillScrollView.style.display == DisplayStyle.Flex)
+                return attackSkillScrollView;
+
+            if (currentSkillCategory == SkillType.Defense && defenseSkillScrollView != null && defenseSkillScrollView.style.display == DisplayStyle.Flex)
+                return defenseSkillScrollView;
+
+            return null;
+        }
+
+        /// <summary>
+        /// 특정 ScrollView 내의 정확도 라벨 업데이트
+        /// </summary>
+        private void UpdateAccuracyLabelsInScrollView(ScrollView scrollView, Dictionary<string, float> accuracyScores)
+        {
+            foreach (var kvp in accuracyScores)
+            {
+                string keyword = kvp.Key;
+                float score = kvp.Value;
+
+                // 해당 ScrollView 내에서 라벨 찾기
+                var accuracyLabel = scrollView.Q<Label>($"Accuracy_{keyword}");
+                if (accuracyLabel != null)
+                {
+                    int percentage = Mathf.RoundToInt(score * 100f);
+                    accuracyLabel.text = $"{percentage}%";
+
+                    // 색상 변경 (높을수록 녹색)
+                    if (score >= 0.7f)
+                        accuracyLabel.style.color = Color.green;
+                    else if (score >= 0.4f)
+                        accuracyLabel.style.color = Color.yellow;
+                    else
+                        accuracyLabel.style.color = Color.white;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 음성인식 결과 표시 (VoiceRecognitionManager에서 호출)
+        /// </summary>
+        public void UpdateVoiceRecognitionDisplay(string message)
+        {
+            if (voiceRecognitionText != null)
+            {
+                voiceRecognitionText.text = message;
+            }
+        }
+
+        /// <summary>
+        /// 챕터 정보 업데이트
+        /// </summary>
+        private void UpdateChapterInfo()
+        {
+            // GameStateManager에서 현재 챕터 정보 가져오기
+            ChapterData currentChapter = GameStateManager.Instance.GetCurrentChapterData();
+
+            if (currentChapter != null && chapterInfoLabel != null)
+            {
+                string chapterText = LocalizationManager.Instance.GetText("ingame_chapter");
+                string chapterName = currentChapter.GetLocalizedName();
+                chapterInfoLabel.text = $"{chapterText} {currentChapter.chapterId} - {chapterName}";
+            }
+            else if (chapterInfoLabel != null)
+            {
+                // 챕터 정보가 없으면 기본값
+                string chapterText = LocalizationManager.Instance.GetText("ingame_chapter");
+                chapterInfoLabel.text = $"{chapterText} 0 - Tutorial";
+            }
+
+            // 웨이브 정보 업데이트
+            UpdateWaveInfo();
+        }
+
+        /// <summary>
+        /// 웨이브 정보 업데이트
+        /// </summary>
+        public void UpdateWaveInfo()
+        {
+            if (waveInfoLabel != null)
+            {
+                int currentWave = GameStateManager.Instance.GetCurrentWave();
+                string waveText = LocalizationManager.Instance.GetText("ingame_wave");
+                waveInfoLabel.text = $"{waveText} {currentWave}";
+            }
+        }
+
+        /// <summary>
+        /// 화폐 정보 업데이트
+        /// </summary>
+        public void UpdateCurrencyDisplay()
+        {
+            if (saveData != null)
+            {
+                if (diamondCountLabel != null)
+                    diamondCountLabel.text = saveData.diamonds.ToString();
+
+                if (reviveStoneCountLabel != null)
+                    reviveStoneCountLabel.text = saveData.reviveStones.ToString();
+            }
+        }
+
+        /// <summary>
+        /// 웨이브 변경 시 호출 (게임 로직에서 호출)
+        /// </summary>
+        public void SetWave(int waveNumber)
+        {
+            GameStateManager.Instance.SetCurrentWave(waveNumber);
+            UpdateWaveInfo();
+        }
+
+        /// <summary>
+        /// 다음 웨이브 시작
+        /// </summary>
+        public void StartNextWave()
+        {
+            if (enemySpawner != null)
+            {
+                int currentWave = GameStateManager.Instance.GetCurrentWave();
+                int nextWave = currentWave + 1;
+
+                GameStateManager.Instance.SetCurrentWave(nextWave);
+                UpdateWaveInfo();
+
+                enemySpawner.StartWave(nextWave);
+                Debug.Log($"Wave {nextWave} 시작!");
+            }
+        }
+
+        private void OnMenuButtonClicked()
+        {
+            if (menuPopup != null)
+            {
+                // 메뉴 팝업 토글
+                bool isVisible = menuPopup.style.display == DisplayStyle.Flex;
+
+                if (isVisible)
+                {
+                    // 메뉴 닫기: 팝업 숨기고 사이드바 표시, 게임 재개
+                    menuPopup.style.display = DisplayStyle.None;
+                    ShowSidebars();
+                    ResumeGame();
+                }
+                else
+                {
+                    // 메뉴 열기: 팝업 표시하고 사이드바 숨기기, 게임 일시정지
+                    menuPopup.style.display = DisplayStyle.Flex;
+                    HideSidebars();
+                    PauseGame();
+                }
+            }
+        }
+
+        private void OnResumeButtonClicked()
+        {
+            if (menuPopup != null)
+            {
+                // 메뉴 닫기 및 게임 재개
+                menuPopup.style.display = DisplayStyle.None;
+                ShowSidebars();
+                ResumeGame();
+            }
+        }
+
+        /// <summary>
+        /// 게임 일시정지
+        /// </summary>
+        private void PauseGame()
+        {
+            Time.timeScale = 0f;
+            Debug.Log("[InGameUI] 게임 일시정지");
+        }
+
+        /// <summary>
+        /// 게임 재개
+        /// </summary>
+        private void ResumeGame()
+        {
+            Time.timeScale = 1f;
+            Debug.Log("[InGameUI] 게임 재개");
+        }
+
+        /// <summary>
+        /// 사이드바 숨기기
+        /// </summary>
+        private void HideSidebars()
+        {
+            if (leftSidebar != null)
+                leftSidebar.style.display = DisplayStyle.None;
+
+            if (rightSidebar != null)
+                rightSidebar.style.display = DisplayStyle.None;
+        }
+
+        /// <summary>
+        /// 사이드바 표시
+        /// </summary>
+        private void ShowSidebars()
+        {
+            if (leftSidebar != null)
+                leftSidebar.style.display = DisplayStyle.Flex;
+
+            if (rightSidebar != null)
+                rightSidebar.style.display = DisplayStyle.Flex;
+        }
+
+        /// <summary>
+        /// Additive 씬이 언로드될 때 호출 (Options/Store에서 돌아올 때)
+        /// </summary>
+        private void OnSceneUnloaded(Scene scene)
+        {
+            // Options나 Store 씬이 언로드되면 사이드바 다시 표시
+            if (scene.name == "Options" || scene.name == "Store")
+            {
+                ShowSidebars();
+                Debug.Log($"[InGameUI] {scene.name} 씬 언로드됨 - 사이드바 다시 표시");
+            }
+        }
+
+        private void OnSettingsButtonClicked()
+        {
+            Debug.Log("Settings clicked");
+            // 메뉴 팝업 닫기
+            if (menuPopup != null)
+                menuPopup.style.display = DisplayStyle.None;
+
+            // 게임 상태 유지를 위해 Additive 모드로 씬 로드
+            // Time.timeScale은 일시정지 상태 유지 (설정 화면에서도 일시정지)
+            SceneNavigationManager.Instance.SetPreviousScene("InGame");
+            SceneManager.LoadScene("Options", LoadSceneMode.Additive);
+        }
+
+        private void OnStoreButtonClicked()
+        {
+            Debug.Log("Store clicked");
+            // 메뉴 팝업 닫기
+            if (menuPopup != null)
+                menuPopup.style.display = DisplayStyle.None;
+
+            // 게임 상태 유지를 위해 Additive 모드로 씬 로드
+            // Time.timeScale은 일시정지 상태 유지 (상점 화면에서도 일시정지)
+            SceneNavigationManager.Instance.SetPreviousScene("InGame");
+            SceneManager.LoadScene("Store", LoadSceneMode.Additive);
+        }
+
+        private void OnMainMenuButtonClicked()
+        {
+            // 게임 시간 복구 및 게임 상태 초기화
+            Time.timeScale = 1f;
+            GameStateManager.Instance.ResetGameState();
+            SceneManager.LoadScene("MainMenu");
+        }
+
+        /// <summary>
+        /// 플레이어 상태 업데이트 (레벨, 경험치, HP, MP)
+        /// </summary>
+        private void UpdatePlayerStats()
+        {
+            if (saveData == null || playerComponent == null) return;
+
+            // 레벨 표시
+            if (playerLevelLabel != null)
+            {
+                playerLevelLabel.text = saveData.level.ToString();
+            }
+
+            // 경험치 바 (TODO: SaveData에 경험치 정보 추가 필요, 일단 0%로 표시)
+            if (expBar != null)
+            {
+                // 경험치 진행률 계산 (임시로 0%)
+                float expPercent = 0f;
+                var style = expBar.style;
+                style.height = new StyleLength(new Length(expPercent, LengthUnit.Percent));
+            }
+
+            // HP 바
+            if (hpBar != null && hpText != null)
+            {
+                int currentHP = playerComponent.GetCurrentHealth();
+                int maxHP = playerComponent.GetMaxHealth();
+                float hpPercent = (float)currentHP / maxHP;
+
+                // HP 바 너비 조정
+                var style = hpBar.style;
+                style.width = new StyleLength(new Length(hpPercent * 100f, LengthUnit.Percent));
+
+                // HP 텍스트 업데이트
+                hpText.text = $"{currentHP} / {maxHP}";
+            }
+
+            // MP 바
+            if (mpBar != null && mpText != null)
+            {
+                int currentMP = playerComponent.GetCurrentMana();
+                int maxMP = playerComponent.GetMaxMana();
+                float mpPercent = (float)currentMP / maxMP;
+
+                // MP 바 너비 조정
+                var style = mpBar.style;
+                style.width = new StyleLength(new Length(mpPercent * 100f, LengthUnit.Percent));
+
+                // MP 텍스트 업데이트
+                mpText.text = $"{currentMP} / {maxMP}";
+            }
+        }
+
+        /// <summary>
+        /// 로컬라이제이션 업데이트
+        /// </summary>
+        private void UpdateLocalization()
+        {
+            var loc = LocalizationManager.Instance;
+
+            // 메뉴 팝업 버튼들 로컬라이즈
+            if (resumeButton != null)
+                resumeButton.text = loc.GetText("ingame_resume");
+
+            if (mainMenuButton != null)
+                mainMenuButton.text = loc.GetText("ingame_quit");
+
+            if (settingsButton != null)
+                settingsButton.text = loc.GetText("main_menu_options");
+
+            if (storeButton != null)
+                storeButton.text = loc.GetText("main_menu_store");
+
+            // 스킬 카테고리 버튼 텍스트 업데이트
+            if (allSkillButton != null)
+                allSkillButton.text = loc.GetText("skill_category_all");
+
+            if (attackSkillButton != null)
+                attackSkillButton.text = loc.GetText("skill_category_attack");
+
+            if (defenseSkillButton != null)
+                defenseSkillButton.text = loc.GetText("skill_category_defense");
+
+            // 챕터 및 웨이브 정보 업데이트
+            UpdateChapterInfo();
+            UpdateWaveInfo();
+
+            // 스킬 목록 다시 로드 (스킬 이름이 언어별로 다름)
+            LoadSkills();
+        }
+    }
+}

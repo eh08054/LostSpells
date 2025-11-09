@@ -1,0 +1,153 @@
+===========================================
+UI 컴포넌트 디자인 템플릿
+LostSpells Options UI
+===========================================
+
+이 파일은 옵션 화면에서 사용하는 UI 컴포넌트들의 디자인 템플릿입니다.
+새로운 설정 항목을 추가할 때 아래 템플릿을 복사하여 사용하세요.
+
+===========================================
+1. 슬라이더 (Slider)
+===========================================
+
+<!-- UXML 코드 -->
+<ui:VisualElement class="setting-row">
+    <ui:Label text="Setting Name" name="SettingNameLabel" class="setting-label"/>
+    <ui:VisualElement name="SettingNameSlider" class="custom-slider">
+        <ui:VisualElement class="slider-track">
+            <ui:VisualElement name="SettingNameFill" class="slider-fill"/>
+        </ui:VisualElement>
+    </ui:VisualElement>
+    <ui:Label text="50%" name="SettingNameValue" class="slider-value-label"/>
+</ui:VisualElement>
+
+사용 예시:
+- Master Volume (마스터 볼륨)
+- BGM Volume (배경음 볼륨)
+- SFX Volume (효과음 볼륨)
+- Brightness (밝기)
+- Contrast (대비)
+
+===========================================
+2. 드롭다운 (Dropdown)
+===========================================
+
+<!-- UXML 코드 -->
+<ui:VisualElement class="setting-row">
+    <ui:Label text="Setting Name" name="SettingNameLabel" class="setting-label"/>
+    <ui:DropdownField name="SettingNameDropdown" class="setting-dropdown"/>
+</ui:VisualElement>
+
+사용 예시:
+- Resolution (해상도)
+- Screen Mode (화면 모드)
+- Game Language (게임 언어)
+- Voice Language (음성 언어)
+- Difficulty (난이도)
+- Microphone (마이크)
+
+===========================================
+3. 온/오프 토글 버튼 (Toggle Button)
+===========================================
+
+<!-- UXML 코드 -->
+<ui:VisualElement class="setting-row">
+    <ui:Label text="Setting Name" name="SettingNameLabel" class="setting-label"/>
+    <ui:VisualElement name="SettingNameToggle" class="toggle-button-group">
+        <ui:Button text="On" name="SettingNameOn" class="toggle-button toggle-button-left"/>
+        <ui:Button text="Off" name="SettingNameOff" class="toggle-button toggle-button-right"/>
+    </ui:VisualElement>
+</ui:VisualElement>
+
+사용 예시:
+- V-Sync (수직 동기화)
+- Subtitle (자막)
+- Screen Shake (화면 흔들림)
+- Hit Effect (피격 효과)
+
+===========================================
+4. 일반 버튼 (Button)
+===========================================
+
+<!-- UXML 코드 -->
+<ui:VisualElement class="setting-row">
+    <ui:Label text="Setting Name" name="SettingNameLabel" class="setting-label"/>
+    <ui:Button text="Button Text" name="SettingNameButton" class="setting-button"/>
+</ui:VisualElement>
+
+사용 예시:
+- Change Keybinds (키 설정 변경)
+- Reset to Default (기본값으로 리셋)
+
+===========================================
+5. 패널 헤더 (Panel Header)
+===========================================
+
+<!-- UXML 코드 -->
+<ui:VisualElement class="panel-header">
+    <ui:Label text="Panel Title" name="PanelTitle" class="panel-title"/>
+    <ui:VisualElement class="reset-button-container">
+        <ui:Button text="Reset" name="PanelResetButton" class="reset-button"/>
+    </ui:VisualElement>
+</ui:VisualElement>
+
+사용 예시:
+- Audio Settings (오디오 설정)
+- Graphics Settings (그래픽 설정)
+- Language Settings (언어 설정)
+- Game Settings (게임 설정)
+
+===========================================
+CSS 클래스 설명
+===========================================
+
+.setting-row          : 각 설정 항목의 행
+.setting-label        : 설정 이름 레이블
+.custom-slider        : 커스텀 슬라이더 컨테이너
+.slider-track         : 슬라이더 트랙
+.slider-fill          : 슬라이더 채워진 부분
+.slider-value-label   : 슬라이더 값 표시 레이블
+.setting-dropdown     : 드롭다운
+.toggle-button-group  : 토글 버튼 그룹
+.toggle-button        : 토글 버튼
+.toggle-button-left   : 왼쪽 토글 버튼 (On)
+.toggle-button-right  : 오른쪽 토글 버튼 (Off)
+.setting-button       : 일반 설정 버튼
+.panel-header         : 패널 헤더
+.panel-title          : 패널 제목
+.reset-button         : 리셋 버튼
+
+===========================================
+C# 코드 예시
+===========================================
+
+// 슬라이더 초기화
+var slider = root.Q<VisualElement>("SettingNameSlider");
+var fill = root.Q<VisualElement>("SettingNameFill");
+var valueLabel = root.Q<Label>("SettingNameValue");
+
+// 슬라이더 값 설정 (0.0 ~ 1.0)
+float value = 0.5f;
+fill.style.width = Length.Percent(value * 100);
+valueLabel.text = $"{(int)(value * 100)}%";
+
+// 드롭다운 초기화
+var dropdown = root.Q<DropdownField>("SettingNameDropdown");
+dropdown.choices = new List<string> { "Option 1", "Option 2", "Option 3" };
+dropdown.value = dropdown.choices[0];
+
+// 토글 버튼 초기화
+var onButton = root.Q<Button>("SettingNameOn");
+var offButton = root.Q<Button>("SettingNameOff");
+
+onButton.clicked += () => {
+    onButton.AddToClassList("active");
+    offButton.RemoveFromClassList("active");
+};
+
+offButton.clicked += () => {
+    offButton.AddToClassList("active");
+    onButton.RemoveFromClassList("active");
+};
+
+===========================================

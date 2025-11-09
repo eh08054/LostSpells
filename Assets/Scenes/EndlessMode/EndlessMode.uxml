@@ -1,0 +1,50 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements"
+       editor-extension-mode="False">
+    <!-- USS 스타일시트 -->
+    <Style src="/Assets/Scenes/Common/Common.uss"/>
+    <Style src="/Assets/Scenes/EndlessMode/EndlessMode.uss"/>
+
+    <!-- 전체 화면 컨테이너 -->
+    <ui:VisualElement name="EndlessMode" class="screen-container">
+
+        <!-- 배경 레이어 (맨 뒤) -->
+        <ui:VisualElement name="BackgroundLayer" class="background-layer"/>
+
+        <!-- 중경 레이어 (건물들) -->
+        <ui:VisualElement name="MiddlegroundLayer" class="middleground-layer"/>
+
+        <!-- UI 컨텐츠 (맨 앞) -->
+        <ui:VisualElement name="UIContent" class="ui-content">
+            <!-- 상단 헤더 바 -->
+            <ui:VisualElement name="HeaderBar" class="header-bar">
+            <!-- 왼쪽 영역 -->
+            <ui:VisualElement name="HeaderLeft" class="header-side header-left">
+                <ui:Button text="" name="BackButton" class="back-button"/>
+            </ui:VisualElement>
+
+            <!-- 중앙 제목 -->
+            <ui:Label text="Endless Mode" name="HeaderTitle" class="header-title"/>
+
+            <!-- 오른쪽 영역 (균형 유지용) -->
+            <ui:VisualElement name="HeaderRight" class="header-side"/>
+        </ui:VisualElement>
+
+        <!-- 컨텐츠 영역 -->
+        <ui:VisualElement name="ContentArea" class="content-area">
+
+            <!-- 순위표 제목 -->
+            <ui:Label text="Best Score" name="RankingTitle" class="ranking-title"/>
+
+            <!-- 순위표 리스트 컨테이너 -->
+            <ui:VisualElement name="RankingListContainer" class="ranking-list-container">
+                <!-- 순위 항목들이 동적으로 추가됨 -->
+            </ui:VisualElement>
+
+            <!-- 플레이 버튼 -->
+            <ui:Button text="Start Game" name="PlayButton" class="play-button"/>
+
+        </ui:VisualElement>
+        </ui:VisualElement>
+
+    </ui:VisualElement>
+</ui:UXML>
