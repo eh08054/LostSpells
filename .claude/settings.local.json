@@ -67,7 +67,10 @@
       "Bash(then rm -f \"nul\")",
       "Bash(if [ -f \"nul.meta\" ])",
       "Bash(then rm -f \"nul.meta\")",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "Bash(git config:*)",
+      "Bash(git tag:*)",
+      "Bash(test:*)"
     ],
     "deny": [],
     "ask": []
