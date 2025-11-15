@@ -4,56 +4,36 @@ Unity용 음성 인식 서버 - Faster Whisper 기반
 
 ## 🚀 빠른 시작
 
-### 🎯 권장 방법 (모든 OS)
+### Windows에서 실행
 
-```bash
-python start.py
-```
-
-### OS별 실행 방법
-
-#### Windows
 ```cmd
-start_gui.bat
-```
-또는
-```cmd
-python start.py
+start.bat
 ```
 
-#### macOS / Linux
-```bash
-./start_gui.sh
-```
-또는
-```bash
-python3 start.py
-```
+더블클릭으로 실행하거나 터미널에서 실행하면 서버가 `http://localhost:8000`에서 시작됩니다.
 
 ---
 
-## 📦 설치
+## 📦 설치 (최초 1회)
 
 ### 1. Python 설치
 - Python 3.9 이상 필요
 - [Python 다운로드](https://www.python.org/downloads/)
 
-### 2. 가상환경 생성
+### 2. 의존성 설치 (선택사항 - 가상환경 사용시)
 
-**Windows:**
+**가상환경 생성:**
 ```cmd
 python -m venv venv
+```
+
+**활성화:**
+```cmd
 venv\Scripts\activate
 ```
 
-**macOS/Linux:**
-```bash
-python3 -m venv venv
-source venv/bin/activate
-```
-
-### 3. 의존성 설치
-```bash
+**의존성 설치:**
+```cmd
 pip install -r requirements.txt
 ```
 
@@ -65,7 +45,6 @@ pip install -r requirements.txt
 - ✅ **스킬 매칭**: Levenshtein 거리 기반 유사도 매칭
 - ✅ **다국어 지원**: 한국어, 영어, 일본어, 중국어
 - ✅ **모델 관리**: 5가지 모델 크기 (tiny ~ large-v3)
-- ✅ **GUI 관리자**: 모델 다운로드/삭제, 서버 제어
 - ✅ **REST API**: FastAPI 기반 REST API
 
 ---
@@ -79,6 +58,7 @@ pip install -r requirements.txt
 - `GET /` - 서버 상태 확인
 - `POST /recognize` - 음성 인식 (파일 업로드)
 - `POST /set-skills` - 스킬 목록 설정
+- `GET /skills` - 현재 스킬 목록 조회
 - `GET /models` - 모델 목록 및 상태
 - `POST /models/select` - 모델 변경
 - `POST /models/download` - 모델 다운로드
@@ -102,80 +82,25 @@ pip install -r requirements.txt
 
 ---
 
-## 🔧 설정
+## 🔧 구조
 
-서버 설정은 `main.py`에서 수정 가능:
-
-```python
-# 서버 주소 및 포트
-host = "0.0.0.0"
-port = 8000
-
-# 기본 모델
-default_model = "base"
-
-# 기본 언어
-default_language = "ko"
 ```
-
----
-
-## 📝 Unity 연동 예시
-
-```csharp
-using UnityEngine;
-using UnityEngine.Networking;
-using System.Collections;
-
-public class VoiceRecognitionClient : MonoBehaviour
-{
-    private const string SERVER_URL = "http://localhost:8000";
-
-    IEnumerator RecognizeAudio(byte[] audioData)
-    {
-        WWWForm form = new WWWForm();
-        form.AddBinaryData("audio", audioData, "recording.wav", "audio/wav");
-        form.AddField("language", "ko");
-
-        using (UnityWebRequest www = UnityWebRequest.Post($"{SERVER_URL}/recognize", form))
-        {
-            yield return www.SendWebRequest();
-
-            if (www.result == UnityWebRequest.Result.Success)
-            {
-                string jsonResponse = www.downloadHandler.text;
-                Debug.Log($"Recognition result: {jsonResponse}");
-            }
-            else
-            {
-                Debug.LogError($"Error: {www.error}");
-            }
-        }
-    }
-}
+Server/
+├── main.py              # FastAPI 서버 메인 코드
+├── whisper_handler.py   # Whisper 음성 인식 핸들러
+├── skill_matcher.py     # 스킬 매칭 로직
+├── start.bat            # Windows 실행 스크립트
+└── requirements.txt     # Python 의존성
 ```
 
 ---
 
 ## 🛠️ 트러블슈팅
 
-### 가상환경을 찾을 수 없음
-```bash
-# 가상환경 재생성
-python -m venv venv
-source venv/bin/activate  # macOS/Linux
-# 또는
-venv\Scripts\activate  # Windows
-pip install -r requirements.txt
-```
-
 ### 포트 8000이 이미 사용 중
-```bash
-# Windows: 포트 사용 중인 프로세스 찾기
+```cmd
+# 포트 사용 중인 프로세스 찾기
 netstat -ano | findstr :8000
-
-# macOS/Linux: 포트 사용 중인 프로세스 찾기
-lsof -i :8000
 ```
 
 ### 모델 다운로드 실패
@@ -188,9 +113,3 @@ lsof -i :8000
 ## 📄 라이센스
 
 MIT License
-
----
-
-## 🤝 기여
-
-버그 리포트 및 기능 제안은 Issues에 등록해주세요.

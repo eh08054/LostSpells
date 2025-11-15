@@ -1,7 +1,16 @@
 @echo off
-REM Voice Recognition Server Launcher (Windows)
-REM start.py를 실행하는 간단한 배치 파일
+echo ========================================
+echo   Voice Recognition Server
+echo ========================================
+echo.
 
-python start.py
+REM 가상환경이 있으면 사용, 없으면 시스템 Python 사용
+if exist "venv\Scripts\python.exe" (
+    echo [*] Using virtual environment Python
+    venv\Scripts\python.exe main.py
+) else (
+    echo [*] Using system Python
+    python main.py
+)
 
 pause
