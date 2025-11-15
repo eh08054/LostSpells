@@ -5,7 +5,7 @@
     position: absolute;
     width: 100%;
     height: 100%;
-    background-image: url("project://database/Assets/Gothicvania-Town/Art/Environment/Background/background.png");
+    background-image: url("project://database/Assets/Templates/Gothicvania-Town/Art/Environment/Background/background.png");
     -unity-background-scale-mode: scale-and-crop;
 }
 
@@ -14,7 +14,7 @@
     position: absolute;
     width: 100%;
     height: 100%;
-    background-image: url("project://database/Assets/Gothicvania-Town/Art/Environment/Background/middleground.png");
+    background-image: url("project://database/Assets/Templates/Gothicvania-Town/Art/Environment/Background/middleground.png");
     -unity-background-scale-mode: scale-and-crop;
 }
 
@@ -127,7 +127,7 @@
     padding: var(--spacing-medium);
 
     /* Fantasy Wooden GUI TextBTN_Big 배경 */
-    background-image: url("project://database/Assets/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/TextBTN_Big.png");
+    background-image: url("project://database/Assets/Templates/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/TextBTN_Big.png");
     -unity-background-scale-mode: stretch-to-fill;
     -unity-background-image-tint-color: rgb(255, 255, 255);
 
@@ -433,7 +433,7 @@
     width: 30px;
     height: 30px;
 
-    background-image: url("project://database/Assets/2D%20Casual%20UI/Sprite/GUI.png#GUI_33");
+    background-image: url("project://database/Assets/Templates/2D%20Casual%20UI/Sprite/GUI.png#GUI_33");
     -unity-background-scale-mode: scale-to-fit;
     background-color: rgba(0, 0, 0, 0);
     border-width: 0;

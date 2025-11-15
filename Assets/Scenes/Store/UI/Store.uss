@@ -6,7 +6,7 @@
     position: absolute;
     width: 100%;
     height: 100%;
-    background-image: url("project://database/Assets/Gothicvania-Town/Art/Environment/Background/background.png");
+    background-image: url("project://database/Assets/Templates/Gothicvania-Town/Art/Environment/Background/background.png");
     -unity-background-scale-mode: scale-and-crop;
 }
 
@@ -15,7 +15,7 @@
     position: absolute;
     width: 100%;
     height: 100%;
-    background-image: url("project://database/Assets/Gothicvania-Town/Art/Environment/Background/middleground.png");
+    background-image: url("project://database/Assets/Templates/Gothicvania-Town/Art/Environment/Background/middleground.png");
     -unity-background-scale-mode: scale-and-crop;
 }
 
@@ -37,7 +37,7 @@
     margin-left: var(--spacing-small);
 
     /* GUI_9 배경 - 전체 바에 적용 */
-    background-image: url("project://database/Assets/2D%20Casual%20UI/Sprite/GUI.png#GUI_9");
+    background-image: url("project://database/Assets/Templates/2D%20Casual%20UI/Sprite/GUI.png#GUI_9");
     -unity-background-scale-mode: stretch-to-fill;
     min-width: 120px;
     padding-left: 8px;
@@ -56,11 +56,11 @@
 }
 
 .diamond-icon {
-    background-image: url("project://database/Assets/2D%20Casual%20UI/Sprite/GUI.png#GUI_22");
+    background-image: url("project://database/Assets/Templates/2D%20Casual%20UI/Sprite/GUI.png#GUI_22");
 }
 
 .revive-stone-icon {
-    background-image: url("project://database/Assets/2D%20Casual%20UI/Sprite/GUI.png#GUI_20");
+    background-image: url("project://database/Assets/Templates/2D%20Casual%20UI/Sprite/GUI.png#GUI_20");
 }
 
 /* 바 컨텐츠 - 오른쪽 정렬 영역 */
@@ -90,7 +90,7 @@
     margin-right: var(--spacing-medium);
 
     /* GUI_60 배경 */
-    background-image: url("project://database/Assets/2D%20Casual%20UI/Sprite/GUI.png#GUI_60");
+    background-image: url("project://database/Assets/Templates/2D%20Casual%20UI/Sprite/GUI.png#GUI_60");
     -unity-background-scale-mode: scale-to-fit;
 }
 
@@ -128,7 +128,7 @@
     padding: var(--spacing-medium);
 
     /* Fantasy Wooden GUI TextBTN_Big 배경 */
-    background-image: url("project://database/Assets/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/TextBTN_Big.png");
+    background-image: url("project://database/Assets/Templates/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/TextBTN_Big.png");
     -unity-background-scale-mode: stretch-to-fill;
     -unity-background-image-tint-color: rgb(255, 255, 255);
 
@@ -186,7 +186,7 @@
     margin-bottom: var(--spacing-large);
 
     /* Fantasy Wooden GUI - UI board Large parchment 배경 */
-    background-image: url("project://database/Assets/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/UI%20board%20Large%20%20parchment.png");
+    background-image: url("project://database/Assets/Templates/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/UI%20board%20Large%20%20parchment.png");
     -unity-background-scale-mode: stretch-to-fill;
     -unity-background-image-tint-color: rgb(255, 255, 255);
 
@@ -258,7 +258,7 @@
     padding: 8px;
 
     /* Fantasy Wooden GUI TextBTN_Big 배경 */
-    background-image: url("project://database/Assets/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/TextBTN_Big.png");
+    background-image: url("project://database/Assets/Templates/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/TextBTN_Big.png");
     -unity-background-scale-mode: stretch-to-fill;
     -unity-background-image-tint-color: rgb(255, 255, 255);
 
@@ -294,7 +294,7 @@
     margin-bottom: var(--spacing-large);
 
     /* Fantasy Wooden GUI - UI board Large parchment 배경 */
-    background-image: url("project://database/Assets/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/UI%20board%20Large%20%20parchment.png");
+    background-image: url("project://database/Assets/Templates/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/UI%20board%20Large%20%20parchment.png");
     -unity-background-scale-mode: stretch-to-fill;
     -unity-background-image-tint-color: rgb(255, 255, 255);
 
@@ -342,11 +342,11 @@
 }
 
 .diamond-icon-product {
-    background-image: url("project://database/Assets/2D%20Casual%20UI/Sprite/GUI.png#GUI_22");
+    background-image: url("project://database/Assets/Templates/2D%20Casual%20UI/Sprite/GUI.png#GUI_22");
 }
 
 .revive-stone-icon-product {
-    background-image: url("project://database/Assets/2D%20Casual%20UI/Sprite/GUI.png#GUI_20");
+    background-image: url("project://database/Assets/Templates/2D%20Casual%20UI/Sprite/GUI.png#GUI_20");
 }
 
 /* X 표시 */
@@ -388,7 +388,7 @@
 .product-price-icon {
     width: 24px;
     height: 24px;
-    background-image: url("project://database/Assets/2D%20Casual%20UI/Sprite/GUI.png#GUI_22");
+    background-image: url("project://database/Assets/Templates/2D%20Casual%20UI/Sprite/GUI.png#GUI_22");
     -unity-background-scale-mode: scale-to-fit;
     flex-shrink: 0;
 }

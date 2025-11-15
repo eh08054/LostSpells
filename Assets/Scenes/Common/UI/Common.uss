@@ -65,7 +65,7 @@
     width: 60px;
     height: 60px;
 
-    background-image: url("project://database/Assets/2D%20Casual%20UI/Sprite/GUI.png#GUI_33");
+    background-image: url("project://database/Assets/Templates/2D%20Casual%20UI/Sprite/GUI.png#GUI_33");
     -unity-background-scale-mode: scale-to-fit;
     background-color: rgba(0, 0, 0, 0);
     border-width: 0;

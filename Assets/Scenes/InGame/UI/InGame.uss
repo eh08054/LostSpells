@@ -15,7 +15,7 @@
     width: 100%;
     height: 100%;
     /* 배경 이미지 제거 - 게임 스프라이트가 보이도록 */
-    /* background-image: url("project://database/Assets/Gothicvania-Town/Art/Environment/Background/background.png");
+    /* background-image: url("project://database/Assets/Templates/Gothicvania-Town/Art/Environment/Background/background.png");
     -unity-background-scale-mode: scale-and-crop; */
 }
 
@@ -25,7 +25,7 @@
     width: 100%;
     height: 100%;
     /* 배경 이미지 제거 - 게임 스프라이트가 보이도록 */
-    /* background-image: url("project://database/Assets/Gothicvania-Town/Art/Environment/Background/middleground.png");
+    /* background-image: url("project://database/Assets/Templates/Gothicvania-Town/Art/Environment/Background/middleground.png");
     -unity-background-scale-mode: scale-and-crop; */
 }
 
@@ -104,7 +104,7 @@
     height: 50px;
     min-width: 50px;
     min-height: 50px;
-    background-image: url("project://database/Assets/2D%20Casual%20UI/Sprite/GUI.png#GUI_36");
+    background-image: url("project://database/Assets/Templates/2D%20Casual%20UI/Sprite/GUI.png#GUI_36");
     -unity-background-scale-mode: scale-to-fit;
     background-color: rgba(0, 0, 0, 0);
     border-width: 0;
@@ -163,7 +163,7 @@
     margin-left: 8px;
 
     /* GUI_9 배경 - 전체 바에 적용 */
-    background-image: url("project://database/Assets/2D%20Casual%20UI/Sprite/GUI.png#GUI_9");
+    background-image: url("project://database/Assets/Templates/2D%20Casual%20UI/Sprite/GUI.png#GUI_9");
     -unity-background-scale-mode: stretch-to-fill;
     min-width: 120px;
     padding-left: 8px;
@@ -182,11 +182,11 @@
 }
 
 .diamond-icon {
-    background-image: url("project://database/Assets/2D%20Casual%20UI/Sprite/GUI.png#GUI_22");
+    background-image: url("project://database/Assets/Templates/2D%20Casual%20UI/Sprite/GUI.png#GUI_22");
 }
 
 .revive-stone-icon {
-    background-image: url("project://database/Assets/2D%20Casual%20UI/Sprite/GUI.png#GUI_20");
+    background-image: url("project://database/Assets/Templates/2D%20Casual%20UI/Sprite/GUI.png#GUI_20");
 }
 
 /* 바 컨텐츠 - 오른쪽 정렬 영역 */
@@ -217,7 +217,7 @@
     margin-right: 16px;
 
     /* GUI_60 배경 */
-    background-image: url("project://database/Assets/2D%20Casual%20UI/Sprite/GUI.png#GUI_60");
+    background-image: url("project://database/Assets/Templates/2D%20Casual%20UI/Sprite/GUI.png#GUI_60");
     -unity-background-scale-mode: scale-to-fit;
 }
 
@@ -572,7 +572,7 @@
     translate: -50% -50%;
     width: 380px;
     height: auto;
-    background-image: url("project://database/Assets/Fantasy Wooden GUI  Free/normal_ui_set A/UI board Large Set.png");
+    background-image: url("project://database/Assets/Templates/Fantasy Wooden GUI  Free/normal_ui_set A/UI board Large Set.png");
     -unity-background-scale-mode: stretch-to-fill;
     border-width: 0;
     padding: 50px 35px 35px 35px;
@@ -596,7 +596,7 @@
 .menu-popup-button {
     width: 100%;
     height: 58px;
-    background-image: url("project://database/Assets/Fantasy Wooden GUI  Free/normal_ui_set A/TextBTN_Big.png");
+    background-image: url("project://database/Assets/Templates/Fantasy Wooden GUI  Free/normal_ui_set A/TextBTN_Big.png");
     -unity-background-scale-mode: stretch-to-fill;
     -unity-background-image-tint-color: rgb(255, 255, 255);
     border-width: 0;

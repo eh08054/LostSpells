@@ -7,7 +7,7 @@
     position: absolute;
     width: 100%;
     height: 100%;
-    background-image: url("project://database/Assets/Gothicvania-Town/Art/Environment/Background/background.png");
+    background-image: url("project://database/Assets/Templates/Gothicvania-Town/Art/Environment/Background/background.png");
     -unity-background-scale-mode: scale-and-crop;
 }
 
@@ -16,7 +16,7 @@
     position: absolute;
     width: 100%;
     height: 100%;
-    background-image: url("project://database/Assets/Gothicvania-Town/Art/Environment/Background/middleground.png");
+    background-image: url("project://database/Assets/Templates/Gothicvania-Town/Art/Environment/Background/middleground.png");
     -unity-background-scale-mode: scale-and-crop;
 }
 
@@ -68,7 +68,7 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    background-image: url("project://database/Assets/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/UI%20board%20Large%20%20parchment.png");
+    background-image: url("project://database/Assets/Templates/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/UI%20board%20Large%20%20parchment.png");
     -unity-background-scale-mode: stretch-to-fill;
     -unity-background-image-tint-color: rgb(255, 255, 255);
     background-color: transparent;
@@ -147,7 +147,7 @@
     min-width: 250px;
     height: 70px;
     flex-shrink: 0;
-    background-image: url("project://database/Assets/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/TextBTN_Big.png");
+    background-image: url("project://database/Assets/Templates/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/TextBTN_Big.png");
     -unity-background-scale-mode: stretch-to-fill;
     background-color: transparent;
     border-width: 0;
