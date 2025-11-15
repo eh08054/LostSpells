@@ -1,0 +1,104 @@
+{
+  "texts": {
+    "main_menu_title": { "ko": "메인 메뉴", "en": "Main Menu" },
+    "main_menu_play": { "ko": "플레이", "en": "Play" },
+    "main_menu_options": { "ko": "설정", "en": "Options" },
+    "main_menu_store": { "ko": "상점", "en": "Store" },
+    "main_menu_quit": { "ko": "종료", "en": "Quit" },
+    "quit_popup_title": { "ko": "종료 확인", "en": "Quit Confirmation" },
+    "quit_popup_message": { "ko": "정말 종료하시겠습니까?", "en": "Are you sure you want to quit?" },
+    "quit_popup_quit": { "ko": "종료", "en": "Quit" },
+    "quit_popup_cancel": { "ko": "취소", "en": "Cancel" },
+
+    "game_mode_selection_title": { "ko": "게임 모드 선택", "en": "Game Mode Selection" },
+    "game_mode_story": { "ko": "스토리 모드", "en": "Story Mode" },
+    "game_mode_chapter": { "ko": "챕터 선택", "en": "Chapter Select" },
+    "game_mode_endless": { "ko": "무한 모드", "en": "Endless Mode" },
+    "game_mode_back": { "ko": "돌아가기", "en": "Back" },
+
+    "story_mode_title": { "ko": "스토리 모드", "en": "Story Mode" },
+    "story_mode_back": { "ko": "돌아가기", "en": "Back" },
+
+    "chapter_select_title": { "ko": "챕터 선택", "en": "Chapter Select" },
+    "chapter_select_back": { "ko": "돌아가기", "en": "Back" },
+
+    "endless_mode_title": { "ko": "무한 모드", "en": "Endless Mode" },
+    "endless_mode_best_score": { "ko": "최고 점수", "en": "Best Score" },
+    "endless_mode_start_game": { "ko": "게임 시작", "en": "Start Game" },
+    "endless_mode_easy": { "ko": "쉬움", "en": "Easy" },
+    "endless_mode_normal": { "ko": "보통", "en": "Normal" },
+    "endless_mode_hard": { "ko": "어려움", "en": "Hard" },
+    "endless_mode_back": { "ko": "돌아가기", "en": "Back" },
+
+    "options_title": { "ko": "설정", "en": "Options" },
+    "options_audio": { "ko": "오디오", "en": "Audio" },
+    "options_graphics": { "ko": "그래픽", "en": "Graphics" },
+    "options_language": { "ko": "언어", "en": "Language" },
+    "options_game": { "ko": "게임", "en": "Game" },
+    "options_back": { "ko": "돌아가기", "en": "Back" },
+
+    "options_audio_title": { "ko": "오디오 설정", "en": "Audio Settings" },
+    "options_audio_reset": { "ko": "초기화", "en": "Reset" },
+    "options_audio_microphone": { "ko": "마이크 장치", "en": "Microphone Device" },
+
+    "options_graphics_title": { "ko": "그래픽 설정", "en": "Graphics Settings" },
+    "options_graphics_reset": { "ko": "초기화", "en": "Reset" },
+
+    "options_language_title": { "ko": "언어 설정", "en": "Language Settings" },
+    "options_language_reset": { "ko": "초기화", "en": "Reset" },
+    "options_language_ui": { "ko": "UI 언어", "en": "UI Language" },
+    "options_language_korean": { "ko": "한국어", "en": "Korean" },
+    "options_language_english": { "ko": "영어", "en": "English" },
+
+    "options_game_title": { "ko": "게임 설정", "en": "Game Settings" },
+    "options_game_reset": { "ko": "초기화", "en": "Reset" },
+    "options_game_keybindings": { "ko": "키 바인딩", "en": "Key Bindings" },
+    "options_game_voice_recognition": { "ko": "음성 인식", "en": "Voice Recognition" },
+
+    "options_keybinding_ingame": { "ko": "게임 내 조작", "en": "In-Game Controls" },
+    "options_keybinding_move_left": { "ko": "왼쪽 이동:", "en": "Move Left:" },
+    "options_keybinding_move_right": { "ko": "오른쪽 이동:", "en": "Move Right:" },
+    "options_keybinding_jump": { "ko": "점프:", "en": "Jump:" },
+    "options_keybinding_voice_record": { "ko": "음성 녹음:", "en": "Voice Recording:" },
+    "options_keybinding_skill_panel": { "ko": "스킬 패널:", "en": "Skill Panel:" },
+    "options_keybinding_store": { "ko": "상점 조작", "en": "Store Controls" },
+
+    "options_voice_server_status": { "ko": "서버 상태:", "en": "Server Status:" },
+    "options_voice_server_not_checked": { "ko": "확인 안됨", "en": "Not checked" },
+    "options_voice_server_check": { "ko": "확인", "en": "Check" },
+    "options_voice_server_connected": { "ko": "연결됨", "en": "Connected" },
+    "options_voice_server_disconnected": { "ko": "연결 안됨", "en": "Disconnected" },
+    "options_voice_language": { "ko": "음성 인식 언어", "en": "Voice Recognition Language" },
+    "options_voice_model": { "ko": "음성 인식 모델", "en": "Voice Recognition Model" },
+    "options_voice_model_status": { "ko": "모델 상태:", "en": "Model Status:" },
+    "options_voice_model_downloaded": { "ko": "다운로드됨", "en": "Downloaded" },
+    "options_voice_model_not_downloaded": { "ko": "다운로드 안됨", "en": "Not downloaded" },
+    "options_voice_model_downloading": { "ko": "다운로드 중", "en": "Downloading" },
+    "options_voice_model_download": { "ko": "다운로드", "en": "Download" },
+    "options_voice_model_delete": { "ko": "삭제", "en": "Delete" },
+
+    "store_title": { "ko": "상점", "en": "Store" },
+    "store_diamond": { "ko": "다이아몬드", "en": "Diamonds" },
+    "store_revive_stone": { "ko": "부활석", "en": "Revive Stones" },
+    "store_back": { "ko": "돌아가기", "en": "Back" },
+
+    "ingame_pause": { "ko": "일시정지", "en": "Pause" },
+    "ingame_resume": { "ko": "계속하기", "en": "Resume" },
+    "ingame_restart": { "ko": "재시작", "en": "Restart" },
+    "ingame_quit": { "ko": "나가기", "en": "Quit" },
+    "ingame_hp": { "ko": "체력", "en": "HP" },
+    "ingame_mana": { "ko": "마나", "en": "Mana" },
+    "ingame_wave": { "ko": "웨이브", "en": "Wave" },
+    "ingame_score": { "ko": "점수", "en": "Score" },
+    "ingame_chapter": { "ko": "챕터", "en": "Chapter" },
+
+    "skill_category_all": { "ko": "전체", "en": "All" },
+    "skill_category_attack": { "ko": "공격", "en": "Attack" },
+    "skill_category_defense": { "ko": "방어", "en": "Defense" },
+
+    "voice_recording": { "ko": "녹음 중...", "en": "Recording..." },
+    "voice_processing": { "ko": "처리 중...", "en": "Processing..." },
+    "voice_too_short": { "ko": "너무 짧음!", "en": "Too short!" },
+    "voice_failed": { "ko": "실패", "en": "Failed" }
+  }
+}

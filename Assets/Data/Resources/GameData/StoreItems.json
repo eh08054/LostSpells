@@ -1,0 +1,104 @@
+{
+  "items": [
+    {
+      "itemId": "diamond_small",
+      "itemName": "Small Diamond Pack",
+      "itemType": 0,
+      "quantity": 100,
+      "price": 99,
+      "priceType": 0,
+      "iconPath": "",
+      "isBestValue": false
+    },
+    {
+      "itemId": "diamond_medium",
+      "itemName": "Medium Diamond Pack",
+      "itemType": 0,
+      "quantity": 500,
+      "price": 499,
+      "priceType": 0,
+      "iconPath": "",
+      "isBestValue": false
+    },
+    {
+      "itemId": "diamond_large",
+      "itemName": "Large Diamond Pack",
+      "itemType": 0,
+      "quantity": 1200,
+      "price": 999,
+      "priceType": 0,
+      "iconPath": "",
+      "isBestValue": true
+    },
+    {
+      "itemId": "diamond_mega",
+      "itemName": "Mega Diamond Pack",
+      "itemType": 0,
+      "quantity": 3000,
+      "price": 1999,
+      "priceType": 0,
+      "iconPath": "",
+      "isBestValue": false
+    },
+    {
+      "itemId": "revive_stone_1",
+      "itemName": "Revive Stone (1x)",
+      "itemType": 1,
+      "quantity": 1,
+      "price": 10,
+      "priceType": 1,
+      "iconPath": "",
+      "isBestValue": false
+    },
+    {
+      "itemId": "revive_stone_5",
+      "itemName": "Revive Stone (5x)",
+      "itemType": 1,
+      "quantity": 5,
+      "price": 45,
+      "priceType": 1,
+      "iconPath": "",
+      "isBestValue": true
+    },
+    {
+      "itemId": "revive_stone_10",
+      "itemName": "Revive Stone (10x)",
+      "itemType": 1,
+      "quantity": 10,
+      "price": 80,
+      "priceType": 1,
+      "iconPath": "",
+      "isBestValue": false
+    },
+    {
+      "itemId": "gold_small",
+      "itemName": "Small Gold Pouch",
+      "itemType": 2,
+      "quantity": 500,
+      "price": 5,
+      "priceType": 1,
+      "iconPath": "",
+      "isBestValue": false
+    },
+    {
+      "itemId": "gold_medium",
+      "itemName": "Medium Gold Bag",
+      "itemType": 2,
+      "quantity": 2000,
+      "price": 15,
+      "priceType": 1,
+      "iconPath": "",
+      "isBestValue": true
+    },
+    {
+      "itemId": "gold_large",
+      "itemName": "Large Gold Chest",
+      "itemType": 2,
+      "quantity": 5000,
+      "price": 30,
+      "priceType": 1,
+      "iconPath": "",
+      "isBestValue": false
+    }
+  ]
+}
