@@ -33,28 +33,28 @@ async def lifespan(app: FastAPI):
     # Startup
     global whisper_handler
     print("=" * 60)
-    print("🎤 Voice Recognition Server - Starting")
+    print("Voice Recognition Server - Starting")
     print("=" * 60)
 
     if WHISPER_AVAILABLE:
         print("[*] Initializing Whisper model (base)...")
         try:
             whisper_handler = WhisperHandler(model_size="base")
-            print("[✓] Whisper model loaded successfully!")
+            print("[OK] Whisper model loaded successfully!")
         except Exception as e:
             print(f"[!] Failed to load Whisper model: {e}")
             print("[*] Server will run in TEST mode")
     else:
         print("[*] Server running in TEST mode (Whisper not available)")
 
-    print("[✓] Server ready on http://0.0.0.0:8000")
+    print("[OK] Server ready on http://0.0.0.0:8000")
     print("=" * 60)
 
     yield  # Server is running
 
     # Shutdown
     print("\n[*] Shutting down server...")
-    print("[✓] Cleanup complete")
+    print("[OK] Cleanup complete")
 
 # FastAPI app with lifespan
 app = FastAPI(
@@ -196,8 +196,26 @@ async def recognize_skill(
         skill_scores = skill_matcher.match_skills(recognized_text)
         best_match = skill_matcher.get_best_match(recognized_text)
 
+        print(f"[Whisper] Recognized: '{recognized_text}'")
         print(f"[Matching] Best match: '{best_match[0]}' (score: {best_match[1]:.2f})")
         print(f"[Matching] All scores: {skill_scores}")
+
+        # 최소 신뢰도 임계값 (0.3 미만이면 인식 실패로 처리)
+        MINIMUM_CONFIDENCE = 0.3
+
+        if best_match[1] < MINIMUM_CONFIDENCE:
+            print(f"[Matching] Score too low ({best_match[1]:.2f} < {MINIMUM_CONFIDENCE}), no skill matched")
+            return {
+                "status": "no_match",
+                "recognized_text": recognized_text,
+                "processing_time": round(processing_time, 2),
+                "skill_scores": skill_scores,
+                "best_match": {
+                    "skill": None,
+                    "score": best_match[1]
+                },
+                "message": f"No skill matched - confidence too low ({best_match[1]:.2f})"
+            }
 
         return {
             "status": "success",

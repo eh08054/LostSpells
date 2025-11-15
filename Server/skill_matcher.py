@@ -23,29 +23,29 @@ class SkillMatcher:
         Returns:
             0.0 ~ 1.0 사이의 유사도 점수
         """
-        # 공백 제거 및 소문자 변환
-        text = recognized_text.strip()
-        skill = skill.strip()
+        # 공백 제거 및 소문자 변환 (띄어쓰기 무시하고 비교)
+        text = recognized_text.strip().replace(" ", "").lower()
+        skill_normalized = skill.strip().replace(" ", "").lower()
 
         if not text:
             return 0.0
 
         # 1. 정확히 일치하는 경우
-        if text == skill:
+        if text == skill_normalized:
             return 1.0
 
         # 2. 부분 문자열로 포함되는 경우
-        if skill in text:
+        if skill_normalized in text:
             # 스킬이 텍스트에 포함되면 높은 점수
             return 0.95
 
-        if text in skill:
+        if text in skill_normalized:
             # 텍스트가 스킬에 포함되면 중간 점수
             return 0.85
 
         # 3. Levenshtein 거리 기반 유사도
-        distance = Levenshtein.distance(text, skill)
-        max_len = max(len(text), len(skill))
+        distance = Levenshtein.distance(text, skill_normalized)
+        max_len = max(len(text), len(skill_normalized))
 
         if max_len == 0:
             return 0.0
@@ -53,7 +53,7 @@ class SkillMatcher:
         similarity = 1.0 - (distance / max_len)
 
         # 4. 자음/모음 분리 비교로 추가 점수
-        jamo_similarity = self._calculate_jamo_similarity(text, skill)
+        jamo_similarity = self._calculate_jamo_similarity(text, skill_normalized)
 
         # 두 점수의 가중 평균
         final_score = (similarity * 0.7) + (jamo_similarity * 0.3)
