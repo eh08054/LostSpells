@@ -1,6 +1,7 @@
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from contextlib import asynccontextmanager
 from typing import List, Optional
 import os
 import tempfile
@@ -17,36 +18,60 @@ except ImportError as e:
 
 from skill_matcher import SkillMatcher
 
-# FastAPI 앱 생성
-app = FastAPI(title="Voice Recognition Skill Matcher")
+# Global state
+whisper_handler = None
+skill_matcher = None
+current_skills = []
+download_progress = {}  # {model_size: {"status": "downloading", "progress": 0-100}}
 
-# CORS 설정 (Unity에서 접근 가능하도록)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Application lifespan manager (modern FastAPI pattern)
+    Replaces deprecated @app.on_event("startup") and @app.on_event("shutdown")
+    """
+    # Startup
+    global whisper_handler
+    print("=" * 60)
+    print("🎤 Voice Recognition Server - Starting")
+    print("=" * 60)
+
+    if WHISPER_AVAILABLE:
+        print("[*] Initializing Whisper model (base)...")
+        try:
+            whisper_handler = WhisperHandler(model_size="base")
+            print("[✓] Whisper model loaded successfully!")
+        except Exception as e:
+            print(f"[!] Failed to load Whisper model: {e}")
+            print("[*] Server will run in TEST mode")
+    else:
+        print("[*] Server running in TEST mode (Whisper not available)")
+
+    print("[✓] Server ready on http://0.0.0.0:8000")
+    print("=" * 60)
+
+    yield  # Server is running
+
+    # Shutdown
+    print("\n[*] Shutting down server...")
+    print("[✓] Cleanup complete")
+
+# FastAPI app with lifespan
+app = FastAPI(
+    title="Voice Recognition Skill Matcher",
+    description="AI-powered voice recognition server for Lost Spells game",
+    version="1.0.0",
+    lifespan=lifespan
+)
+
+# CORS middleware (allow Unity to connect)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 실제 배포시에는 특정 도메인만 허용
+    allow_origins=["*"],  # Production: restrict to specific domains
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Whisper 핸들러 (서버 시작 시 한 번만 로드)
-whisper_handler = None
-skill_matcher = None
-current_skills = []
-
-# 다운로드 진행 상태 추적
-download_progress = {}  # {model_size: {"status": "downloading", "progress": 0-100}}
-
-@app.on_event("startup")
-async def startup_event():
-    """서버 시작 시 Whisper 모델 로드"""
-    global whisper_handler
-    if WHISPER_AVAILABLE:
-        print("Initializing Whisper model...")
-        whisper_handler = WhisperHandler(model_size="base")  # tiny, base, small, medium, large
-        print("Server ready with Whisper!")
-    else:
-        print("Server ready in TEST mode (Whisper disabled)")
 
 @app.get("/")
 async def root():
