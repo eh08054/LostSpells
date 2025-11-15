@@ -1,8 +1,8 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements"
        editor-extension-mode="False">
     <!-- USS 스타일시트 -->
-    <Style src="/Assets/Scenes/Common/Common.uss"/>
-    <Style src="/Assets/Scenes/EndlessMode/EndlessMode.uss"/>
+    <Style src="/Assets/Scenes/Common/UI/Common.uss"/>
+    <Style src="/Assets/Scenes/EndlessMode/UI/EndlessMode.uss"/>
 
     <!-- 전체 화면 컨테이너 -->
     <ui:VisualElement name="EndlessMode" class="screen-container">

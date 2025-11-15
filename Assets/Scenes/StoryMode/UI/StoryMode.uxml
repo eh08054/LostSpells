@@ -1,7 +1,7 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements"
         editor-extension-mode="False">
-    <Style src="/Assets/Scenes/Common/Common.uss"/>
-    <Style src="/Assets/Scenes/StoryMode/StoryMode.uss"/>
+    <Style src="/Assets/Scenes/Common/UI/Common.uss"/>
+    <Style src="/Assets/Scenes/StoryMode/UI/StoryMode.uss"/>
 
     <ui:VisualElement name="StoryMode" class="screen-container">
 

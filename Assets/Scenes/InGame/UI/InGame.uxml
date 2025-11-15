@@ -1,8 +1,8 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements"
         editor-extension-mode="False">
     <!-- USS 스타일시트 -->
-    <Style src="project://database/Assets/Scenes/Common/Common.uss"/>
-    <Style src="project://database/Assets/Scenes/InGame/InGame.uss"/>
+    <Style src="project://database/Assets/Scenes/Common/UI/Common.uss"/>
+    <Style src="project://database/Assets/Scenes/InGame/UI/InGame.uss"/>
 
     <!-- 전체 화면 컨테이너 -->
     <ui:VisualElement name="InGame" class="screen-container">

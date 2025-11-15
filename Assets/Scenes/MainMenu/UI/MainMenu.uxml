@@ -1,8 +1,8 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements"
         editor-extension-mode="False">
     <!-- USS 스타일시트 자동 적용 -->
-    <Style src="/Assets/Scenes/Common/Common.uss"/>
-    <Style src="/Assets/Scenes/MainMenu/MainMenu.uss"/>
+    <Style src="/Assets/Scenes/Common/UI/Common.uss"/>
+    <Style src="/Assets/Scenes/MainMenu/UI/MainMenu.uss"/>
 
     <ui:VisualElement name="MainMenu" class="main-menu">
         <!-- 배경 레이어 (맨 뒤) -->

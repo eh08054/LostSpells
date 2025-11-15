@@ -1,8 +1,8 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements"
         editor-extension-mode="False">
     <!-- USS 스타일시트 자동 적용 -->
-    <Style src="/Assets/Scenes/Common/Common.uss"/>
-    <Style src="/Assets/Scenes/GameModeSelection/GameModeSelection.uss"/>
+    <Style src="/Assets/Scenes/Common/UI/Common.uss"/>
+    <Style src="/Assets/Scenes/GameModeSelection/UI/GameModeSelection.uss"/>
 
     <!-- 전체 화면 컨테이너 -->
     <ui:VisualElement name="GameModeSelection" class="screen-container">
