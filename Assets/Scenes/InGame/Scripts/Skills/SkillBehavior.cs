@@ -69,10 +69,9 @@ namespace LostSpells.Components
             var enemy = collision.GetComponent<EnemyComponent>();
             if (enemy != null && skillData != null)
             {
-                Debug.Log($"[Skill] {skillData.skillName}이(가) {enemy.name}에게 {skillData.damage} 데미지!");
-
-                // TODO: Enemy에 데미지 적용 메서드 추가 필요
-                // enemy.TakeDamage(skillData.damage);
+                int damageAmount = Mathf.RoundToInt(skillData.damage);
+                enemy.TakeDamage(damageAmount);
+                Debug.Log($"[Skill] {skillData.skillName}이(가) {enemy.GetEnemyName()}에게 {damageAmount} 데미지!");
 
                 // 스킬 제거 (관통형이 아니라면)
                 Destroy(gameObject);
