@@ -209,14 +209,12 @@ namespace LostSpells.UI
                 // InGame에서 Additive로 로드된 경우 - 현재 씬만 언로드하고 게임 재개
                 Time.timeScale = 1f;
                 SceneManager.UnloadSceneAsync("Store");
-                Debug.Log("[StoreUI] Unloading Store scene (Additive mode) and resuming game");
             }
             else
             {
                 // 메인메뉴에서 일반 로드된 경우 - 이전 씬으로 이동
                 string previousScene = SceneNavigationManager.Instance.GetPreviousScene();
                 SceneManager.LoadScene(previousScene);
-                Debug.Log($"[StoreUI] Loading previous scene: {previousScene}");
             }
         }
 
@@ -232,7 +230,7 @@ namespace LostSpells.UI
             {
                 new StoreItemData("diamond_1", "Small", StoreItemType.Diamond, 1, 1100, PriceType.RealMoney),
                 new StoreItemData("diamond_5", "Medium", StoreItemType.Diamond, 5, 5000, PriceType.RealMoney),
-                new StoreItemData("diamond_10", "Large", StoreItemType.Diamond, 10, 9000, PriceType.RealMoney, true), // Best Value
+                new StoreItemData("diamond_10", "Large", StoreItemType.Diamond, 10, 9000, PriceType.RealMoney),
                 new StoreItemData("diamond_25", "Huge", StoreItemType.Diamond, 25, 20000, PriceType.RealMoney),
                 new StoreItemData("diamond_50", "Mountain", StoreItemType.Diamond, 50, 35000, PriceType.RealMoney),
                 new StoreItemData("diamond_100", "Treasure", StoreItemType.Diamond, 100, 60000, PriceType.RealMoney)
@@ -243,7 +241,7 @@ namespace LostSpells.UI
             {
                 new StoreItemData("revive_1", "Single", StoreItemType.ReviveStone, 1, 1, PriceType.Diamond),
                 new StoreItemData("revive_5", "Small Pack", StoreItemType.ReviveStone, 5, 4, PriceType.Diamond),
-                new StoreItemData("revive_10", "Medium Pack", StoreItemType.ReviveStone, 10, 8, PriceType.Diamond, true), // Best Value
+                new StoreItemData("revive_10", "Medium Pack", StoreItemType.ReviveStone, 10, 8, PriceType.Diamond),
                 new StoreItemData("revive_25", "Large Pack", StoreItemType.ReviveStone, 25, 18, PriceType.Diamond),
                 new StoreItemData("revive_50", "Huge Pack", StoreItemType.ReviveStone, 50, 32, PriceType.Diamond),
                 new StoreItemData("revive_100", "Premium Pack", StoreItemType.ReviveStone, 100, 55, PriceType.Diamond)
@@ -370,18 +368,12 @@ namespace LostSpells.UI
         {
             if (item.priceType == PriceType.RealMoney)
             {
-                // 실제 돈으로 구매 (테스트용으로 바로 지급)
-                Debug.Log($"구매 시도: {item.itemName} - {item.quantity}개 (₩{item.price:N0})");
-
                 // TODO: 실제 결제 로직 구현 (IAP)
                 // 현재는 테스트로 바로 다이아몬드 지급
                 SaveManager.Instance.AddDiamonds(item.quantity);
             }
             else // PriceType.Diamond
             {
-                // 다이아몬드로 구매
-                Debug.Log($"구매 시도: {item.itemName} - {item.quantity}개 ({item.price:N0} 다이아)");
-
                 // 다이아몬드 차감
                 if (SaveManager.Instance.SpendDiamonds(item.price))
                 {
@@ -394,8 +386,6 @@ namespace LostSpells.UI
                     {
                         SaveManager.Instance.AddGold(item.quantity);
                     }
-
-                    Debug.Log($"구매 완료: {item.itemName}");
                 }
                 else
                 {

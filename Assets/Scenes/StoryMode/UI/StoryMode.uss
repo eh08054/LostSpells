@@ -90,14 +90,18 @@
     scale: 0.98;
 }
 
-/* 잠긴 챕터 */
-.chapter-button.locked {
-    -unity-background-image-tint-color: rgb(150, 150, 150);
-}
-
-.chapter-button.locked:hover {
-    -unity-background-image-tint-color: rgb(150, 150, 150);
-    scale: 1.0;
+/* 잠금 오버레이 */
+.lock-overlay {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url("project://database/Assets/Templates/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/UI%20board%20Large%20%20parchment.png");
+    -unity-background-scale-mode: stretch-to-fill;
+    -unity-background-image-tint-color: rgba(20, 20, 20, 0.85);
+    justify-content: center;
+    align-items: center;
 }
 
 /* 챕터 정보 */
@@ -106,48 +110,44 @@
     flex-grow: 1;
     justify-content: flex-start;
     align-items: stretch;
+    padding-top: 16px;
 }
 
 .chapter-number {
     font-size: 16px;
     color: rgb(120, 100, 80);
     -unity-font-style: bold;
-    margin-bottom: 4px;
+    margin-bottom: 8px;
     -unity-text-align: upper-center;
+    flex-shrink: 0;
 }
 
 .chapter-name {
     font-size: 28px;
     color: rgb(80, 60, 40);
     -unity-font-style: bold;
-    margin-bottom: 12px;
+    margin-bottom: 24px;
     -unity-text-align: upper-center;
     white-space: normal;
+    flex-shrink: 0;
 }
 
-.chapter-description {
-    font-size: 14px;
-    color: rgb(100, 80, 60);
-    margin-bottom: 8px;
-    -unity-text-align: upper-left;
-    white-space: normal;
-    flex-grow: 1;
-}
-
-.chapter-wave-info {
-    font-size: 16px;
+.chapter-progress {
+    font-size: 18px;
     color: rgb(60, 40, 20);
     -unity-font-style: bold;
-    margin-top: 8px;
+    margin-top: auto;
+    margin-bottom: 8px;
     -unity-text-align: middle-center;
+    flex-shrink: 0;
 }
 
-.lock-label {
-    font-size: 24px;
-    color: rgb(100, 80, 60);
-    -unity-font-style: bold;
-    -unity-text-align: middle-center;
-    margin-top: 16px;
+/* 잠금 아이콘 */
+.lock-icon {
+    width: 80px;
+    height: 80px;
+    background-image: url("project://database/Assets/Templates/2D%20Casual%20UI/Sprite/GUI.png#GUI_0");
+    -unity-background-scale-mode: scale-to-fit;
 }
 
 /* ========== 슬롯 카드 ========== */

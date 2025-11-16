@@ -156,7 +156,6 @@ namespace LostSpells.Components
         /// </summary>
         private void Die()
         {
-            Debug.Log("플레이어 사망!");
             // TODO: 게임 오버 처리
         }
 
@@ -361,7 +360,6 @@ namespace LostSpells.Components
             currentMana -= (int)skillData.manaCost;
             UpdateHealthBar();
 
-            Debug.Log($"[Player] 스킬 사용: {skillData.skillName} (마나: {currentMana}/{maxMana})");
             return true;
         }
 

@@ -45,7 +45,58 @@
     -unity-font-style: bold;
     -unity-text-align: middle-center;
     margin-top: 0;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
+    flex-shrink: 0;
+}
+
+/* ========== 테이블 헤더 ========== */
+.ranking-header {
+    width: 100%;
+    max-width: 700px;
+    height: 35px;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 24px;
+    margin-bottom: 8px;
+    background-color: rgba(40, 30, 20, 0.7);
+    border-radius: 5px;
+    flex-shrink: 0;
+}
+
+.header-rank {
+    font-size: 18px;
+    color: rgb(240, 220, 180);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    width: 60px;
+    flex-shrink: 0;
+}
+
+.header-score {
+    font-size: 18px;
+    color: rgb(240, 220, 180);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    width: 120px;
+    flex-shrink: 0;
+}
+
+.header-wave {
+    font-size: 18px;
+    color: rgb(240, 220, 180);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    width: 120px;
+    flex-shrink: 0;
+}
+
+.header-date {
+    font-size: 18px;
+    color: rgb(240, 220, 180);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    width: 140px;
     flex-shrink: 0;
 }
 
@@ -53,18 +104,20 @@
 .ranking-list-container {
     width: 100%;
     max-width: 700px;
+    max-height: 320px;
     flex-direction: column;
     align-items: stretch;
     flex-shrink: 0;
+    margin-bottom: 16px;
 }
 
 /* ========== 순위 항목 카드 ========== */
 .ranking-item {
     width: 100%;
-    height: 70px;
+    height: 56px;
     flex-shrink: 0;
-    margin-bottom: 10px;
-    padding: 12px 24px;
+    margin-bottom: 8px;
+    padding: 8px 24px;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
@@ -73,13 +126,12 @@
     -unity-background-image-tint-color: rgb(255, 255, 255);
     background-color: transparent;
     border-width: 0;
-    transition-property: -unity-background-image-tint-color, scale;
+    transition-property: -unity-background-image-tint-color;
     transition-duration: 0.15s;
 }
 
 .ranking-item:hover {
     -unity-background-image-tint-color: rgb(255, 250, 240);
-    scale: 1.02;
 }
 
 /* 1-3등 특별 색상 */
@@ -97,7 +149,7 @@
 
 /* ========== 순위 정보 ========== */
 .ranking-rank {
-    font-size: 32px;
+    font-size: 28px;
     color: rgb(80, 60, 40);
     -unity-font-style: bold;
     -unity-text-align: middle-center;
@@ -105,28 +157,32 @@
     flex-shrink: 0;
 }
 
-.ranking-info {
-    flex-direction: column;
-    flex-grow: 1;
-    justify-content: center;
-    align-items: flex-start;
-    padding: 0 12px;
+.ranking-score {
+    font-size: 22px;
+    color: rgb(80, 60, 40);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    width: 120px;
+    flex-shrink: 0;
 }
 
 .ranking-wave {
     font-size: 22px;
     color: rgb(80, 60, 40);
     -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    width: 120px;
+    flex-shrink: 0;
 }
 
 .ranking-date {
-    font-size: 15px;
+    font-size: 16px;
     color: rgb(100, 80, 60);
     -unity-font-style: italic;
-    -unity-text-align: middle-right;
+    -unity-text-align: middle-center;
     width: 140px;
     flex-shrink: 0;
-    margin-right: 20px;
+    margin-right: 12px;
 }
 
 /* 빈 순위 항목 (기록 없음) */
@@ -141,6 +197,7 @@
     -unity-text-align: middle-center;
     flex-grow: 1;
 }
+
 
 /* ========== 플레이 버튼 ========== */
 .play-button {

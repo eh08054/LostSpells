@@ -125,28 +125,25 @@ namespace LostSpells.UI
             var chapterInfo = new VisualElement();
             chapterInfo.AddToClassList("chapter-info");
 
+            var loc = LocalizationManager.Instance;
+
             // 챕터 번호
-            var chapterNumber = new Label($"Chapter {chapterData.chapterId}");
+            var chapterText = loc.GetText("story_mode_chapter");
+            var chapterNumber = new Label($"{chapterText} {chapterData.chapterId}");
             chapterNumber.AddToClassList("chapter-number");
             chapterInfo.Add(chapterNumber);
 
             // 챕터 이름
-            var chapterName = new Label(chapterData.chapterName);
+            var chapterName = new Label(chapterData.GetLocalizedName());
             chapterName.AddToClassList("chapter-name");
             chapterInfo.Add(chapterName);
 
-            // 챕터 설명 (짧게)
-            if (!string.IsNullOrEmpty(chapterData.chapterDescription))
-            {
-                var description = new Label(chapterData.chapterDescription);
-                description.AddToClassList("chapter-description");
-                chapterInfo.Add(description);
-            }
-
-            // 웨이브 정보
-            var waveInfo = new Label($"Waves: {chapterData.TotalWaves}");
-            waveInfo.AddToClassList("chapter-wave-info");
-            chapterInfo.Add(waveInfo);
+            // 진행 상황 표시 (간결하게: "웨이브 2")
+            var progress = saveData.GetChapterProgress(chapterData.chapterId);
+            var waveText = loc.GetText("story_mode_wave");
+            var progressInfo = new Label($"{waveText} {progress.clearedWaves}");
+            progressInfo.AddToClassList("chapter-progress");
+            chapterInfo.Add(progressInfo);
 
             chapterButton.Add(chapterInfo);
 
@@ -157,12 +154,16 @@ namespace LostSpells.UI
 
             if (isLocked)
             {
-                chapterButton.AddToClassList("locked");
-                chapterButton.SetEnabled(false);
+                // 잠금 오버레이 레이어 생성
+                var lockOverlay = new VisualElement();
+                lockOverlay.AddToClassList("lock-overlay");
 
-                var lockLabel = new Label("LOCKED");
-                lockLabel.AddToClassList("lock-label");
-                chapterButton.Add(lockLabel);
+                // 잠금 아이콘 (GUI_0)
+                var lockIcon = new VisualElement();
+                lockIcon.AddToClassList("lock-icon");
+                lockOverlay.Add(lockIcon);
+
+                chapterButton.Add(lockOverlay);
             }
             else
             {
@@ -179,8 +180,6 @@ namespace LostSpells.UI
         /// </summary>
         private void OnChapterButtonClicked(ChapterData chapterData)
         {
-            Debug.Log($"챕터 {chapterData.chapterId} - {chapterData.chapterName} 선택");
-
             // GameStateManager에 선택한 챕터 정보 저장
             GameStateManager.Instance.StartChapter(chapterData.chapterId);
 

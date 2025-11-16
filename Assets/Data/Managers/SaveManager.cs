@@ -102,6 +102,26 @@ namespace LostSpells.Data
                 {
                     string json = File.ReadAllText(saveFilePath);
                     currentSaveData = JsonUtility.FromJson<PlayerSaveData>(json);
+
+                    // 이전 세이브 파일 마이그레이션: "-" 날짜를 "0000-00-00"로 변환하고 저장
+                    bool needsSave = false;
+                    if (currentSaveData.endlessModeTopRecords != null)
+                    {
+                        foreach (var record in currentSaveData.endlessModeTopRecords)
+                        {
+                            if (string.IsNullOrEmpty(record.date) || record.date == "-")
+                            {
+                                record.date = "0000-00-00";
+                                needsSave = true;
+                            }
+                        }
+                    }
+
+                    // 마이그레이션이 필요한 경우 즉시 저장
+                    if (needsSave)
+                    {
+                        SaveGame();
+                    }
                 }
                 else
                 {
@@ -152,7 +172,6 @@ namespace LostSpells.Data
                 if (File.Exists(saveFilePath))
                 {
                     File.Delete(saveFilePath);
-                    Debug.Log($"저장 파일 삭제 완료: {saveFilePath}");
                 }
                 else
                 {
@@ -287,6 +306,71 @@ namespace LostSpells.Data
             return false;
         }
 
+        // ========== 무한 모드 관리 ==========
+
+        /// <summary>
+        /// 무한 모드 기록 업데이트 (상위 5개 기록 유지)
+        /// </summary>
+        public void UpdateEndlessModeRecord(int score, int wave)
+        {
+            if (currentSaveData == null)
+                return;
+
+            // 리스트가 비어있거나 크기가 5가 아니면 초기화
+            if (currentSaveData.endlessModeTopRecords == null || currentSaveData.endlessModeTopRecords.Count != 5)
+            {
+                currentSaveData.endlessModeTopRecords = new System.Collections.Generic.List<EndlessModeRecord>
+                {
+                    new EndlessModeRecord(0, 0, "0000-00-00"),
+                    new EndlessModeRecord(0, 0, "0000-00-00"),
+                    new EndlessModeRecord(0, 0, "0000-00-00"),
+                    new EndlessModeRecord(0, 0, "0000-00-00"),
+                    new EndlessModeRecord(0, 0, "0000-00-00")
+                };
+            }
+
+            // 새 기록 추가
+            string currentDate = DateTime.Now.ToString("yyyy-MM-dd");
+            currentSaveData.endlessModeTopRecords.Add(new EndlessModeRecord(score, wave, currentDate));
+
+            // 점수 기준 내림차순 정렬
+            currentSaveData.endlessModeTopRecords.Sort((a, b) => b.score.CompareTo(a.score));
+
+            // 상위 5개만 유지
+            if (currentSaveData.endlessModeTopRecords.Count > 5)
+            {
+                currentSaveData.endlessModeTopRecords = currentSaveData.endlessModeTopRecords.GetRange(0, 5);
+            }
+
+            SaveGame();
+        }
+
+        /// <summary>
+        /// 무한 모드 상위 5개 기록 가져오기
+        /// </summary>
+        public System.Collections.Generic.List<EndlessModeRecord> GetEndlessModeTopRecords()
+        {
+            if (currentSaveData == null)
+            {
+                LoadGame();
+            }
+
+            // 리스트가 비어있거나 크기가 5가 아니면 초기화
+            if (currentSaveData.endlessModeTopRecords == null || currentSaveData.endlessModeTopRecords.Count != 5)
+            {
+                currentSaveData.endlessModeTopRecords = new System.Collections.Generic.List<EndlessModeRecord>
+                {
+                    new EndlessModeRecord(0, 0, "0000-00-00"),
+                    new EndlessModeRecord(0, 0, "0000-00-00"),
+                    new EndlessModeRecord(0, 0, "0000-00-00"),
+                    new EndlessModeRecord(0, 0, "0000-00-00"),
+                    new EndlessModeRecord(0, 0, "0000-00-00")
+                };
+            }
+
+            return currentSaveData.endlessModeTopRecords;
+        }
+
         // ========== 데이터 초기화 ==========
 
         /// <summary>
@@ -298,14 +382,11 @@ namespace LostSpells.Data
             if (File.Exists(saveFilePath))
             {
                 File.Delete(saveFilePath);
-                Debug.Log("저장 파일 삭제됨: " + saveFilePath);
             }
 
             // 새로운 기본 데이터 생성
             currentSaveData = PlayerSaveData.CreateDefault();
             SaveGame();
-
-            Debug.Log("저장 데이터가 초기화되었습니다.");
         }
     }
 }

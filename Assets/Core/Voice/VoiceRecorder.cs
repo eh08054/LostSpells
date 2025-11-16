@@ -27,7 +27,7 @@ namespace LostSpells.Systems
             {
                 int index = Mathf.Clamp(microphoneIndex, 0, Microphone.devices.Length - 1);
                 microphoneDevice = Microphone.devices[index];
-                Debug.Log($"마이크 선택: {microphoneDevice}");
+                // Debug.Log($"마이크 선택: {microphoneDevice}");
             }
             else
             {
@@ -55,7 +55,7 @@ namespace LostSpells.Systems
 
             // 녹음 시작
             recordedClip = Microphone.Start(microphoneDevice, false, recordingLength, sampleRate);
-            Debug.Log("녹음 시작");
+            // Debug.Log("녹음 시작");
         }
 
         /// <summary>
@@ -70,7 +70,7 @@ namespace LostSpells.Systems
 
             isRecording = false;
             Microphone.End(microphoneDevice);
-            Debug.Log("녹음 중지");
+            // Debug.Log("녹음 중지");
         }
 
         /// <summary>

@@ -4,6 +4,42 @@ using System.Collections.Generic;
 namespace LostSpells.Data
 {
     /// <summary>
+    /// 무한 모드 기록
+    /// </summary>
+    [Serializable]
+    public class EndlessModeRecord
+    {
+        public int score;           // 점수
+        public int wave;            // 클리어한 웨이브
+        public string date;         // 날짜
+
+        public EndlessModeRecord(int score, int wave, string date)
+        {
+            this.score = score;
+            this.wave = wave;
+            this.date = date;
+        }
+    }
+
+    /// <summary>
+    /// 챕터 진행 상황
+    /// </summary>
+    [Serializable]
+    public class ChapterProgress
+    {
+        public int chapterId;           // 챕터 ID
+        public int clearedWaves;        // 클리어한 웨이브 수 (0~3)
+        public bool isCompleted;        // 챕터 완료 여부
+
+        public ChapterProgress(int chapterId, int clearedWaves = 0, bool isCompleted = false)
+        {
+            this.chapterId = chapterId;
+            this.clearedWaves = clearedWaves;
+            this.isCompleted = isCompleted;
+        }
+    }
+
+    /// <summary>
     /// 플레이어 저장 데이터
     /// JSON으로 직렬화되어 파일로 저장됨
     /// </summary>
@@ -25,9 +61,12 @@ namespace LostSpells.Data
         public int currentStage = 1;
         public int highestChapterUnlocked = 1;
 
-        // 무한 모드 기록
-        public int endlessModeHighScore = 0;
+        // 무한 모드 기록 (상위 5개 기록 저장)
+        public List<EndlessModeRecord> endlessModeTopRecords = new List<EndlessModeRecord>();
         public int endlessModeCurrentWave = 0;
+
+        // 챕터별 진행 상황
+        public List<ChapterProgress> chapterProgressList = new List<ChapterProgress>();
 
         // 스킬 및 아이템
         public List<string> unlockedSkills = new List<string>();
@@ -73,8 +112,16 @@ namespace LostSpells.Data
                 currentChapter = 1,
                 currentStage = 1,
                 highestChapterUnlocked = 1,
-                endlessModeHighScore = 0,
+                endlessModeTopRecords = new List<EndlessModeRecord>
+                {
+                    new EndlessModeRecord(0, 0, "0000-00-00"),
+                    new EndlessModeRecord(0, 0, "0000-00-00"),
+                    new EndlessModeRecord(0, 0, "0000-00-00"),
+                    new EndlessModeRecord(0, 0, "0000-00-00"),
+                    new EndlessModeRecord(0, 0, "0000-00-00")
+                }, // 1~5등 초기값
                 endlessModeCurrentWave = 0,
+                chapterProgressList = new List<ChapterProgress>(),
                 unlockedSkills = new List<string>(),
                 purchasedItems = new List<string>(),
                 isFullScreen = true,
@@ -90,6 +137,21 @@ namespace LostSpells.Data
             };
 
             return data;
+        }
+
+        /// <summary>
+        /// 특정 챕터의 진행 상황 가져오기
+        /// </summary>
+        public ChapterProgress GetChapterProgress(int chapterId)
+        {
+            var progress = chapterProgressList.Find(p => p.chapterId == chapterId);
+            if (progress == null)
+            {
+                // 없으면 새로 생성
+                progress = new ChapterProgress(chapterId, 0, false);
+                chapterProgressList.Add(progress);
+            }
+            return progress;
         }
     }
 }

@@ -38,6 +38,31 @@ namespace LostSpells.Systems
 
             instance = this;
             DontDestroyOnLoad(gameObject);
+
+            // 씬 로드 시 AudioListener 중복 체크
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
+        }
+
+        private void OnDestroy()
+        {
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoaded;
+        }
+
+        private void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
+        {
+            // AudioListener 중복 체크 및 수정
+            AudioListener[] listeners = FindObjectsByType<AudioListener>(FindObjectsSortMode.None);
+            if (listeners.Length > 1)
+            {
+                // Main Camera의 AudioListener만 남기고 제거
+                foreach (var listener in listeners)
+                {
+                    if (listener.gameObject.name != "Main Camera")
+                    {
+                        Destroy(listener);
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -47,7 +72,6 @@ namespace LostSpells.Systems
         {
             currentChapterId = chapterId;
             currentWaveNumber = 1; // 웨이브 초기화
-            Debug.Log($"챕터 {chapterId} 시작");
         }
 
         /// <summary>

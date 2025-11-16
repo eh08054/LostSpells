@@ -100,5 +100,18 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
-# End of https://www.toptal.com/developers/gitignore/api/unity,windowsNUL
+# End of https://www.toptal.com/developers/gitignore/api/unity,windows
+
+# IDE and Editor folders
+.claude/
+.vscode/
+
+# Temporary files
+NUL
 NUL.meta
+nul
+
+# Server temporary files
+Server/temp/
+Server/last_recording.wav
+Server/__pycache__/

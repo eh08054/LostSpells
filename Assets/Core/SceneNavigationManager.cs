@@ -41,7 +41,6 @@ namespace LostSpells.Systems
         public void SetPreviousScene(string sceneName)
         {
             previousScene = sceneName;
-            Debug.Log($"[SceneNavigation] 이전 씬 설정: {sceneName}");
         }
 
         /// <summary>

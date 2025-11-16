@@ -35,6 +35,14 @@
             <!-- 순위표 제목 -->
             <ui:Label text="Best Score" name="RankingTitle" class="ranking-title"/>
 
+            <!-- 테이블 헤더 -->
+            <ui:VisualElement name="RankingHeader" class="ranking-header">
+                <ui:Label text="Rank" name="HeaderRank" class="header-rank"/>
+                <ui:Label text="Score" name="HeaderScore" class="header-score"/>
+                <ui:Label text="Wave" name="HeaderWave" class="header-wave"/>
+                <ui:Label text="Date" name="HeaderDate" class="header-date"/>
+            </ui:VisualElement>
+
             <!-- 순위표 리스트 컨테이너 -->
             <ui:VisualElement name="RankingListContainer" class="ranking-list-container">
                 <!-- 순위 항목들이 동적으로 추가됨 -->

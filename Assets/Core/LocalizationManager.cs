@@ -110,6 +110,8 @@ namespace LostSpells.Systems
 
             // Story Mode
             AddText("story_mode_title", "스토리 모드", "Story Mode");
+            AddText("story_mode_chapter", "챕터", "Chapter");
+            AddText("story_mode_wave", "웨이브", "Wave");
             AddText("story_mode_back", "돌아가기", "Back");
 
             // Chapter Select
@@ -119,6 +121,12 @@ namespace LostSpells.Systems
             // Endless Mode
             AddText("endless_mode_title", "무한 모드", "Endless Mode");
             AddText("endless_mode_best_score", "최고 점수", "Best Score");
+            AddText("endless_mode_rank", "순위", "Rank");
+            AddText("endless_mode_rank_suffix", "등", "");
+            AddText("endless_mode_score", "점수", "Score");
+            AddText("endless_mode_wave", "웨이브", "Wave");
+            AddText("endless_mode_date", "날짜", "Date");
+            AddText("endless_mode_no_date", "기록 없음", "No Record");
             AddText("endless_mode_start_game", "게임 시작", "Start Game");
             AddText("endless_mode_easy", "쉬움", "Easy");
             AddText("endless_mode_normal", "보통", "Normal");

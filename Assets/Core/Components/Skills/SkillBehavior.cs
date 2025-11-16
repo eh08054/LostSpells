@@ -31,8 +31,6 @@ namespace LostSpells.Components
         {
             skillData = data;
             caster = player;
-
-            Debug.Log($"[Skill] {data.skillName} 초기화 완료");
         }
 
         protected virtual void Update()
@@ -71,7 +69,6 @@ namespace LostSpells.Components
             {
                 int damageAmount = Mathf.RoundToInt(skillData.damage);
                 enemy.TakeDamage(damageAmount);
-                Debug.Log($"[Skill] {skillData.skillName}이(가) {enemy.GetEnemyName()}에게 {damageAmount} 데미지!");
 
                 // 스킬 제거 (관통형이 아니라면)
                 Destroy(gameObject);

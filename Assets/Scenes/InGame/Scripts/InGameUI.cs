@@ -90,7 +90,6 @@ namespace LostSpells.UI
             {
                 int currentWave = GameStateManager.Instance.GetCurrentWave();
                 enemySpawner.StartWave(currentWave);
-                Debug.Log($"Wave {currentWave} 시작!");
             }
             else
             {
@@ -335,8 +334,6 @@ namespace LostSpells.UI
 
             // 초기 카테고리 표시 (All 탭)
             SwitchSkillCategory(currentSkillCategory);
-
-            Debug.Log($"[InGameUI] 스킬 로드 완료: Attack={attackSkills.Count}, Defense={defenseSkills.Count}");
         }
 
         /// <summary>
@@ -448,12 +445,10 @@ namespace LostSpells.UI
                 if (isHidden)
                 {
                     rightSidebar.RemoveFromClassList("sidebar-hidden");
-                    Debug.Log("[InGameUI] 스킬창 열기");
                 }
                 else
                 {
                     rightSidebar.AddToClassList("sidebar-hidden");
-                    Debug.Log("[InGameUI] 스킬창 닫기");
                 }
             }
         }
@@ -497,8 +492,6 @@ namespace LostSpells.UI
 
             // 음성인식 매니저에 현재 카테고리 스킬 전달
             UpdateVoiceRecognitionSkills();
-
-            Debug.Log($"[InGameUI] 스킬 카테고리 변경: {(category == null ? "All" : category.ToString())}");
         }
 
         /// <summary>
@@ -532,6 +525,35 @@ namespace LostSpells.UI
                 return allSkills;
 
             return allSkills.Where(s => s.skillType == currentSkillCategory.Value).ToList();
+        }
+
+        /// <summary>
+        /// 모든 스킬 정확도 초기화 (새로운 음성 인식 시작 시)
+        /// </summary>
+        public void ClearSkillAccuracy()
+        {
+            // 맵 초기화
+            skillAccuracyMap.Clear();
+
+            // 모든 ScrollView의 라벨을 0%로 초기화
+            ClearAccuracyLabelsInScrollView(allSkillScrollView);
+            ClearAccuracyLabelsInScrollView(attackSkillScrollView);
+            ClearAccuracyLabelsInScrollView(defenseSkillScrollView);
+        }
+
+        /// <summary>
+        /// 특정 ScrollView의 모든 정확도 라벨을 0%로 초기화
+        /// </summary>
+        private void ClearAccuracyLabelsInScrollView(ScrollView scrollView)
+        {
+            if (scrollView == null) return;
+
+            var allLabels = scrollView.Query<Label>().Where(label => label.name != null && label.name.StartsWith("Accuracy_")).ToList();
+            foreach (var label in allLabels)
+            {
+                label.text = "0%";
+                label.style.color = Color.white;
+            }
         }
 
         /// <summary>
@@ -688,7 +710,6 @@ namespace LostSpells.UI
                 UpdateWaveInfo();
 
                 enemySpawner.StartWave(nextWave);
-                Debug.Log($"Wave {nextWave} 시작!");
             }
         }
 
@@ -733,7 +754,6 @@ namespace LostSpells.UI
         private void PauseGame()
         {
             Time.timeScale = 0f;
-            Debug.Log("[InGameUI] 게임 일시정지");
         }
 
         /// <summary>
@@ -742,7 +762,6 @@ namespace LostSpells.UI
         private void ResumeGame()
         {
             Time.timeScale = 1f;
-            Debug.Log("[InGameUI] 게임 재개");
         }
 
         /// <summary>
@@ -778,7 +797,6 @@ namespace LostSpells.UI
             if (scene.name == "Options" || scene.name == "Store")
             {
                 ShowSidebars();
-                Debug.Log($"[InGameUI] {scene.name} 씬 언로드됨 - 사이드바 다시 표시");
 
                 // Options에서 언어가 변경되었을 수 있으므로 UI 업데이트
                 if (scene.name == "Options")
@@ -787,14 +805,12 @@ namespace LostSpells.UI
                     LocalizationManager.Instance.OnLanguageChanged += UpdateLocalization;
                     // 현재 언어로 UI 업데이트
                     UpdateLocalization();
-                    Debug.Log("[InGameUI] 언어 설정 다시 적용");
                 }
             }
         }
 
         private void OnSettingsButtonClicked()
         {
-            Debug.Log("Settings clicked");
             // 메뉴 팝업 닫기
             if (menuPopup != null)
                 menuPopup.style.display = DisplayStyle.None;
@@ -807,7 +823,6 @@ namespace LostSpells.UI
 
         private void OnStoreButtonClicked()
         {
-            Debug.Log("Store clicked");
             // 메뉴 팝업 닫기
             if (menuPopup != null)
                 menuPopup.style.display = DisplayStyle.None;

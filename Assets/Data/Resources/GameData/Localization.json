@@ -17,6 +17,8 @@
     "game_mode_back": { "ko": "돌아가기", "en": "Back" },
 
     "story_mode_title": { "ko": "스토리 모드", "en": "Story Mode" },
+    "story_mode_chapter": { "ko": "챕터", "en": "Chapter" },
+    "story_mode_wave": { "ko": "웨이브", "en": "Wave" },
     "story_mode_back": { "ko": "돌아가기", "en": "Back" },
 
     "chapter_select_title": { "ko": "챕터 선택", "en": "Chapter Select" },
@@ -24,6 +26,12 @@
 
     "endless_mode_title": { "ko": "무한 모드", "en": "Endless Mode" },
     "endless_mode_best_score": { "ko": "최고 점수", "en": "Best Score" },
+    "endless_mode_rank": { "ko": "순위", "en": "Rank" },
+    "endless_mode_rank_suffix": { "ko": "등", "en": "" },
+    "endless_mode_score": { "ko": "점수", "en": "Score" },
+    "endless_mode_wave": { "ko": "웨이브", "en": "Wave" },
+    "endless_mode_date": { "ko": "날짜", "en": "Date" },
+    "endless_mode_no_date": { "ko": "기록 없음", "en": "No Record" },
     "endless_mode_start_game": { "ko": "게임 시작", "en": "Start Game" },
     "endless_mode_easy": { "ko": "쉬움", "en": "Easy" },
     "endless_mode_normal": { "ko": "보통", "en": "Normal" },

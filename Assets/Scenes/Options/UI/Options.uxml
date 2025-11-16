@@ -137,48 +137,18 @@
                         </ui:VisualElement>
                     </ui:VisualElement>
 
-                    <!-- 음성인식 설정 섹션 -->
-                    <ui:VisualElement style="flex-direction: row; justify-content: flex-start; align-items: center; margin-top: 20px;">
+                    <!-- 음성 인식 섹션 -->
+                    <ui:VisualElement style="flex-direction: row; justify-content: flex-start; align-items: center; margin-top: 10px;">
                         <ui:Label text="Voice Recognition" name="VoiceRecognitionHeader" class="section-title" style="margin-top: 0; margin-bottom: 0; cursor: pointer;"/>
                         <ui:Button text="" name="VoiceRecognitionToggleButton" class="section-toggle" style="margin-left: 10px;"/>
                     </ui:VisualElement>
 
-                    <!-- 음성인식 설정 영역 (숨김) -->
+                    <!-- 음성 인식 설정 영역 (숨김) -->
                     <ui:VisualElement name="VoiceRecognitionArea" style="display: none;">
                         <!-- 서버 연결 상태 -->
-                        <ui:VisualElement class="setting-row">
-                            <ui:Label text="Server Status:" class="setting-label"/>
-                            <ui:VisualElement class="server-status-container">
-                                <ui:Label text="Not checked" name="ServerStatusLabel" class="setting-label server-status-text"/>
-                                <ui:Button text="Check" name="CheckServerButton" class="configure-button server-check-button"/>
-                            </ui:VisualElement>
-                        </ui:VisualElement>
-
-                        <!-- 음성인식 언어 -->
-                        <ui:VisualElement class="setting-row">
-                            <ui:Label text="Voice Recognition Language" class="setting-label"/>
-                            <ui:DropdownField name="VoiceLanguageDropdown" class="setting-dropdown"/>
-                        </ui:VisualElement>
-
-                        <!-- 음성인식 모델 -->
-                        <ui:VisualElement class="setting-row">
-                            <ui:Label text="Voice Recognition Model" class="setting-label"/>
-                            <ui:DropdownField name="VoiceModelDropdown" class="setting-dropdown"/>
-                        </ui:VisualElement>
-
-                        <!-- 모델 상태 표시 -->
-                        <ui:VisualElement class="setting-row">
-                            <ui:Label text="Model Status:" class="setting-label"/>
-                            <ui:Label text="Loading..." name="ModelStatusLabel" class="setting-label"/>
-                        </ui:VisualElement>
-
-                        <!-- 다운로드 및 삭제 버튼 -->
-                        <ui:VisualElement class="setting-row">
-                            <ui:Label text="" class="setting-label"/>
-                            <ui:VisualElement class="model-buttons-container">
-                                <ui:Button text="Download" name="DownloadModelButton" class="configure-button model-download-button"/>
-                                <ui:Button text="Delete" name="DeleteModelButton" class="configure-button model-delete-button"/>
-                            </ui:VisualElement>
+                        <ui:VisualElement class="setting-row" style="margin-top: 10px;">
+                            <ui:Label text="Voice Server Status:" class="setting-label"/>
+                            <ui:Label text="Checking..." name="ServerStatusLabel" class="setting-label server-status-text"/>
                         </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>

@@ -59,8 +59,6 @@ namespace LostSpells.Data
             LoadMonsterData();
             LoadChapterData();
             LoadSkillData();
-
-            Debug.Log($"DataManager 초기화 완료 - Chapters: {chapterDataDict.Count}, Monster Data: {monsterDataDict.Count}, Skills: {skillDataDict.Count}");
         }
 
         /// <summary>
@@ -86,7 +84,6 @@ namespace LostSpells.Data
                             monsterDataDict[monster.monsterId] = monster;
                         }
                     }
-                    Debug.Log($"몬스터 데이터 {monsterDataList.Count}개 로드 완료");
                 }
             }
             else
@@ -115,7 +112,6 @@ namespace LostSpells.Data
                     {
                         chapterDataDict[chapter.chapterId] = chapter;
                     }
-                    Debug.Log($"챕터 데이터 {chapterDataList.Count}개 로드 완료");
                 }
             }
             else
@@ -194,7 +190,6 @@ namespace LostSpells.Data
                             skillDataDict[skill.skillId] = skill;
                         }
                     }
-                    Debug.Log($"스킬 데이터 {skillDataList.Count}개 로드 완료");
                 }
             }
             else
@@ -231,7 +226,6 @@ namespace LostSpells.Data
         public void ReloadData()
         {
             InitializeData();
-            Debug.Log("데이터 리로드 완료");
         }
     }
 

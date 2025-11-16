@@ -39,6 +39,15 @@ namespace LostSpells.Systems
 
         private void Awake()
         {
+            // 중복 방지: VoiceRecognitionManager가 이미 존재하면 이 인스턴스 제거
+            VoiceRecognitionManager[] managers = FindObjectsByType<VoiceRecognitionManager>(FindObjectsSortMode.None);
+            if (managers.Length > 1)
+            {
+                Debug.LogWarning($"[VoiceRecognition] 중복된 VoiceRecognitionManager 발견! 제거합니다. (총 {managers.Length}개)");
+                Destroy(gameObject);
+                return;
+            }
+
             // 컴포넌트 자동 찾기 - Awake에서 초기화하여 다른 스크립트의 Start보다 먼저 실행되도록 함
             if (voiceRecorder == null)
             {
@@ -66,7 +75,6 @@ namespace LostSpells.Systems
             if (playerComponent != null)
             {
                 originalPlayerName = playerComponent.GetPlayerName();
-                Debug.Log($"[VoiceRecognition] PlayerComponent 찾음: {originalPlayerName}");
             }
             else
             {
@@ -118,7 +126,7 @@ namespace LostSpells.Systems
                 {
                     saveData.voiceRecognitionLanguage = languageCode;
                     SaveManager.Instance.SaveGame();
-                    Debug.Log($"[VoiceRecognition] UI 언어 변경에 따라 음성인식 언어 자동 변경: {languageCode}");
+                    // Debug.Log($"[VoiceRecognition] UI 언어 변경: {languageCode}");
                 }
             }
         }
@@ -135,7 +143,7 @@ namespace LostSpells.Systems
                 {
                     string languageCode = saveData.voiceRecognitionLanguage;
                     serverClient.SetLanguage(languageCode);
-                    Debug.Log($"[VoiceRecognition] 언어 설정 로드: {languageCode}");
+                    // Debug.Log($"[VoiceRecognition] 언어 설정 로드: {languageCode}");
                 }
                 else
                 {
@@ -167,7 +175,7 @@ namespace LostSpells.Systems
 
                 // 서버에 새로운 스킬 목록 전송
                 StartCoroutine(serverClient.SetSkills(skills));
-                Debug.Log($"[VoiceRecognition] 활성 스킬 설정: {skills.Count}개 - {string.Join(", ", skills.ConvertAll(s => s.voiceKeyword))}");
+                // Debug.Log($"[VoiceRecognition] 활성 스킬 설정: {skills.Count}개 - {string.Join(", ", skills.ConvertAll(s => s.voiceKeyword))}");
             }
         }
 
@@ -253,7 +261,7 @@ namespace LostSpells.Systems
             {
                 // 서버에 스킬 설정
                 StartCoroutine(serverClient.SetSkills(skills));
-                Debug.Log($"[VoiceRecognition] 스킬 초기화: {skills.Count}개");
+                // Debug.Log($"[VoiceRecognition] 스킬 초기화: {skills.Count}개");
             }
             else
             {
@@ -274,13 +282,19 @@ namespace LostSpells.Systems
             isRecording = true;
             recordingStartTime = Time.time;
 
+            // 새로운 인식 시작 시 이전 정확도 초기화
+            if (inGameUI != null)
+            {
+                inGameUI.ClearSkillAccuracy();
+            }
+
             voiceRecorder.StartRecording();
 
             // Display "Recording..." on voice recognition UI
             string recordingText = LocalizationManager.Instance.GetText("voice_recording");
             UpdateVoiceRecognitionDisplay(recordingText);
 
-            Debug.Log("[VoiceRecognition] Recording started");
+            // Debug.Log("[VoiceRecognition] Recording started");
         }
 
         /// <summary>
@@ -314,7 +328,7 @@ namespace LostSpells.Systems
             string processingText = LocalizationManager.Instance.GetText("voice_processing");
             UpdateVoiceRecognitionDisplay(processingText);
 
-            Debug.Log($"[VoiceRecognition] Recording stopped ({recordingDuration:F2}s)");
+            // Debug.Log($"[VoiceRecognition] Recording stopped ({recordingDuration:F2}s)");
 
             // 서버로 전송
             StartCoroutine(SendAudioToServer());
@@ -348,27 +362,24 @@ namespace LostSpells.Systems
         {
             if (result == null)
             {
-                string failedText = LocalizationManager.Instance.GetText("voice_failed");
-                UpdateVoiceRecognitionDisplay(failedText);
-                StartCoroutine(ClearVoiceRecognitionDisplayAfterDelay(2f));
+                // 실패: "서버 연결 실패" 표시
+                UpdateVoiceRecognitionDisplay("서버 연결 실패");
+                StartCoroutine(ClearVoiceRecognitionDisplayAfterDelay(3f));
                 return;
             }
 
-            // Display recognized text
             string recognizedText = result.recognized_text;
-            Debug.Log($"[VoiceRecognition] Recognized: '{recognizedText}'");
 
             // 스킬이 1개뿐이면 무조건 그 스킬 선택
             if (activeSkills != null && activeSkills.Count == 1)
             {
                 string onlySkill = activeSkills[0].voiceKeyword;
-                // 스킬명만 간결하게 표시
                 string skillDisplayName = GetSkillDisplayName(onlySkill);
-                UpdateVoiceRecognitionDisplay(skillDisplayName);
-                Debug.Log($"[VoiceRecognition] Only one skill available, auto-selecting: {onlySkill}");
+
+                // "인식: [스킬명] (100%)" 형식으로 표시
+                UpdateVoiceRecognitionDisplay($"인식: {skillDisplayName} (100%)");
                 ExecuteSkill(onlySkill);
 
-                // 정확도는 100%로 표시
                 if (inGameUI != null)
                 {
                     var accuracyScores = new System.Collections.Generic.Dictionary<string, float>();
@@ -376,38 +387,43 @@ namespace LostSpells.Systems
                     inGameUI.UpdateSkillAccuracy(accuracyScores);
                 }
 
-                StartCoroutine(ClearVoiceRecognitionDisplayAfterDelay(2f));
+                StartCoroutine(ClearVoiceRecognitionDisplayAfterDelay(3f));
                 return;
             }
 
             // 정확도 정보를 InGameUI에 전달
             if (inGameUI != null && result.skill_scores != null)
             {
-                // skill_scores는 서버에서 받은 Dictionary<string, float>
                 var accuracyScores = result.skill_scores;
                 inGameUI.UpdateSkillAccuracy(accuracyScores);
-                Debug.Log($"[VoiceRecognition] 정확도 업데이트: {accuracyScores.Count}개 스킬");
             }
 
-            // 임계값 없이 항상 가장 유사한 프롬프트 단어 선택
-            if (result.best_match != null)
+            // 스킬 매칭 결과 처리
+            if (result.best_match != null && !string.IsNullOrEmpty(result.best_match.skill))
             {
-                // 스킬명만 간결하게 표시
                 string skillDisplayName = GetSkillDisplayName(result.best_match.skill);
-                UpdateVoiceRecognitionDisplay(skillDisplayName);
-                Debug.Log($"[VoiceRecognition] Matched: {result.best_match.skill} ({result.best_match.score:F2})");
+                int scorePercent = Mathf.RoundToInt(result.best_match.score * 100);
+
+                // "인식: [스킬명] (정확도%)" 형식으로 표시
+                UpdateVoiceRecognitionDisplay($"인식: {skillDisplayName} ({scorePercent}%)");
 
                 // 스킬 실행
                 ExecuteSkill(result.best_match.skill);
             }
             else
             {
-                // 매칭 실패 시 인식된 텍스트 표시
-                UpdateVoiceRecognitionDisplay(recognizedText);
+                // 매칭 실패: "인식 실패: [인식된 텍스트]" 표시
+                if (string.IsNullOrEmpty(recognizedText))
+                {
+                    UpdateVoiceRecognitionDisplay("인식 실패: 음성 없음");
+                }
+                else
+                {
+                    UpdateVoiceRecognitionDisplay($"인식 실패: {recognizedText}");
+                }
             }
 
-            // Clear display after 2 seconds
-            StartCoroutine(ClearVoiceRecognitionDisplayAfterDelay(2f));
+            StartCoroutine(ClearVoiceRecognitionDisplayAfterDelay(3f));
         }
 
         /// <summary>
@@ -415,14 +431,28 @@ namespace LostSpells.Systems
         /// </summary>
         private string GetSkillDisplayName(string voiceKeyword)
         {
-            var skills = DataManager.Instance.GetAllSkillData();
-            foreach (var skill in skills)
+            // activeSkills에서 먼저 찾기 (현재 탭의 스킬 우선)
+            if (activeSkills != null && activeSkills.Count > 0)
+            {
+                foreach (var skill in activeSkills)
+                {
+                    if (skill.voiceKeyword == voiceKeyword)
+                    {
+                        return skill.GetLocalizedName();
+                    }
+                }
+            }
+
+            // activeSkills에 없으면 전체에서 찾기 (안전장치)
+            var allSkills = DataManager.Instance.GetAllSkillData();
+            foreach (var skill in allSkills)
             {
                 if (skill.voiceKeyword == voiceKeyword)
                 {
                     return skill.GetLocalizedName();
                 }
             }
+
             return voiceKeyword; // 못 찾으면 키워드 그대로 반환
         }
 
@@ -443,7 +473,7 @@ namespace LostSpells.Systems
             if (inGameUI != null)
             {
                 inGameUI.UpdateVoiceRecognitionDisplay(text);
-                Debug.Log($"[VoiceRecognition] UI 업데이트: '{text}'");
+                // Debug.Log($"[VoiceRecognition] UI 업데이트: '{text}'");
             }
             else
             {
@@ -462,9 +492,14 @@ namespace LostSpells.Systems
                 return;
             }
 
-            // 스킬 데이터 찾기
-            var skills = DataManager.Instance.GetAllSkillData();
-            foreach (var skill in skills)
+            // activeSkills에서만 스킬 찾기 (현재 탭의 스킬만 실행)
+            if (activeSkills == null || activeSkills.Count == 0)
+            {
+                Debug.LogWarning("[VoiceRecognition] 활성화된 스킬이 없습니다!");
+                return;
+            }
+
+            foreach (var skill in activeSkills)
             {
                 if (skill.voiceKeyword == skillName)
                 {
@@ -503,7 +538,7 @@ namespace LostSpells.Systems
             if (serverClient != null)
             {
                 serverClient.SetLanguage(languageCode);
-                Debug.Log($"[VoiceRecognition] 언어 변경: {languageCode}");
+                // Debug.Log($"[VoiceRecognition] 언어 변경: {languageCode}");
             }
             else
             {
