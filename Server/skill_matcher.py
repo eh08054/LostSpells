@@ -1,155 +1,96 @@
-import Levenshtein
+"""
+스킬명 매칭 알고리즘
+음성 인식 결과에서 가장 유사한 스킬명을 찾음
+"""
+
+from difflib import SequenceMatcher
 import re
-from typing import List, Dict
+
 
 class SkillMatcher:
-    def __init__(self, skills: List[str]):
+    def __init__(self):
+        """스킬 매처 초기화"""
+        self.skills = []
+
+    def set_skills(self, skill_names):
         """
-        스킬 매칭 시스템 초기화
+        스킬 목록 설정
 
         Args:
-            skills: 스킬명 리스트 (예: ["가", "나", "다", "라", "마"])
+            skill_names: 스킬명 리스트 (한글 또는 영어)
         """
-        self.skills = skills
+        self.skills = [name.strip().lower() for name in skill_names]
+        print(f"[SkillMatcher] Updated skill list: {len(self.skills)} skills")
 
-    def calculate_similarity(self, recognized_text: str, skill: str) -> float:
+    def match(self, recognized_text, threshold=0.6):
         """
-        인식된 텍스트와 스킬의 유사도 계산
+        인식된 텍스트에서 가장 유사한 스킬명 찾기
 
         Args:
-            recognized_text: Whisper로 인식된 텍스트
-            skill: 비교할 스킬명
+            recognized_text: Whisper가 인식한 텍스트
+            threshold: 최소 유사도 (0.0 ~ 1.0)
 
         Returns:
-            0.0 ~ 1.0 사이의 유사도 점수
+            dict: {
+                "matched": 스킬명 (없으면 None),
+                "confidence": 유사도 (0.0 ~ 1.0),
+                "candidates": 후보 리스트 (상위 3개)
+            }
         """
-        # 공백 제거 및 소문자 변환 (띄어쓰기 무시하고 비교)
-        text = recognized_text.strip().replace(" ", "").lower()
-        skill_normalized = skill.strip().replace(" ", "").lower()
+        if not self.skills:
+            return {
+                "matched": None,
+                "confidence": 0.0,
+                "candidates": []
+            }
 
-        if not text:
-            return 0.0
+        # 텍스트 정규화
+        text = self._normalize(recognized_text)
 
-        # 1. 정확히 일치하는 경우
-        if text == skill_normalized:
-            return 1.0
-
-        # 2. 부분 문자열로 포함되는 경우
-        if skill_normalized in text:
-            # 스킬이 텍스트에 포함되면 높은 점수
-            return 0.95
-
-        if text in skill_normalized:
-            # 텍스트가 스킬에 포함되면 중간 점수
-            return 0.85
-
-        # 3. Levenshtein 거리 기반 유사도
-        distance = Levenshtein.distance(text, skill_normalized)
-        max_len = max(len(text), len(skill_normalized))
-
-        if max_len == 0:
-            return 0.0
-
-        similarity = 1.0 - (distance / max_len)
-
-        # 4. 자음/모음 분리 비교로 추가 점수
-        jamo_similarity = self._calculate_jamo_similarity(text, skill_normalized)
-
-        # 두 점수의 가중 평균
-        final_score = (similarity * 0.7) + (jamo_similarity * 0.3)
-
-        return max(0.0, min(1.0, final_score))
-
-    def _calculate_jamo_similarity(self, text1: str, text2: str) -> float:
-        """
-        한글 자음/모음 분리 비교
-        "가" vs "갸" → 자음은 같으므로 어느 정도 유사
-        """
-        try:
-            # 한글 자음/모음 분리
-            jamo1 = self._decompose_hangul(text1)
-            jamo2 = self._decompose_hangul(text2)
-
-            if not jamo1 or not jamo2:
-                return 0.0
-
-            # Levenshtein 거리로 자모 비교
-            distance = Levenshtein.distance(jamo1, jamo2)
-            max_len = max(len(jamo1), len(jamo2))
-
-            if max_len == 0:
-                return 0.0
-
-            return 1.0 - (distance / max_len)
-        except:
-            return 0.0
-
-    def _decompose_hangul(self, text: str) -> str:
-        """
-        한글을 자음/모음으로 분리
-        예: "가" → "ㄱㅏ"
-        """
-        CHOSUNG = [
-            'ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ',
-            'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'
-        ]
-        JUNGSUNG = [
-            'ㅏ', 'ㅐ', 'ㅑ', 'ㅒ', 'ㅓ', 'ㅔ', 'ㅕ', 'ㅖ', 'ㅗ', 'ㅘ',
-            'ㅙ', 'ㅚ', 'ㅛ', 'ㅜ', 'ㅝ', 'ㅞ', 'ㅟ', 'ㅠ', 'ㅡ', 'ㅢ', 'ㅣ'
-        ]
-        JONGSUNG = [
-            '', 'ㄱ', 'ㄲ', 'ㄳ', 'ㄴ', 'ㄵ', 'ㄶ', 'ㄷ', 'ㄹ', 'ㄺ',
-            'ㄻ', 'ㄼ', 'ㄽ', 'ㄾ', 'ㄿ', 'ㅀ', 'ㅁ', 'ㅂ', 'ㅄ', 'ㅅ',
-            'ㅆ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'
-        ]
-
-        result = []
-        for char in text:
-            if '가' <= char <= '힣':
-                # 유니코드 한글 분해
-                code = ord(char) - 0xAC00
-                cho = code // (21 * 28)
-                jung = (code % (21 * 28)) // 28
-                jong = code % 28
-
-                result.append(CHOSUNG[cho])
-                result.append(JUNGSUNG[jung])
-                if jong > 0:
-                    result.append(JONGSUNG[jong])
-            else:
-                result.append(char)
-
-        return ''.join(result)
-
-    def match_skills(self, recognized_text: str) -> Dict[str, float]:
-        """
-        모든 스킬과 비교하여 유사도 점수 반환
-
-        Args:
-            recognized_text: 인식된 텍스트
-
-        Returns:
-            {"가": 0.95, "나": 0.10, ...} 형태의 딕셔너리
-        """
-        scores = {}
-
+        # 모든 스킬과 유사도 계산
+        similarities = []
         for skill in self.skills:
-            score = self.calculate_similarity(recognized_text, skill)
-            scores[skill] = round(score, 2)
+            # 완전 일치 체크
+            if text == skill:
+                similarities.append((skill, 1.0))
+                continue
 
-        return scores
+            # 부분 일치 체크
+            if skill in text:
+                # 스킬명이 인식 텍스트에 포함되어 있으면 높은 점수
+                similarities.append((skill, 0.95))
+                continue
+            elif text in skill:
+                # 인식 텍스트가 스킬명의 일부면 중간 점수
+                ratio = len(text) / len(skill)
+                similarities.append((skill, ratio * 0.85))
+                continue
 
-    def get_best_match(self, recognized_text: str) -> tuple:
-        """
-        가장 높은 점수의 스킬 반환
+            # 유사도 계산
+            ratio = SequenceMatcher(None, text, skill).ratio()
+            similarities.append((skill, ratio))
 
-        Returns:
-            (skill_name, score) 튜플
-        """
-        scores = self.match_skills(recognized_text)
+        # 유사도 순으로 정렬
+        similarities.sort(key=lambda x: x[1], reverse=True)
 
-        if not scores:
-            return (None, 0.0)
+        # 최고 유사도 스킬
+        best_skill, best_score = similarities[0] if similarities else (None, 0.0)
 
-        best_skill = max(scores.items(), key=lambda x: x[1])
-        return best_skill
+        # 상위 3개 후보
+        candidates = [
+            {"name": skill, "confidence": round(score, 2)}
+            for skill, score in similarities[:3]
+        ]
+
+        return {
+            "matched": best_skill if best_score >= threshold else None,
+            "confidence": round(best_score, 2),
+            "candidates": candidates
+        }
+
+    def _normalize(self, text):
+        """텍스트 정규화 (소문자, 공백 제거)"""
+        text = text.lower().strip()
+        # 공백 제거
+        text = re.sub(r'\s+', '', text)
+        return text

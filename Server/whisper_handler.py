@@ -1,127 +1,93 @@
-from faster_whisper import WhisperModel
-import time
+"""
+Whisper 음성 인식 핸들러 (GPU/CPU 자동 선택)
+Medium 모델을 사용하여 높은 정확도 제공
+"""
+
+import whisper
 from pathlib import Path
-import os
+import torch
+
 
 class WhisperHandler:
-    # 사용 가능한 모델 목록
-    AVAILABLE_MODELS = {
-        "tiny": {"name": "Tiny", "description": "가장 빠름, 정확도 낮음", "size": "~75MB"},
-        "base": {"name": "Base", "description": "빠르고 적당한 정확도 (추천)", "size": "~145MB"},
-        "small": {"name": "Small", "description": "균형잡힌 선택", "size": "~466MB"},
-        "medium": {"name": "Medium", "description": "느리지만 높은 정확도", "size": "~1.5GB"},
-        "large-v3": {"name": "Large-v3", "description": "최고 정확도, 매우 느림", "size": "~2.9GB"}
-    }
-
-    def __init__(self, model_size="base"):
+    def __init__(self, model_name="medium", language="ko"):
         """
-        Faster Whisper 모델 초기화
-        model_size: tiny, base, small, medium, large-v3
+        Whisper 모델 초기화
+
+        Args:
+            model_name: 모델 크기 (tiny, base, small, medium, large)
+            language: 인식 언어 (ko, en)
         """
-        print(f"Loading Faster-Whisper model: {model_size}...")
-        # device: "cpu" 또는 "cuda"
-        # compute_type: "int8", "int8_float16", "float16", "float32"
-        self.current_model_size = model_size
-        self.model = WhisperModel(model_size, device="cpu", compute_type="int8")
-        print(f"Faster-Whisper model loaded successfully!")
+        self.model_name = model_name
+        self.language = language
 
-    @classmethod
-    def get_available_models(cls):
-        """사용 가능한 모델 목록 반환"""
-        return cls.AVAILABLE_MODELS
+        # GPU 사용 가능 여부 확인 (하지만 sm_120 같은 최신 GPU는 지원 안 됨)
+        # 안전하게 CPU 모드로 실행
+        self.device = "cpu"
 
-    @classmethod
-    def check_model_downloaded(cls, model_size):
-        """
-        모델이 다운로드되어 있는지 확인
-        faster-whisper는 모델을 캐시에 자동 다운로드하므로,
-        캐시 디렉토리에 모델이 있는지 확인
-        """
-        try:
-            # faster-whisper의 기본 캐시 디렉토리
-            cache_dir = Path.home() / ".cache" / "huggingface" / "hub"
+        if torch.cuda.is_available():
+            gpu_name = torch.cuda.get_device_name(0)
+            # Compute capability 확인
+            capability = torch.cuda.get_device_capability(0)
+            sm_version = capability[0] * 10 + capability[1]
 
-            # 모델 이름 패턴 (예: models--Systran--faster-whisper-base)
-            model_pattern = f"models--Systran--faster-whisper-{model_size}"
+            print(f"[Whisper] GPU detected: {gpu_name} (sm_{sm_version})")
+            print(f"[Whisper] Note: PyTorch currently supports up to sm_90")
+            print(f"[Whisper] Falling back to CPU mode for compatibility")
 
-            if cache_dir.exists():
-                for item in cache_dir.iterdir():
-                    if model_pattern in item.name:
-                        return True
-            return False
-        except Exception as e:
-            print(f"Error checking model: {e}")
-            return False
+        print(f"[Whisper] Initializing...")
+        print(f"   - Model: {model_name}")
+        print(f"   - Language: {language}")
+        print(f"   - Device: CPU")
 
-    def change_model(self, new_model_size):
-        """모델 변경"""
-        print(f"Changing model from {self.current_model_size} to {new_model_size}...")
-        self.current_model_size = new_model_size
-        self.model = WhisperModel(new_model_size, device="cpu", compute_type="int8")
-        print(f"Model changed to {new_model_size} successfully!")
+        # 모델 로드 (CPU 모드)
+        self.model = whisper.load_model(model_name, device=self.device)
+        print(f"[Whisper] Model loaded successfully!")
 
-    def transcribe_audio(self, audio_path: str, language: str = "ko") -> dict:
+    def transcribe(self, audio_path, skill_names=None):
         """
         음성 파일을 텍스트로 변환
 
         Args:
-            audio_path: 음성 파일 경로
-            language: 언어 코드 (ko=한국어)
+            audio_path: 오디오 파일 경로
+            skill_names: 스킬명 리스트 (프롬프트로 사용하여 정확도 향상)
 
         Returns:
-            {
+            dict: {
                 "text": 인식된 텍스트,
-                "processing_time": 처리 시간(초)
+                "language": 감지된 언어,
+                "confidence": 신뢰도 (평균)
             }
         """
-        start_time = time.time()
+        # 스킬명을 프롬프트로 사용 (인식 정확도 향상)
+        prompt = None
+        if skill_names:
+            prompt = ", ".join(skill_names[:20])  # 최대 20개 스킬명만 사용
 
-        # Faster-Whisper로 음성 인식
-        segments, info = self.model.transcribe(
-            audio_path,
-            language=language,
-            beam_size=5
+        # Whisper 실행
+        result = self.model.transcribe(
+            str(audio_path),
+            language=self.language,
+            initial_prompt=prompt,  # 스킬명 힌트 제공
         )
 
-        # 세그먼트를 하나의 텍스트로 결합
-        text = " ".join([segment.text for segment in segments])
+        # 신뢰도 계산 (세그먼트별 평균)
+        confidences = []
+        if "segments" in result:
+            for segment in result["segments"]:
+                if "avg_logprob" in segment:
+                    # logprob를 0~1 범위로 변환
+                    confidence = min(1.0, max(0.0, (segment["avg_logprob"] + 1.0)))
+                    confidences.append(confidence)
 
-        processing_time = time.time() - start_time
-
-        return {
-            "text": text.strip(),
-            "processing_time": processing_time
-        }
-
-    def transcribe_with_segments(self, audio_path: str, language: str = "ko") -> dict:
-        """
-        음성 파일을 세그먼트별로 변환 (더 상세한 정보)
-        """
-        start_time = time.time()
-
-        segments, info = self.model.transcribe(
-            audio_path,
-            language=language,
-            beam_size=5
-        )
-
-        # 세그먼트 정보 수집
-        segment_list = []
-        full_text = []
-
-        for segment in segments:
-            segment_list.append({
-                "start": segment.start,
-                "end": segment.end,
-                "text": segment.text
-            })
-            full_text.append(segment.text)
-
-        processing_time = time.time() - start_time
+        avg_confidence = sum(confidences) / len(confidences) if confidences else 0.8
 
         return {
-            "text": " ".join(full_text).strip(),
-            "segments": segment_list,
-            "language": info.language,
-            "processing_time": processing_time
+            "text": result["text"].strip(),
+            "language": result.get("language", self.language),
+            "confidence": round(avg_confidence, 2)
         }
+
+    def change_language(self, language):
+        """언어 변경"""
+        self.language = language
+        print(f"[Whisper] Language changed: {language}")

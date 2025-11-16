@@ -62,8 +62,8 @@
     },
     {
       "skillId": "cure",
-      "skillName": "큐어",
-      "skillNameEn": "Cure",
+      "skillName": "큐어 힐",
+      "skillNameEn": "Cure Heal",
       "skillDescription": "체력을 즉시 회복합니다.",
       "skillDescriptionEn": "Instantly restores health.",
       "skillType": 1,
@@ -73,7 +73,7 @@
       "range": 0.0,
       "iconPath": "Icons/Cure",
       "effectPrefabPath": "Prefabs/Skills/Cure",
-      "voiceKeyword": "큐어"
+      "voiceKeyword": "큐어힐"
     }
   ]
 }

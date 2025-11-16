@@ -1,6 +1,7 @@
-fastapi>=0.104.0
-uvicorn[standard]>=0.24.0
-python-multipart>=0.0.6
-faster-whisper>=0.10.0
-python-Levenshtein>=0.23.0
-numpy>=1.24.0
+# Whisper 음성 인식 (CPU 버전)
+openai-whisper
+
+# FastAPI 서버
+fastapi==0.115.0
+uvicorn==0.32.0
+python-multipart==0.0.9

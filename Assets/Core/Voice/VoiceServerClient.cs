@@ -38,13 +38,14 @@ namespace LostSpells.Systems
                 }
                 else
                 {
-                    Debug.Log("음성인식 서버 연결 성공!");
+                    // Debug.Log("음성인식 서버 연결 성공!");
                 }
             }
         }
 
         /// <summary>
         /// 스킬 목록을 서버에 설정
+        /// 새 서버는 /recognize 요청 시 스킬을 함께 전달하므로, 여기서는 키워드만 저장
         /// </summary>
         public IEnumerator SetSkills(List<SkillData> skillList)
         {
@@ -61,25 +62,13 @@ namespace LostSpells.Systems
             if (currentSkillKeywords.Count == 0)
             {
                 Debug.LogWarning("음성 키워드가 설정된 스킬이 없습니다.");
-                yield break;
             }
-
-            WWWForm form = new WWWForm();
-            form.AddField("skills", string.Join(",", currentSkillKeywords));
-
-            using (UnityWebRequest request = UnityWebRequest.Post($"{serverUrl}/set-skills", form))
+            else
             {
-                yield return request.SendWebRequest();
-
-                if (request.result != UnityWebRequest.Result.Success)
-                {
-                    Debug.LogError($"스킬 설정 실패: {request.error}");
-                }
-                else
-                {
-                    Debug.Log($"서버에 {currentSkillKeywords.Count}개 스킬 키워드 설정 완료: {string.Join(", ", currentSkillKeywords)}");
-                }
+                Debug.Log($"스킬 키워드 설정 완료: {currentSkillKeywords.Count}개 - {string.Join(", ", currentSkillKeywords)}");
             }
+
+            yield break;
         }
 
         /// <summary>
@@ -88,7 +77,7 @@ namespace LostSpells.Systems
         public void SetLanguage(string languageCode)
         {
             currentLanguage = languageCode;
-            Debug.Log($"음성인식 언어 설정: {languageCode}");
+            // Debug.Log($"음성인식 언어 설정: {languageCode}");
         }
 
         /// <summary>
@@ -98,18 +87,19 @@ namespace LostSpells.Systems
         {
             WWWForm form = new WWWForm();
             form.AddBinaryData("audio", audioData, "recording.wav", "audio/wav");
-            form.AddField("language", currentLanguage); // 언어 설정 추가
+            form.AddField("language", currentLanguage);
+            form.AddField("skills", string.Join(",", currentSkillKeywords)); // 스킬 키워드 전달
 
             using (UnityWebRequest request = UnityWebRequest.Post($"{serverUrl}/recognize", form))
             {
+                request.timeout = 60;
                 yield return request.SendWebRequest();
 
                 if (request.result == UnityWebRequest.Result.Success)
                 {
                     string jsonResponse = request.downloadHandler.text;
-                    Debug.Log($"서버 응답 (언어: {currentLanguage}): {jsonResponse}");
+                    Debug.Log($"서버 응답: {jsonResponse}");
 
-                    // JSON 파싱 (skill_scores는 수동으로 파싱)
                     RecognitionResult result = ParseRecognitionResult(jsonResponse);
                     callback?.Invoke(result);
                 }
@@ -208,55 +198,73 @@ namespace LostSpells.Systems
         }
 
         /// <summary>
-        /// JSON 응답을 RecognitionResult로 파싱 (skill_scores Dictionary 포함)
+        /// JSON 응답을 RecognitionResult로 파싱
+        /// 새 서버 형식: {success, text, matched_skill, confidence, candidates, processing_time}
         /// </summary>
         private RecognitionResult ParseRecognitionResult(string json)
         {
             var result = new RecognitionResult();
-            result.skill_scores = new System.Collections.Generic.Dictionary<string, float>();
+            result.skill_scores = new Dictionary<string, float>();
 
-            // SimpleJSON 또는 수동 파싱 대신, 간단한 방법 사용
-            // status, recognized_text, processing_time은 JsonUtility로 파싱
-            var tempResult = JsonUtility.FromJson<RecognitionResult>(json);
-            result.status = tempResult.status;
-            result.recognized_text = tempResult.recognized_text;
-            result.processing_time = tempResult.processing_time;
-            result.best_match = tempResult.best_match;
-
-            // skill_scores는 수동 파싱 (간단한 문자열 파싱)
             try
             {
-                int skillScoresStart = json.IndexOf("\"skill_scores\":{");
-                if (skillScoresStart >= 0)
+                // JsonUtility로 기본 파싱
+                var serverResponse = JsonUtility.FromJson<ServerRecognitionResponse>(json);
+
+                if (!serverResponse.success)
                 {
-                    int braceStart = json.IndexOf("{", skillScoresStart);
-                    int braceEnd = json.IndexOf("}", braceStart);
-                    string skillScoresJson = json.Substring(braceStart + 1, braceEnd - braceStart - 1);
+                    Debug.LogError($"인식 실패: {serverResponse.error}");
+                    result.status = "error";
+                    return result;
+                }
 
-                    // "skill1": 0.5, "skill2": 0.3 형태를 파싱
-                    string[] pairs = skillScoresJson.Split(',');
-                    foreach (string pair in pairs)
+                // 새 형식을 기존 형식으로 변환
+                result.status = "success";
+                result.recognized_text = serverResponse.text;
+                result.processing_time = serverResponse.processing_time;
+
+                // best_match 설정
+                result.best_match = new BestMatch
+                {
+                    skill = serverResponse.matched_skill ?? "",
+                    score = serverResponse.confidence
+                };
+
+                // candidates를 skill_scores로 변환
+                if (serverResponse.candidates != null)
+                {
+                    foreach (var candidate in serverResponse.candidates)
                     {
-                        if (string.IsNullOrWhiteSpace(pair)) continue;
-
-                        string[] keyValue = pair.Split(':');
-                        if (keyValue.Length == 2)
-                        {
-                            string key = keyValue[0].Trim().Trim('"');
-                            if (float.TryParse(keyValue[1].Trim(), out float value))
-                            {
-                                result.skill_scores[key] = value;
-                            }
-                        }
+                        result.skill_scores[candidate.name] = candidate.confidence;
                     }
                 }
             }
-            catch (System.Exception e)
+            catch (Exception e)
             {
-                Debug.LogWarning($"skill_scores 파싱 실패: {e.Message}");
+                Debug.LogError($"JSON 파싱 실패: {e.Message}");
+                result.status = "error";
             }
 
             return result;
+        }
+
+        [Serializable]
+        private class ServerRecognitionResponse
+        {
+            public bool success;
+            public string text;
+            public string matched_skill;
+            public float confidence;
+            public SkillCandidate[] candidates;
+            public float processing_time;
+            public string error;
+        }
+
+        [Serializable]
+        private class SkillCandidate
+        {
+            public string name;
+            public float confidence;
         }
     }
 
