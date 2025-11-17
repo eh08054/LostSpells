@@ -19,7 +19,7 @@ public class Spacebarwhisper : MonoBehaviour
     private AudioSource audioSource;
     private bool isRecording;
     private float time;
-    private readonly int recordDuration = 2;
+    private readonly int recordDuration = 3;
 
     [Header("Audio Settings")]
     public int sampleRate = 44100; // 마이크 샘플레이트 - 프로젝트 설정과 동일하게
@@ -58,7 +58,22 @@ public class Spacebarwhisper : MonoBehaviour
     private void EndRecording()
     {
         Debug.Log("Ended Recording");
+        int currentPosition = Microphone.GetPosition(null);
         Microphone.End(null);
+
+        AudioClip originalClip = audioSource.clip;
+        AudioClip newClip = null;
+
+        if(originalClip != null && currentPosition > 0)
+        {
+            float[] recordedData = new float[currentPosition];
+            originalClip.GetData(recordedData, 0);
+
+            newClip = AudioClip.Create("NewClip", currentPosition, originalClip.channels, originalClip.frequency, false);
+            newClip.SetData(recordedData, 0);
+
+            audioSource.clip = null;
+        }
         audioSource.enabled = false;
         textAnimation.StopAnimation();
         recordingField.gameObject.SetActive(false);
@@ -66,8 +81,9 @@ public class Spacebarwhisper : MonoBehaviour
         isRecording = false;
         time = 0;
         progressBar.fillAmount = 0;
-        wavToWhisper.SendAudioToServer(audioSource.clip);
-        analyzingPitch.AnalyzeRecordedClip(audioSource.clip);
+        wavToWhisper.SendAudioToServer(originalClip);
+        analyzingPitch.AnalyzeRecordedClip(newClip);
+        Destroy(originalClip);
     }
 
     private void Update()
