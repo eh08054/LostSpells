@@ -17,7 +17,6 @@ namespace LostSpells.Components
         protected override void Start()
         {
             base.Start();
-            Debug.Log($"[Projectile] {gameObject.name} 발사!");
         }
 
         protected override void MoveSkill()
@@ -32,16 +31,12 @@ namespace LostSpells.Components
             if (((1 << collision.gameObject.layer) & targetLayer) == 0)
                 return;
 
-            // 적에게 데미지 처리
             var enemy = collision.GetComponent<EnemyComponent>();
             if (enemy != null && skillData != null)
             {
-                Debug.Log($"[Projectile] {skillData.skillName}이(가) {enemy.name}에게 {skillData.damage} 데미지!");
-
                 // TODO: Enemy에 데미지 적용 메서드 추가 필요
                 // enemy.TakeDamage(skillData.damage);
 
-                // 관통형이 아니면 파괴
                 if (!penetrating)
                 {
                     Destroy(gameObject);

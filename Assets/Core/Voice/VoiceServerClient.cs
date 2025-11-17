@@ -36,10 +36,6 @@ namespace LostSpells.Systems
                     Debug.LogWarning($"음성인식 서버 연결 실패: {request.error}");
                     Debug.LogWarning("음성인식을 사용하려면 서버를 시작하세요.");
                 }
-                else
-                {
-                    // Debug.Log("음성인식 서버 연결 성공!");
-                }
             }
         }
 
@@ -63,10 +59,6 @@ namespace LostSpells.Systems
             {
                 Debug.LogWarning("음성 키워드가 설정된 스킬이 없습니다.");
             }
-            else
-            {
-                Debug.Log($"스킬 키워드 설정 완료: {currentSkillKeywords.Count}개 - {string.Join(", ", currentSkillKeywords)}");
-            }
 
             yield break;
         }
@@ -77,7 +69,6 @@ namespace LostSpells.Systems
         public void SetLanguage(string languageCode)
         {
             currentLanguage = languageCode;
-            // Debug.Log($"음성인식 언어 설정: {languageCode}");
         }
 
         /// <summary>
@@ -98,14 +89,12 @@ namespace LostSpells.Systems
                 if (request.result == UnityWebRequest.Result.Success)
                 {
                     string jsonResponse = request.downloadHandler.text;
-                    Debug.Log($"서버 응답: {jsonResponse}");
-
                     RecognitionResult result = ParseRecognitionResult(jsonResponse);
                     callback?.Invoke(result);
                 }
                 else
                 {
-                    Debug.LogError($"음성 인식 실패: {request.error}");
+                    Debug.LogWarning($"음성 인식 실패: {request.error}");
                     callback?.Invoke(null);
                 }
             }
@@ -131,14 +120,12 @@ namespace LostSpells.Systems
                 if (request.result == UnityWebRequest.Result.Success)
                 {
                     string jsonResponse = request.downloadHandler.text;
-                    Debug.Log($"모델 목록: {jsonResponse}");
-
                     ModelsInfo modelsInfo = JsonUtility.FromJson<ModelsInfo>(jsonResponse);
                     callback?.Invoke(modelsInfo);
                 }
                 else
                 {
-                    Debug.LogError($"모델 목록 조회 실패: {request.error}");
+                    Debug.LogWarning($"모델 목록 조회 실패: {request.error}");
                     callback?.Invoke(null);
                 }
             }
@@ -158,12 +145,11 @@ namespace LostSpells.Systems
 
                 if (request.result == UnityWebRequest.Result.Success)
                 {
-                    Debug.Log($"모델 변경 성공: {modelSize}");
                     callback?.Invoke(true);
                 }
                 else
                 {
-                    Debug.LogError($"모델 변경 실패: {request.error}");
+                    Debug.LogWarning($"모델 변경 실패: {request.error}");
                     callback?.Invoke(false);
                 }
             }
@@ -186,12 +172,11 @@ namespace LostSpells.Systems
 
                 if (request.result == UnityWebRequest.Result.Success)
                 {
-                    Debug.Log($"모델 다운로드 성공: {modelSize}");
                     callback?.Invoke(true);
                 }
                 else
                 {
-                    Debug.LogError($"모델 다운로드 실패: {request.error}");
+                    Debug.LogWarning($"모델 다운로드 실패: {request.error}");
                     callback?.Invoke(false);
                 }
             }
@@ -213,7 +198,6 @@ namespace LostSpells.Systems
 
                 if (!serverResponse.success)
                 {
-                    Debug.LogError($"인식 실패: {serverResponse.error}");
                     result.status = "error";
                     return result;
                 }
@@ -241,7 +225,7 @@ namespace LostSpells.Systems
             }
             catch (Exception e)
             {
-                Debug.LogError($"JSON 파싱 실패: {e.Message}");
+                Debug.LogWarning($"JSON 파싱 실패: {e.Message}");
                 result.status = "error";
             }
 

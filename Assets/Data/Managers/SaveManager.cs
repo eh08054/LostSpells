@@ -145,7 +145,6 @@ namespace LostSpells.Data
             {
                 if (currentSaveData == null)
                 {
-                    Debug.LogWarning("저장할 데이터가 없습니다.");
                     return;
                 }
 
@@ -172,10 +171,6 @@ namespace LostSpells.Data
                 if (File.Exists(saveFilePath))
                 {
                     File.Delete(saveFilePath);
-                }
-                else
-                {
-                    Debug.LogWarning("삭제할 저장 파일이 없습니다.");
                 }
 
                 currentSaveData = PlayerSaveData.CreateDefault();
@@ -231,7 +226,6 @@ namespace LostSpells.Data
                 }
                 else
                 {
-                    Debug.LogWarning("다이아몬드가 부족합니다.");
                     return false;
                 }
             }
@@ -265,7 +259,6 @@ namespace LostSpells.Data
                 }
                 else
                 {
-                    Debug.LogWarning("부활석이 부족합니다.");
                     return false;
                 }
             }
@@ -299,7 +292,6 @@ namespace LostSpells.Data
                 }
                 else
                 {
-                    Debug.LogWarning("골드가 부족합니다.");
                     return false;
                 }
             }

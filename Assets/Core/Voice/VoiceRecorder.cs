@@ -22,16 +22,14 @@ namespace LostSpells.Systems
 
         void Start()
         {
-            // 마이크 디바이스 선택
             if (Microphone.devices.Length > 0)
             {
                 int index = Mathf.Clamp(microphoneIndex, 0, Microphone.devices.Length - 1);
                 microphoneDevice = Microphone.devices[index];
-                // Debug.Log($"마이크 선택: {microphoneDevice}");
             }
             else
             {
-                Debug.LogError("마이크를 찾을 수 없습니다!");
+                Debug.LogWarning("마이크를 찾을 수 없습니다!");
             }
         }
 
@@ -47,15 +45,11 @@ namespace LostSpells.Systems
 
             if (string.IsNullOrEmpty(microphoneDevice))
             {
-                Debug.LogError("마이크 디바이스가 없습니다!");
                 return;
             }
 
             isRecording = true;
-
-            // 녹음 시작
             recordedClip = Microphone.Start(microphoneDevice, false, recordingLength, sampleRate);
-            // Debug.Log("녹음 시작");
         }
 
         /// <summary>
@@ -70,7 +64,6 @@ namespace LostSpells.Systems
 
             isRecording = false;
             Microphone.End(microphoneDevice);
-            // Debug.Log("녹음 중지");
         }
 
         /// <summary>
@@ -81,7 +74,6 @@ namespace LostSpells.Systems
         {
             if (recordedClip == null)
             {
-                Debug.LogError("저장할 녹음이 없습니다!");
                 return null;
             }
 
@@ -116,7 +108,6 @@ namespace LostSpells.Systems
         {
             if (recordedClip == null)
             {
-                Debug.LogError("녹음된 오디오가 없습니다!");
                 return null;
             }
 

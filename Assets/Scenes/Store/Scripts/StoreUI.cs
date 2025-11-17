@@ -389,7 +389,6 @@ namespace LostSpells.UI
                 }
                 else
                 {
-                    Debug.LogWarning("다이아몬드가 부족합니다!");
                     // TODO: 부족하다는 팝업 표시
                 }
             }

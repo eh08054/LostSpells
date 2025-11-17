@@ -21,8 +21,6 @@ namespace LostSpells.Components
         {
             base.Start();
             activationTime = Time.time;
-
-            Debug.Log($"[Shield] {gameObject.name} 활성화! (지속시간: {shieldDuration}초)");
         }
 
         protected override void MoveSkill()
@@ -39,21 +37,16 @@ namespace LostSpells.Components
         {
             base.Update();
 
-            // 지속 시간 체크
             if (Time.time - activationTime > shieldDuration)
             {
-                Debug.Log($"[Shield] {gameObject.name} 지속시간 종료");
                 Destroy(gameObject);
             }
         }
 
         protected override void OnTriggerEnter2D(Collider2D collision)
         {
-            // 보호막은 적의 공격을 막음
             if (((1 << collision.gameObject.layer) & targetLayer) == 0)
                 return;
-
-            Debug.Log($"[Shield] 적의 공격 차단!");
 
             // TODO: 적의 발사체를 파괴하거나 데미지 무효화
             // var enemyProjectile = collision.GetComponent<EnemyProjectile>();

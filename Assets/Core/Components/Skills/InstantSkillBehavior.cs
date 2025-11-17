@@ -28,8 +28,6 @@ namespace LostSpells.Components
             // 즉시 데미지 처리
             ApplyInstantEffect();
 
-            Debug.Log($"[Instant] {gameObject.name} 즉시 발동!");
-
             // 이펙트 재생 후 자동 파괴
             Destroy(gameObject, effectDuration);
         }
@@ -68,9 +66,7 @@ namespace LostSpells.Components
 
             if (nearestEnemy != null)
             {
-                // 적 위치로 이동
                 transform.position = nearestEnemy.transform.position;
-                Debug.Log($"[Instant] 타겟: {nearestEnemy.name} (거리: {minDistance:F2})");
             }
         }
 
@@ -92,8 +88,6 @@ namespace LostSpells.Components
                 var enemy = hit.GetComponent<EnemyComponent>();
                 if (enemy != null)
                 {
-                    Debug.Log($"[Instant] {skillData.skillName}이(가) {enemy.name}에게 {skillData.damage} 데미지!");
-
                     // TODO: Enemy에 데미지 적용 메서드 추가 필요
                     // enemy.TakeDamage(skillData.damage);
                 }
