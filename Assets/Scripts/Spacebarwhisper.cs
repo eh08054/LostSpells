@@ -21,24 +21,6 @@ public class Spacebarwhisper : MonoBehaviour
     private float time;
     private readonly int recordDuration = 3;
 
-    [Header("Audio Settings")]
-    public int sampleRate = 44100; // 마이크 샘플레이트 - 프로젝트 설정과 동일하게
-    public int frameSize = 2048;   // 분석 윈도우 (권장 1024-4096)
-    public int hopSize = 1024;     // 프레임 슬라이드 (보통 frameSize/2)
-
-    [Header("Onset / Energy")]
-    public float rmsThreshold = 0.01f; // 음절 시작 기준 (조정 필요)
-    public float rmsSilenceThreshold = 0.008f; // 음절 종료 기준
-    public int minFramesPerSegment = 3; // 최소 프레임 길이(노이즈 필터)
-
-    [Header("Pitch Matching")]
-    public string noteNames = "C4,G4,E4,G4"; // 또는 빈값으로 두고 targetNotesHz 사용
-    public float[] targetNotesHz; // 직접 Hz 배열로 넣어도 됨
-    public float toleranceCents = 100f; // 허용 오차(센트) — 초기값 관대(100cent = 1 semitone)
-
-    [Header("Debug / UI hooks")]
-    public bool debugLog = true;
-
     private void Start()
     {
         audioSource = GetComponent<AudioSource>();

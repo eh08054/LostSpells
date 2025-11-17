@@ -12,22 +12,24 @@ using UnityEngine;
 //4. 각 피크 구간에 대해 PitchFromYin 메서드를 사용하여 기본 주파수를 검출한다.
 //5. 검출된 주파수를 음표로 변환하고 화면에 출력한다.
 
+// 음절 수가 정해져 있지 않은 문제(플레이어가 말한 스킬이 몇음절인지 알 수 없음) - 고음/중음/저음의 비율을 통해 스킬의 특성을 결정.
+// 예를 들어 상위 X개의 피크 중에 고음이 X / 2개 이상일 경우 스턴 부가효과를 주는등.
+// 즉 정확한 음이 아니라 플레이어가 발화한 전반적 특성에 따라 스킬의 효과가 결정되므로 플레이어는 이를 유연하게 활용 가능.
 public class AnalyzingPitch : MonoBehaviour
 {
     public int sampleRate = 44100;
     public int frameSize = 2048;
     public int hopSize = 1024;
-    public int peakCount = 4; // 찾고 싶은 RMS 피크 개수 
+    public int peakCount = 4; // 찾고 싶은 RMS 피크 개수.
     public float basicFrequency = 65.41f;
     private float highFrequency;
     private float lowFrequency;
-
     private string[] noteNames = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
     [SerializeField] private TMP_Text myText;
     public void AnalyzeRecordedClip(AudioClip clip)
     {
-        highFrequency = basicFrequency * 4f;
-        lowFrequency = basicFrequency / 4f;
+        highFrequency = basicFrequency * 2f;
+        lowFrequency = basicFrequency / 2f;
         myText.text = "Detected Notes: ";
         if (clip == null)
         {
@@ -48,23 +50,25 @@ public class AnalyzingPitch : MonoBehaviour
         {
             float rms = ComputeRMS(data, i, frameSize);
             Debug.Log($"RMS at sample {i}: {rms:F5}");
-            rmsList.Add(rms);  //rmsList와 indexList에 각각 위에서 반환된 RMS 값과 해당 프레임의 시작 인덱스를 저장                      
+            rmsList.Add(rms);  //rmsList와 indexList에 각각 위에서 반환된 RMS 값과 해당 프레임의 시작 인덱스를 저장
             indexList.Add(i);
         }
 
         // 2️. 3가지 조건에 맞는 피크 인덱스를 RMS 값이 가장 높은 인덱스부터 내림차순으로 저장.
         List<int> peakIndices = FindTopRMSPeaks(rmsList, indexList, peakCount);
 
-        for(int i = 0; i < peakIndices.Count; i++)
+        for (int i = 0; i < peakIndices.Count; i++)
         {
-            Debug.Log($"🔍 Found RMS Peak Top {i + 1} at sample {peakIndices[i]}");
+            Debug.Log($"Found RMS Peak Top {i + 1} at sample {peakIndices[i]}");
         }
 
         int frequencyCount = 0;
         // 3️. 각 피크 구간의 주파수 분석
         // peakIndices 리스트에 저장된 각 인덱스(프레임 시작점)부터 frameSize 길이만큼 데이터를 잘라서 PitchFromYin 메서드로 주파수 분석
         // 만약 분석한 기본 주파수가 0보다 크면(유효한 주파수) 이를 출력하고 frequencyCount를 증가시킨다.
-        foreach (int peakIndex in peakIndices)   
+
+        int[] countingFrequencyArray = { 0, 0, 0, 0 };
+        foreach (int peakIndex in peakIndices)
         {
             float[] frame = new float[frameSize];
             Array.Copy(data, peakIndex, frame, 0, frameSize);  // data 배열로부터 peakIndex에서 시작해 frameSize 길이만큼 frame 배열에 복사(예를 들어 peakIndex가 2048이면 data[2048]부터 data[4095]까지 복사)
@@ -72,6 +76,22 @@ public class AnalyzingPitch : MonoBehaviour
             Debug.Log("Detected frequency: " + freq);
             if (freq > 0)
             {
+                if (freq < lowFrequency)
+                {
+                    countingFrequencyArray[0]++; //주파수(freq) < 설정 주파수 / 2
+                }
+                else if (freq < basicFrequency)
+                {
+                    countingFrequencyArray[1]++; //설정 주파수 / 2 <= 주파수(freq) < 설정 주파수
+                }
+                else if (freq < highFrequency)
+                {
+                    countingFrequencyArray[2]++; // 설정 주파수 <= 주파수(freq) < 설정 주파수 * 2
+                }
+                else
+                {
+                    countingFrequencyArray[3]++; // 주파수(freq) >= 설정 주파수 * 2
+                }
                 int noteNumber = ToNoteNumberLog(freq);
 
                 string note = noteNames[noteNumber % 12];
@@ -79,12 +99,12 @@ public class AnalyzingPitch : MonoBehaviour
 
                 string text = $"{note}{octave}";
                 myText.text += text + " ";
-                Debug.Log($"🎵 Peak at sample {peakIndex} → {freq:F2} Hz");
+                Debug.Log($"Peak at sample {peakIndex} → {freq:F2} Hz");
                 frequencyCount++;
             }
             else
-                Debug.Log($"⚠️ No pitch detected at peak {peakIndex}");
-            if(frequencyCount >= peakCount)
+                Debug.Log($"No pitch detected at peak {peakIndex}");
+            if (frequencyCount >= peakCount)
                 break;
         }
     }
@@ -113,7 +133,7 @@ public class AnalyzingPitch : MonoBehaviour
         List<int> peakIndices = new List<int>();
         List<(float rms, int index)> pairs = new List<(float, int)>();
 
-        for(int i = 1; i < rmsList.Count - 1; i++)
+        for (int i = 1; i < rmsList.Count - 1; i++)
         {
             if (rmsList[i] > rmsList[i - 1] && rmsList[i] > rmsList[i + 1])
             {
@@ -128,7 +148,7 @@ public class AnalyzingPitch : MonoBehaviour
         // RMS 값 기준으로 내림차순 정렬
         pairs.Sort((a, b) => b.rms.CompareTo(a.rms));
 
-        int minDistance = hopSize * 2; 
+        int minDistance = hopSize * 2;
         foreach (var p in pairs)
         {
             bool tooClose = false;
@@ -143,7 +163,7 @@ public class AnalyzingPitch : MonoBehaviour
             if (!tooClose)
                 peakIndices.Add(p.index);
         }
-;
+
         return peakIndices;
     }
 
@@ -159,15 +179,15 @@ public class AnalyzingPitch : MonoBehaviour
         int halfN = N / 2;
 
         //여기서 Lag는 샘플 단위의 지연 시간(주기)임. 예를 들어 1000Hz면 Lag=44.1(44100 / 1000), 50Hz면 Lag=882(44100 / 50)
-        int minLag = Mathf.Max(2, sampleRate / 1000); 
-        int maxLag = Mathf.Min(halfN, sampleRate / 50); 
+        int minLag = Mathf.Max(2, sampleRate / 1000);
+        int maxLag = Mathf.Min(halfN, sampleRate / 50);
 
         Debug.Log($"YIN Analysis: minLag= {minLag}, maxLag={maxLag}");
 
         if (maxLag <= minLag) return -1f;
 
         // 1. 차이 함수 (Difference Function, d(τ)) 계산
-        // 
+        //
         float[] d = new float[maxLag];
 
         // d[τ] = Σ_{j=1}^{N-τ} (x_j - x_{j+τ})^2
@@ -183,7 +203,7 @@ public class AnalyzingPitch : MonoBehaviour
         }
 
         // 2. 누적 정규화 차이 함수 (Cumulative Normalized Difference Function, d'(τ)) 계산
-        // 이것을 한 번 더 계산하는 이유는 차이함수에서 tau가 커질수록 for이 돌아가는 횟수가 줄어 값이 작아지는 경향이 있기 때문이다. 
+        // 이것을 한 번 더 계산하는 이유는 차이함수에서 tau가 커질수록 for이 돌아가는 횟수가 줄어 값이 작아지는 경향이 있기 때문이다.
         // d'(τ) = d(τ) / [(1/τ) * Σ_{i=1}^{τ} d(i)]
         float[] d_prime = new float[maxLag];
         float sum_d = 0f;
@@ -240,7 +260,7 @@ public class AnalyzingPitch : MonoBehaviour
 
             if (actualTau > 0)
             {
-                // F0 = SampleRate / T0
+                // F0 = SampleRate / T0(기본 주파수 = SampleRate / 주기)
                 return sampleRate / actualTau;
             }
         }
@@ -252,14 +272,5 @@ public class AnalyzingPitch : MonoBehaviour
     private int ToNoteNumberLog(float freq)
     {
         return Mathf.RoundToInt(57 + 12 * Mathf.Log(freq / 440.0f, 2));
-    }
-    private int checkFrequencyInRange(float freq)
-    {
-        if(freq > lowFrequency && freq < basicFrequency)
-            return 1; // Low
-        else if(freq >= basicFrequency && freq <= highFrequency)
-            return 2; // High
-        else
-            return 0; // Out of range
     }
 }
