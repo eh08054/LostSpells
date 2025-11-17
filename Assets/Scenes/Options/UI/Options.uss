@@ -52,23 +52,47 @@
     padding-left: var(--spacing-large);
     padding-right: var(--spacing-large);
     padding-bottom: var(--spacing-large);
-    padding-top: 120px;  /* 오른쪽 패널 헤더와 첫 번째 항목 사이 정렬 */
+    padding-top: var(--spacing-large);
 }
 
-/* 오른쪽 패널 - 스크롤 영역 */
-.right-panel {
+/* 오른쪽 패널 컨테이너 */
+.right-panel-container {
+    flex-grow: 1;
+    background-color: rgba(0, 0, 0, 0);
+}
+
+/* 설정 패널 래퍼 */
+.settings-panel-wrapper {
+    flex-grow: 1;
+    flex-direction: column;
+}
+
+/* 고정 헤더 */
+.panel-header-fixed {
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    padding: var(--spacing-xlarge);
+    padding-bottom: var(--spacing-medium);
+    flex-shrink: 0;
+}
+
+/* 패널 스크롤뷰 */
+.panel-scroll {
     flex-grow: 1;
     background-color: rgba(0, 0, 0, 0);
 }
 
 /* ScrollView 기본 패딩 제거 */
-.right-panel > .unity-scroll-view__content-container {
+.panel-scroll > .unity-scroll-view__content-container {
     padding: 0;
 }
 
-/* 설정 패널 */
-.settings-panel {
-    padding: var(--spacing-xlarge);
+/* 패널 컨텐츠 */
+.panel-content {
+    padding-left: var(--spacing-xlarge);
+    padding-right: var(--spacing-xlarge);
+    padding-bottom: var(--spacing-xlarge);
 }
 
 /* 설정 행 */
@@ -80,14 +104,6 @@
 }
 
 /* ========== 텍스트 스타일 ========== */
-
-/* 패널 헤더 (타이틀 + 기본값 버튼) */
-.panel-header {
-    width: 100%;
-    flex-direction: row;
-    align-items: center;
-    margin-bottom: var(--spacing-xlarge);
-}
 
 .panel-title {
     font-size: 32px;
