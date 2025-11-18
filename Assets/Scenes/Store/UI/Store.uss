@@ -127,32 +127,32 @@
     margin-bottom: var(--spacing-medium);
     padding: var(--spacing-medium);
 
-    /* Fantasy Wooden GUI TextBTN_Big 배경 */
-    background-image: url("project://database/Assets/Templates/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/TextBTN_Big.png");
-    -unity-background-scale-mode: stretch-to-fill;
-    -unity-background-image-tint-color: rgb(255, 255, 255);
-
-    /* 기본 버튼 배경 제거 */
-    background-color: rgba(0, 0, 0, 0);
-    border-width: 0;
+    /* 배경 및 테두리 */
+    background-color: rgba(0, 0, 0, 0.3);
+    border-width: 2px;
+    border-color: rgba(255, 255, 255, 0.5);
+    border-radius: 0;
 
     /* 텍스트 스타일 */
-    color: rgb(240, 220, 180);
+    color: rgb(255, 255, 255);
     font-size: var(--font-size-medium);
     -unity-font-style: bold;
     -unity-text-align: middle-center;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
 
     /* 트랜지션 효과 */
-    transition-property: -unity-background-image-tint-color, scale;
+    transition-property: background-color, border-color, scale;
     transition-duration: 0.15s;
 }
 
 .category-button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.7);
     scale: 1.02;
 }
 
 .category-button:active {
-    -unity-background-image-tint-color: rgb(180, 180, 180);
+    background-color: rgba(255, 255, 255, 0.2);
     scale: 0.98;
 }
 

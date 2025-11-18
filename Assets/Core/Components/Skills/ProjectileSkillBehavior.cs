@@ -12,7 +12,9 @@ namespace LostSpells.Components
     public class ProjectileSkillBehavior : SkillBehavior
     {
         [Header("Projectile Settings")]
-        [SerializeField] private bool penetrating = false; // 관통형 여부
+        [SerializeField] private int maxPenetrationCount = 0; // 최대 관통 횟수 (-1: 무제한, 0: 관통 안함, 1+: 지정 횟수)
+
+        private int currentPenetrationCount = 0; // 현재 관통한 적의 수
 
         protected override void Start()
         {
@@ -34,10 +36,18 @@ namespace LostSpells.Components
             var enemy = collision.GetComponent<EnemyComponent>();
             if (enemy != null && skillData != null)
             {
-                // TODO: Enemy에 데미지 적용 메서드 추가 필요
-                // enemy.TakeDamage(skillData.damage);
+                // 적에게 데미지 적용
+                int damageAmount = Mathf.RoundToInt(skillData.damage);
+                enemy.TakeDamage(damageAmount);
 
-                if (!penetrating)
+                // 관통 카운트 증가
+                currentPenetrationCount++;
+
+                // 관통 여부 체크
+                // -1: 무제한 관통 (파괴 안함)
+                // 0: 관통 안함 (첫 충돌 시 파괴)
+                // 1+: 지정 횟수만큼 관통 후 파괴
+                if (maxPenetrationCount >= 0 && currentPenetrationCount > maxPenetrationCount)
                 {
                     Destroy(gameObject);
                 }

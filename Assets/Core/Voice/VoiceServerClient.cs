@@ -45,13 +45,15 @@ namespace LostSpells.Systems
         /// </summary>
         public IEnumerator SetSkills(List<SkillData> skillList)
         {
-            // 스킬에서 음성 키워드만 추출
+            // 스킬에서 음성 키워드만 추출 (현재 언어에 맞게)
             currentSkillKeywords.Clear();
             foreach (var skill in skillList)
             {
-                if (!string.IsNullOrEmpty(skill.voiceKeyword))
+                // 현재 언어에 맞는 스킬 이름을 키워드로 사용
+                string keyword = GetVoiceKeywordForCurrentLanguage(skill);
+                if (!string.IsNullOrEmpty(keyword))
                 {
-                    currentSkillKeywords.Add(skill.voiceKeyword);
+                    currentSkillKeywords.Add(keyword);
                 }
             }
 
@@ -61,6 +63,22 @@ namespace LostSpells.Systems
             }
 
             yield break;
+        }
+
+        /// <summary>
+        /// 현재 언어에 맞는 음성 키워드 반환
+        /// </summary>
+        private string GetVoiceKeywordForCurrentLanguage(SkillData skill)
+        {
+            // 한국어면 한국어 이름, 영어면 영어 이름 사용
+            if (currentLanguage == "ko")
+            {
+                return !string.IsNullOrEmpty(skill.skillName) ? skill.skillName : skill.skillNameEn;
+            }
+            else
+            {
+                return !string.IsNullOrEmpty(skill.skillNameEn) ? skill.skillNameEn : skill.skillName;
+            }
         }
 
         /// <summary>

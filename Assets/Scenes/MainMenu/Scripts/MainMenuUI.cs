@@ -17,8 +17,11 @@ namespace LostSpells.UI
         private Button storeButton;
         private Button quitButton;
 
-        // 팝업 요소
-        private VisualElement quitPopup;
+        // 메뉴 버튼 컨테이너
+        private VisualElement menuButtonContainer;
+
+        // 종료 확인 화면
+        private VisualElement quitConfirmation;
         private Button confirmQuitButton;
         private Button cancelQuitButton;
 
@@ -37,8 +40,11 @@ namespace LostSpells.UI
             storeButton = root.Q<Button>("StoreButton");
             quitButton = root.Q<Button>("QuitButton");
 
-            // 팝업 요소 찾기
-            quitPopup = root.Q<VisualElement>("QuitPopup");
+            // 메뉴 버튼 컨테이너 찾기
+            menuButtonContainer = root.Q<VisualElement>("MenuButtonContainer");
+
+            // 종료 확인 화면 찾기
+            quitConfirmation = root.Q<VisualElement>("QuitConfirmation");
             confirmQuitButton = root.Q<Button>("ConfirmQuitButton");
             cancelQuitButton = root.Q<Button>("CancelQuitButton");
 
@@ -68,8 +74,8 @@ namespace LostSpells.UI
             // 현재 언어로 UI 업데이트
             UpdateLocalization();
 
-            // 팝업 초기 상태 - 숨김
-            HideQuitPopup();
+            // 종료 확인 화면 초기 상태 - 숨김
+            HideQuitConfirmation();
         }
 
         private void OnDisable()
@@ -131,16 +137,16 @@ namespace LostSpells.UI
             if (quitButton != null)
                 quitButton.text = loc.GetText("main_menu_quit");
 
-            // Popup
-            if (quitPopup != null)
+            // 종료 확인 화면
+            if (quitConfirmation != null)
             {
-                var popupTitle = quitPopup.Q<Label>("PopupTitle");
-                if (popupTitle != null)
-                    popupTitle.text = loc.GetText("quit_popup_title");
+                var quitTitle = quitConfirmation.Q<Label>("QuitTitle");
+                if (quitTitle != null)
+                    quitTitle.text = loc.GetText("quit_popup_title");
 
-                var popupMessage = quitPopup.Q<Label>("PopupMessage");
-                if (popupMessage != null)
-                    popupMessage.text = loc.GetText("quit_popup_message");
+                var quitMessage = quitConfirmation.Q<Label>("QuitMessage");
+                if (quitMessage != null)
+                    quitMessage.text = loc.GetText("quit_popup_message");
             }
 
             if (confirmQuitButton != null)
@@ -172,8 +178,8 @@ namespace LostSpells.UI
 
         private void OnQuitButtonClicked()
         {
-            // 팝업 표시
-            ShowQuitPopup();
+            // 종료 확인 화면 표시
+            ShowQuitConfirmation();
         }
 
         private void OnConfirmQuitButtonClicked()
@@ -188,27 +194,41 @@ namespace LostSpells.UI
 
         private void OnCancelQuitButtonClicked()
         {
-            // 팝업 숨김
-            HideQuitPopup();
+            // 종료 확인 화면 숨김
+            HideQuitConfirmation();
         }
 
         #endregion
 
-        #region Popup Control
+        #region Quit Confirmation Control
 
-        private void ShowQuitPopup()
+        private void ShowQuitConfirmation()
         {
-            if (quitPopup != null)
+            // 메뉴 버튼들 숨기기
+            if (menuButtonContainer != null)
             {
-                quitPopup.style.display = DisplayStyle.Flex;
+                menuButtonContainer.style.display = DisplayStyle.None;
+            }
+
+            // 종료 확인 화면 표시
+            if (quitConfirmation != null)
+            {
+                quitConfirmation.style.display = DisplayStyle.Flex;
             }
         }
 
-        private void HideQuitPopup()
+        private void HideQuitConfirmation()
         {
-            if (quitPopup != null)
+            // 종료 확인 화면 숨기기
+            if (quitConfirmation != null)
             {
-                quitPopup.style.display = DisplayStyle.None;
+                quitConfirmation.style.display = DisplayStyle.None;
+            }
+
+            // 메뉴 버튼들 다시 표시
+            if (menuButtonContainer != null)
+            {
+                menuButtonContainer.style.display = DisplayStyle.Flex;
             }
         }
 

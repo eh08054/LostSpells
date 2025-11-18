@@ -28,6 +28,10 @@ namespace LostSpells.UI
         // 헤더 버튼
         private Button backButton;
 
+        // 통합 패널 헤더
+        private Label currentPanelTitle;
+        private Button currentPanelResetButton;
+
         // 카테고리 버튼들
         private Button audioButton;
         private Button graphicsButton;
@@ -40,24 +44,26 @@ namespace LostSpells.UI
         private VisualElement languagePanel;
         private VisualElement gamePanel;
 
+        // 현재 활성 패널 추적
+        private VisualElement currentPanel;
+
         // Audio 패널 컨트롤
-        private DropdownField microphoneDropdown;
-        private Button audioResetButton;
+        private CustomDropdown microphoneDropdown;
 
         // Language 패널 컨트롤
-        private DropdownField uiLanguageDropdown;
-        private Button languageResetButton;
+        private CustomDropdown uiLanguageDropdown;
 
         // Game 패널 컨트롤
-        private Label keyBindingsHeader;
-        private Button keyBindingsToggleButton;
-        private VisualElement keyBindingArea;
-        private Label voiceRecognitionHeader;
-        private Button voiceRecognitionToggleButton;
-        private VisualElement voiceRecognitionArea;
+        private CollapsibleSection keyBindingSection;
+        private CollapsibleSection voiceRecognitionSection;
         private Label serverStatusLabel;
         private Dictionary<string, Button> keyButtons = new Dictionary<string, Button>();
-        private Button gameResetButton;
+        private Button resetGameButton;
+
+        // 게임 초기화 확인 팝업
+        private VisualElement gameResetConfirmation;
+        private Button confirmResetButton;
+        private Button cancelResetButton;
 
         // 서버 체크
         private const string SERVER_URL = "http://localhost:8000";
@@ -74,22 +80,6 @@ namespace LostSpells.UI
 
             // SaveManager 싱글톤 인스턴스 가져오기
             saveManager = SaveManager.Instance;
-
-            // AudioListener 중복 체크 및 수정
-            AudioListener[] listeners = FindObjectsByType<AudioListener>(FindObjectsSortMode.None);
-            if (listeners.Length > 1)
-            {
-                Debug.LogWarning($"[OptionsUI] AudioListener가 {listeners.Length}개 발견됨. Main Camera만 남기고 제거합니다.");
-
-                foreach (var listener in listeners)
-                {
-                    // Main Camera가 아닌 AudioListener는 제거
-                    if (listener.gameObject.name != "Main Camera")
-                    {
-                        Destroy(listener);
-                    }
-                }
-            }
         }
 
         private void OnEnable()
@@ -140,6 +130,14 @@ namespace LostSpells.UI
         private void OnDestroy()
         {
             UnregisterLocalizationEvents();
+
+            // 드롭다운 정리
+            microphoneDropdown?.Dispose();
+            uiLanguageDropdown?.Dispose();
+
+            // 접기/펼치기 섹션 정리
+            keyBindingSection?.Dispose();
+            voiceRecognitionSection?.Dispose();
         }
 
         private void UnregisterLocalizationEvents()
@@ -179,6 +177,10 @@ namespace LostSpells.UI
             // 헤더 버튼
             backButton = root.Q<Button>("BackButton");
 
+            // 통합 패널 헤더
+            currentPanelTitle = root.Q<Label>("CurrentPanelTitle");
+            currentPanelResetButton = root.Q<Button>("CurrentPanelResetButton");
+
             // 카테고리 버튼들
             audioButton = root.Q<Button>("AudioButton");
             graphicsButton = root.Q<Button>("GraphicsButton");
@@ -192,22 +194,15 @@ namespace LostSpells.UI
             gamePanel = root.Q<VisualElement>("GamePanel");
 
             // Audio 패널 컨트롤
-            microphoneDropdown = root.Q<DropdownField>("MicrophoneDropdown");
-            audioResetButton = root.Q<Button>("AudioResetButton");
+            microphoneDropdown = new CustomDropdown(root, "MicrophoneDropdownContainer", "MicrophoneDropdownButton", "MicrophoneDropdownLabel", "MicrophoneDropdownList");
 
             // Language 패널 컨트롤
-            uiLanguageDropdown = root.Q<DropdownField>("UILanguageDropdown");
-            languageResetButton = root.Q<Button>("LanguageResetButton");
+            uiLanguageDropdown = new CustomDropdown(root, "UILanguageDropdownContainer", "UILanguageDropdownButton", "UILanguageDropdownLabel", "UILanguageDropdownList");
 
             // Game 패널 컨트롤
-            keyBindingsHeader = root.Q<Label>("KeyBindingsHeader");
-            keyBindingsToggleButton = root.Q<Button>("KeyBindingsToggleButton");
-            keyBindingArea = root.Q<VisualElement>("KeyBindingArea");
-            voiceRecognitionHeader = root.Q<Label>("VoiceRecognitionHeader");
-            voiceRecognitionToggleButton = root.Q<Button>("VoiceRecognitionToggleButton");
-            voiceRecognitionArea = root.Q<VisualElement>("VoiceRecognitionArea");
+            keyBindingSection = new CollapsibleSection(root, "KeyBindingsHeader", "KeyBindingsToggleButton", "KeyBindingArea");
+            voiceRecognitionSection = new CollapsibleSection(root, "VoiceRecognitionHeader", "VoiceRecognitionToggleButton", "VoiceRecognitionArea");
             serverStatusLabel = root.Q<Label>("ServerStatusLabel");
-            gameResetButton = root.Q<Button>("GameResetButton");
 
             // 키 버튼들
             keyButtons["MoveLeft"] = root.Q<Button>("MoveLeftKey");
@@ -215,6 +210,14 @@ namespace LostSpells.UI
             keyButtons["Jump"] = root.Q<Button>("JumpKey");
             keyButtons["VoiceRecord"] = root.Q<Button>("VoiceRecordKey");
             keyButtons["SkillPanel"] = root.Q<Button>("SkillPanelKey");
+
+            // 게임 초기화 버튼
+            resetGameButton = root.Q<Button>("ResetGameButton");
+
+            // 게임 초기화 확인 팝업
+            gameResetConfirmation = root.Q<VisualElement>("GameResetConfirmation");
+            confirmResetButton = root.Q<Button>("ConfirmResetButton");
+            cancelResetButton = root.Q<Button>("CancelResetButton");
         }
 
         private void RegisterEvents()
@@ -234,35 +237,9 @@ namespace LostSpells.UI
             if (gameButton != null)
                 gameButton.clicked += () => ShowPanel(gamePanel);
 
-            // Audio 패널 이벤트
-            if (microphoneDropdown != null)
-                microphoneDropdown.RegisterValueChangedCallback(evt => OnMicrophoneChanged(evt.newValue));
-
-            if (audioResetButton != null)
-                audioResetButton.clicked += OnAudioReset;
-
-            // Language 패널 이벤트
-            if (uiLanguageDropdown != null)
-                uiLanguageDropdown.RegisterValueChangedCallback(evt => OnUILanguageChanged(evt.newValue));
-
-            if (languageResetButton != null)
-                languageResetButton.clicked += OnLanguageReset;
-
-            // Game 패널 이벤트
-            if (keyBindingsHeader != null)
-                keyBindingsHeader.RegisterCallback<ClickEvent>(evt => ToggleKeyBindingArea());
-
-            if (keyBindingsToggleButton != null)
-                keyBindingsToggleButton.clicked += ToggleKeyBindingArea;
-
-            if (voiceRecognitionHeader != null)
-                voiceRecognitionHeader.RegisterCallback<ClickEvent>(evt => ToggleVoiceRecognitionArea());
-
-            if (voiceRecognitionToggleButton != null)
-                voiceRecognitionToggleButton.clicked += ToggleVoiceRecognitionArea;
-
-            if (gameResetButton != null)
-                gameResetButton.clicked += OnGameReset;
+            // 통합 리셋 버튼 이벤트
+            if (currentPanelResetButton != null)
+                currentPanelResetButton.clicked += OnCurrentPanelReset;
 
             // 서버 상태 실시간 체크 시작
             serverCheckCoroutine = StartCoroutine(CheckServerStatusLoop());
@@ -276,6 +253,17 @@ namespace LostSpells.UI
                     kvp.Value.clicked += () => OnKeyButtonClicked(action);
                 }
             }
+
+            // 게임 초기화 버튼 이벤트
+            if (resetGameButton != null)
+                resetGameButton.clicked += OnResetGameButtonClicked;
+
+            // 게임 초기화 확인 팝업 버튼 이벤트
+            if (confirmResetButton != null)
+                confirmResetButton.clicked += OnConfirmResetButtonClicked;
+
+            if (cancelResetButton != null)
+                cancelResetButton.clicked += OnCancelResetButtonClicked;
         }
 
         private void UnregisterEvents()
@@ -295,15 +283,20 @@ namespace LostSpells.UI
             if (gameButton != null)
                 gameButton.clicked -= () => ShowPanel(gamePanel);
 
-            // Audio 패널 이벤트 해제
-            if (audioResetButton != null)
-                audioResetButton.clicked -= OnAudioReset;
+            // 통합 리셋 버튼 이벤트 해제
+            if (currentPanelResetButton != null)
+                currentPanelResetButton.clicked -= OnCurrentPanelReset;
 
-            if (languageResetButton != null)
-                languageResetButton.clicked -= OnLanguageReset;
+            // 게임 초기화 버튼 이벤트 해제
+            if (resetGameButton != null)
+                resetGameButton.clicked -= OnResetGameButtonClicked;
 
-            if (gameResetButton != null)
-                gameResetButton.clicked -= OnGameReset;
+            // 게임 초기화 확인 팝업 버튼 이벤트 해제
+            if (confirmResetButton != null)
+                confirmResetButton.clicked -= OnConfirmResetButtonClicked;
+
+            if (cancelResetButton != null)
+                cancelResetButton.clicked -= OnCancelResetButtonClicked;
         }
 
         private void LoadSettings()
@@ -330,17 +323,16 @@ namespace LostSpells.UI
                 {
                     microphones.Add(device);
                 }
-                microphoneDropdown.choices = microphones;
 
                 // 저장된 마이크 선택
+                string selectedMicrophone = "Default";
                 if (!string.IsNullOrEmpty(saveData.microphoneDeviceId) && microphones.Contains(saveData.microphoneDeviceId))
                 {
-                    microphoneDropdown.value = saveData.microphoneDeviceId;
+                    selectedMicrophone = saveData.microphoneDeviceId;
                 }
-                else
-                {
-                    microphoneDropdown.value = "Default";
-                }
+
+                // 드롭다운 설정
+                microphoneDropdown.SetItems(microphones, selectedMicrophone, OnMicrophoneChanged);
             }
         }
 
@@ -349,10 +341,12 @@ namespace LostSpells.UI
             // UI 언어
             if (uiLanguageDropdown != null)
             {
-                uiLanguageDropdown.choices = new List<string> { "Korean", "English" };
-                uiLanguageDropdown.value = saveData.uiLanguage;
-            }
+                List<string> languages = new List<string> { "Korean", "English" };
+                string selectedUILanguage = saveData.uiLanguage;
 
+                // 드롭다운 설정
+                uiLanguageDropdown.SetItems(languages, selectedUILanguage, OnUILanguageChanged);
+            }
 
             // 음성인식 모델 로드 제거됨 (서버 상태만 표시)
         }
@@ -437,6 +431,10 @@ namespace LostSpells.UI
             if (headerTitle != null)
                 headerTitle.text = loc.GetText("options_title");
 
+            // 통합 리셋 버튼
+            if (currentPanelResetButton != null)
+                currentPanelResetButton.text = loc.GetText("options_audio_reset"); // "Reset" 텍스트
+
             // Category buttons
             if (audioButton != null)
                 audioButton.text = loc.GetText("options_audio");
@@ -447,50 +445,28 @@ namespace LostSpells.UI
             if (gameButton != null)
                 gameButton.text = loc.GetText("options_game");
 
-            // Audio Panel
-            var audioPanelTitle = root.Q<Label>("AudioPanelTitle");
-            if (audioPanelTitle != null)
-                audioPanelTitle.text = loc.GetText("options_audio_title");
-            if (audioResetButton != null)
-                audioResetButton.text = loc.GetText("options_audio_reset");
-
+            // Audio Panel labels
             var micLabel = root.Q<Label>("MicrophoneLabel");
             if (micLabel != null)
                 micLabel.text = loc.GetText("options_audio_microphone");
 
-            // Graphics Panel
-            var graphicsPanelTitle = root.Q<Label>("GraphicsPanelTitle");
-            if (graphicsPanelTitle != null)
-                graphicsPanelTitle.text = loc.GetText("options_graphics_title");
-            var graphicsResetButton = root.Q<Button>("GraphicsResetButton");
-            if (graphicsResetButton != null)
-                graphicsResetButton.text = loc.GetText("options_graphics_reset");
-
-            // Language Panel
-            var languagePanelTitle = root.Q<Label>("LanguagePanelTitle");
-            if (languagePanelTitle != null)
-                languagePanelTitle.text = loc.GetText("options_language_title");
-            if (languageResetButton != null)
-                languageResetButton.text = loc.GetText("options_language_reset");
-
+            // Language Panel labels
             var uiLanguageLabel = root.Q<Label>("UILanguageLabel");
             if (uiLanguageLabel != null)
                 uiLanguageLabel.text = loc.GetText("options_language_ui");
 
-            // Game Panel
-            var gamePanelTitle = root.Q<Label>("GamePanelTitle");
-            if (gamePanelTitle != null)
-                gamePanelTitle.text = loc.GetText("options_game_title");
-            if (gameResetButton != null)
-                gameResetButton.text = loc.GetText("options_game_reset");
-
+            // Game Panel - Key Bindings 헤더
+            var keyBindingsHeader = root.Q<Label>("KeyBindingsHeader");
             if (keyBindingsHeader != null)
                 keyBindingsHeader.text = loc.GetText("options_game_keybindings");
 
+            // Voice Recognition 헤더
+            var voiceRecognitionHeader = root.Q<Label>("VoiceRecognitionHeader");
             if (voiceRecognitionHeader != null)
                 voiceRecognitionHeader.text = loc.GetText("options_game_voice_recognition");
 
             // Key Bindings
+            var keyBindingArea = root.Q<VisualElement>("KeyBindingArea");
             var keyBindingLabels = keyBindingArea?.Query<Label>("keybinding-label").ToList();
             if (keyBindingLabels != null)
             {
@@ -514,6 +490,7 @@ namespace LostSpells.UI
                 inGameTitle.text = loc.GetText("options_keybinding_ingame");
 
             // Voice Recognition - 서버 상태 라벨
+            var voiceRecognitionArea = root.Q<VisualElement>("VoiceRecognitionArea");
             var serverStatusLabelText = voiceRecognitionArea?.Q<Label>("setting-label");
             if (serverStatusLabelText != null)
             {
@@ -525,6 +502,34 @@ namespace LostSpells.UI
                     labels[0].text = loc.GetText("options_voice_server_status");
                 }
             }
+
+            // 게임 초기화
+            var resetGameLabel = root.Q<Label>("ResetGameLabel");
+            if (resetGameLabel != null)
+                resetGameLabel.text = loc.GetText("options_game_reset_game");
+
+            if (resetGameButton != null)
+                resetGameButton.text = loc.GetText("options_game_reset_game");
+
+            // 게임 초기화 확인 팝업
+            if (gameResetConfirmation != null)
+            {
+                var gameResetTitle = gameResetConfirmation.Q<Label>("GameResetTitle");
+                if (gameResetTitle != null)
+                    gameResetTitle.text = loc.GetText("game_reset_popup_title");
+
+                var gameResetMessage = gameResetConfirmation.Q<Label>("GameResetMessage");
+                if (gameResetMessage != null)
+                    gameResetMessage.text = loc.GetText("game_reset_popup_message");
+            }
+
+            if (confirmResetButton != null)
+                confirmResetButton.text = loc.GetText("game_reset_popup_confirm");
+            if (cancelResetButton != null)
+                cancelResetButton.text = loc.GetText("game_reset_popup_cancel");
+
+            // 현재 패널 제목 업데이트
+            UpdateCurrentPanelTitle();
         }
 
         /// <summary>
@@ -533,6 +538,12 @@ namespace LostSpells.UI
         private void ShowPanel(VisualElement panelToShow)
         {
             if (panelToShow == null) return;
+
+            // 모든 카테고리 버튼에서 selected 클래스 제거
+            audioButton?.RemoveFromClassList("selected");
+            graphicsButton?.RemoveFromClassList("selected");
+            languageButton?.RemoveFromClassList("selected");
+            gameButton?.RemoveFromClassList("selected");
 
             // 모든 패널 숨기기
             if (audioPanel != null)
@@ -549,7 +560,56 @@ namespace LostSpells.UI
 
             // 선택한 패널만 표시
             panelToShow.style.display = DisplayStyle.Flex;
+            currentPanel = panelToShow;
+
+            // 해당 카테고리 버튼에 selected 클래스 추가
+            if (panelToShow == audioPanel)
+                audioButton?.AddToClassList("selected");
+            else if (panelToShow == graphicsPanel)
+                graphicsButton?.AddToClassList("selected");
+            else if (panelToShow == languagePanel)
+                languageButton?.AddToClassList("selected");
+            else if (panelToShow == gamePanel)
+                gameButton?.AddToClassList("selected");
+
+            // 패널 제목 업데이트
+            UpdateCurrentPanelTitle();
         }
+
+        /// <summary>
+        /// 현재 패널에 따라 통합 헤더의 제목 업데이트
+        /// </summary>
+        private void UpdateCurrentPanelTitle()
+        {
+            if (currentPanelTitle == null || currentPanel == null) return;
+
+            var loc = LocalizationManager.Instance;
+
+            if (currentPanel == audioPanel)
+                currentPanelTitle.text = loc.GetText("options_audio_title");
+            else if (currentPanel == graphicsPanel)
+                currentPanelTitle.text = loc.GetText("options_graphics_title");
+            else if (currentPanel == languagePanel)
+                currentPanelTitle.text = loc.GetText("options_language_title");
+            else if (currentPanel == gamePanel)
+                currentPanelTitle.text = loc.GetText("options_game_title");
+        }
+
+        /// <summary>
+        /// 통합 리셋 버튼 클릭 시 현재 패널에 따라 리셋 처리
+        /// </summary>
+        private void OnCurrentPanelReset()
+        {
+            if (currentPanel == audioPanel)
+                OnAudioReset();
+            else if (currentPanel == graphicsPanel)
+                OnGraphicsReset();
+            else if (currentPanel == languagePanel)
+                OnLanguageReset();
+            else if (currentPanel == gamePanel)
+                OnGameReset();
+        }
+
 
         // Audio 패널 이벤트 핸들러
         private void OnMicrophoneChanged(string value)
@@ -567,6 +627,12 @@ namespace LostSpells.UI
                 saveData.microphoneDeviceId = "";
                 LoadAudioSettings();
             }
+        }
+
+        private void OnGraphicsReset()
+        {
+            // Graphics 패널 리셋 기능 (필요시 구현)
+            // 현재는 빈 메서드로 유지
         }
 
         // Language 패널 이벤트 핸들러
@@ -587,8 +653,11 @@ namespace LostSpells.UI
             if (saveData != null && uiLanguageDropdown != null)
             {
                 saveData.uiLanguage = "Korean";
-                uiLanguageDropdown.value = "Korean";
+                uiLanguageDropdown.SetValue("Korean");
                 LocalizationManager.Instance.SetLanguage(Language.Korean);
+
+                // 드롭다운 항목 업데이트
+                LoadLanguageSettings();
             }
         }
 
@@ -610,49 +679,6 @@ namespace LostSpells.UI
             }
         }
 
-        private void ToggleKeyBindingArea()
-        {
-            if (keyBindingArea != null)
-            {
-                bool isVisible = keyBindingArea.style.display == DisplayStyle.Flex;
-                keyBindingArea.style.display = isVisible ? DisplayStyle.None : DisplayStyle.Flex;
-
-                if (keyBindingsToggleButton != null)
-                {
-                    // section-toggle 클래스가 화살표를 CSS로 처리하므로 rotate만 적용
-                    if (isVisible)
-                    {
-                        keyBindingsToggleButton.RemoveFromClassList("expanded");
-                    }
-                    else
-                    {
-                        keyBindingsToggleButton.AddToClassList("expanded");
-                    }
-                }
-            }
-        }
-
-        private void ToggleVoiceRecognitionArea()
-        {
-            if (voiceRecognitionArea != null)
-            {
-                bool isVisible = voiceRecognitionArea.style.display == DisplayStyle.Flex;
-                voiceRecognitionArea.style.display = isVisible ? DisplayStyle.None : DisplayStyle.Flex;
-
-                if (voiceRecognitionToggleButton != null)
-                {
-                    // section-toggle 클래스가 화살표를 CSS로 처리하므로 rotate만 적용
-                    if (isVisible)
-                    {
-                        voiceRecognitionToggleButton.RemoveFromClassList("expanded");
-                    }
-                    else
-                    {
-                        voiceRecognitionToggleButton.AddToClassList("expanded");
-                    }
-                }
-            }
-        }
 
         private void OnKeyButtonClicked(string action)
         {
@@ -672,23 +698,36 @@ namespace LostSpells.UI
             foreach (var key in System.Enum.GetValues(typeof(Key)))
             {
                 Key k = (Key)key;
-                if (Keyboard.current[k].wasPressedThisFrame && k != Key.Escape)
+
+                // Skip None and IMESelected as they are not valid keyboard keys
+                if (k == Key.None || k == Key.IMESelected)
+                    continue;
+
+                try
                 {
-                    string keyName = GetKeyDisplayName(k);
-
-                    if (saveData != null && saveData.keyBindings != null)
+                    if (Keyboard.current[k].wasPressedThisFrame && k != Key.Escape)
                     {
-                        saveData.keyBindings[currentKeyAction] = keyName;
-                    }
+                        string keyName = GetKeyDisplayName(k);
 
-                    if (keyButtons.ContainsKey(currentKeyAction))
-                    {
-                        keyButtons[currentKeyAction].text = keyName;
-                    }
+                        if (saveData != null && saveData.keyBindings != null)
+                        {
+                            saveData.keyBindings[currentKeyAction] = keyName;
+                        }
 
-                    isWaitingForKey = false;
-                    currentKeyAction = "";
-                    return;
+                        if (keyButtons.ContainsKey(currentKeyAction))
+                        {
+                            keyButtons[currentKeyAction].text = keyName;
+                        }
+
+                        isWaitingForKey = false;
+                        currentKeyAction = "";
+                        return;
+                    }
+                }
+                catch (System.ArgumentOutOfRangeException)
+                {
+                    // Skip invalid keys that are not supported by Keyboard
+                    continue;
                 }
             }
 
@@ -764,6 +803,56 @@ namespace LostSpells.UI
                         serverStatusLabel.style.color = new Color(0.8f, 0.2f, 0.2f); // 빨간색
                     }
                 }
+            }
+        }
+
+        #endregion
+
+        #region Game Reset
+
+        private void OnResetGameButtonClicked()
+        {
+            // 게임 초기화 확인 팝업 표시
+            ShowGameResetConfirmation();
+        }
+
+        private void OnConfirmResetButtonClicked()
+        {
+            // SaveManager를 통해 게임 데이터 초기화
+            if (Data.SaveManager.Instance != null)
+            {
+                Data.SaveManager.Instance.ResetSaveData();
+
+                // 현재 saveData 참조도 새로 불러오기
+                saveData = Data.SaveManager.Instance.GetCurrentSaveData();
+
+                // UI에 초기화된 설정 반영
+                LoadSettings();
+            }
+
+            // 팝업 닫기
+            HideGameResetConfirmation();
+        }
+
+        private void OnCancelResetButtonClicked()
+        {
+            // 팝업 닫기
+            HideGameResetConfirmation();
+        }
+
+        private void ShowGameResetConfirmation()
+        {
+            if (gameResetConfirmation != null)
+            {
+                gameResetConfirmation.style.display = DisplayStyle.Flex;
+            }
+        }
+
+        private void HideGameResetConfirmation()
+        {
+            if (gameResetConfirmation != null)
+            {
+                gameResetConfirmation.style.display = DisplayStyle.None;
             }
         }
 

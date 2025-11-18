@@ -18,6 +18,8 @@ namespace LostSpells.Components
         [SerializeField] private int currentHealth;
         [SerializeField] private int maxMana = 80;
         [SerializeField] private int currentMana;
+        [SerializeField] private float manaRegenRate = 5f; // 초당 마나 회복량
+        [SerializeField] private float healthRegenRate = 5f; // 초당 체력 회복량
         [SerializeField] private float moveSpeed = 5f;
         [SerializeField] private float jumpForce = 5f; // 점프 힘
         [SerializeField] private float knockbackForce = 3f; // 넉백 힘
@@ -38,6 +40,8 @@ namespace LostSpells.Components
         private Collider2D playerCollider;
         private bool isKnockedBack = false; // 넉백 중인지 여부
         private bool isGrounded = false; // 땅에 닿아있는지 여부
+        private float manaRegenAccumulator = 0f; // 마나 회복 누적값
+        private float healthRegenAccumulator = 0f; // 체력 회복 누적값
 
         private void Awake()
         {
@@ -98,6 +102,12 @@ namespace LostSpells.Components
         {
             if (rb == null) return;
 
+            // 마나 자동 회복
+            RegenerateMana();
+
+            // 체력 자동 회복
+            RegenerateHealth();
+
             // 넉백 중에는 이동 불가
             if (isKnockedBack) return;
 
@@ -133,6 +143,16 @@ namespace LostSpells.Components
             Vector2 velocity2 = rb.linearVelocity;
             velocity2.x = horizontal * moveSpeed;
             rb.linearVelocity = velocity2;
+
+            // 이동 방향에 따라 스프라이트 뒤집기
+            if (horizontal < 0f) // 왼쪽으로 이동
+            {
+                spriteRenderer.flipX = true;
+            }
+            else if (horizontal > 0f) // 오른쪽으로 이동
+            {
+                spriteRenderer.flipX = false;
+            }
         }
 
         /// <summary>
@@ -168,6 +188,51 @@ namespace LostSpells.Components
             currentHealth = Mathf.Min(currentHealth, maxHealth);
 
             UpdateHealthBar();
+        }
+
+        /// <summary>
+        /// 마나 자동 회복
+        /// </summary>
+        private void RegenerateMana()
+        {
+            if (currentMana < maxMana)
+            {
+                // 누적 방식으로 마나 회복 (소수점 단위로 누적)
+                manaRegenAccumulator += manaRegenRate * Time.deltaTime;
+
+                // 누적값이 1 이상이면 정수로 변환하여 마나 회복
+                if (manaRegenAccumulator >= 1f)
+                {
+                    int manaToAdd = Mathf.FloorToInt(manaRegenAccumulator);
+                    currentMana += manaToAdd;
+                    currentMana = Mathf.Min(currentMana, maxMana);
+                    manaRegenAccumulator -= manaToAdd;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 체력 자동 회복
+        /// </summary>
+        private void RegenerateHealth()
+        {
+            if (currentHealth < maxHealth)
+            {
+                // 누적 방식으로 체력 회복 (소수점 단위로 누적)
+                healthRegenAccumulator += healthRegenRate * Time.deltaTime;
+
+                // 누적값이 1 이상이면 정수로 변환하여 체력 회복
+                if (healthRegenAccumulator >= 1f)
+                {
+                    int healthToAdd = Mathf.FloorToInt(healthRegenAccumulator);
+                    currentHealth += healthToAdd;
+                    currentHealth = Mathf.Min(currentHealth, maxHealth);
+                    healthRegenAccumulator -= healthToAdd;
+
+                    // 체력바 업데이트
+                    UpdateHealthBar();
+                }
+            }
         }
 
         /// <summary>
@@ -354,6 +419,10 @@ namespace LostSpells.Components
             if (skillScript != null)
             {
                 skillScript.Initialize(skillData, this);
+            }
+            else
+            {
+                Debug.LogWarning($"[Player] SkillBehavior 컴포넌트를 찾을 수 없음!");
             }
 
             // 마나 소모

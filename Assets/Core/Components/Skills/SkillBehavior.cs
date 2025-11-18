@@ -16,12 +16,16 @@ namespace LostSpells.Components
 
         protected SkillData skillData;
         protected PlayerComponent caster; // 스킬 사용자
+        protected SpriteRenderer spriteRenderer; // 스프라이트 렌더러 (방향 표시용)
 
         private float spawnTime;
 
         protected virtual void Start()
         {
             spawnTime = Time.time;
+
+            // SpriteRenderer 가져오기
+            spriteRenderer = GetComponent<SpriteRenderer>();
         }
 
         /// <summary>
@@ -31,6 +35,16 @@ namespace LostSpells.Components
         {
             skillData = data;
             caster = player;
+
+            // 플레이어의 방향에 따라 스킬 스프라이트 뒤집기
+            if (spriteRenderer != null && player != null)
+            {
+                var playerSprite = player.GetComponent<SpriteRenderer>();
+                if (playerSprite != null)
+                {
+                    spriteRenderer.flipX = playerSprite.flipX;
+                }
+            }
         }
 
         protected virtual void Update()

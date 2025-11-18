@@ -14,6 +14,12 @@ namespace LostSpells.Components
         [Header("Instant Skill Settings")]
         [SerializeField] private float effectDuration = 1f; // 이펙트 지속 시간
         [SerializeField] private bool findNearestEnemy = true; // 가장 가까운 적 찾기
+        [SerializeField] private bool hitOnlyTarget = true; // true: 타겟만 공격, false: 범위 내 모든 적 공격
+        [SerializeField] private bool isDamageOverTime = false; // true: 지속 데미지, false: 즉시 데미지
+        [SerializeField] private float damageInterval = 0.2f; // 지속 데미지 간격 (초)
+
+        private EnemyComponent targetEnemy = null; // 타겟팅된 적
+        private float lastDamageTime = 0f; // 마지막 데미지 시간
 
         protected override void Start()
         {
@@ -25,11 +31,32 @@ namespace LostSpells.Components
                 FindAndMoveToNearestEnemy();
             }
 
-            // 즉시 데미지 처리
-            ApplyInstantEffect();
+            // 즉시 데미지 모드일 때만 즉시 데미지 적용
+            if (!isDamageOverTime)
+            {
+                ApplyInstantEffect();
+            }
+            else
+            {
+                // 지속 데미지 모드: 첫 데미지 즉시 적용
+                lastDamageTime = Time.time;
+                ApplyInstantEffect();
+            }
 
             // 이펙트 재생 후 자동 파괴
             Destroy(gameObject, effectDuration);
+        }
+
+        protected override void Update()
+        {
+            base.Update();
+
+            // 지속 데미지 모드일 때만 반복 데미지 처리
+            if (isDamageOverTime && Time.time - lastDamageTime >= damageInterval)
+            {
+                lastDamageTime = Time.time;
+                ApplyInstantEffect();
+            }
         }
 
         protected override void MoveSkill()
@@ -66,6 +93,7 @@ namespace LostSpells.Components
 
             if (nearestEnemy != null)
             {
+                targetEnemy = nearestEnemy; // 타겟 저장
                 transform.position = nearestEnemy.transform.position;
             }
         }
@@ -77,7 +105,15 @@ namespace LostSpells.Components
         {
             if (skillData == null) return;
 
-            // 범위 내 모든 적에게 데미지
+            // hitOnlyTarget이 true면 타겟만 공격
+            if (hitOnlyTarget && targetEnemy != null)
+            {
+                int damageAmount = Mathf.RoundToInt(skillData.damage);
+                targetEnemy.TakeDamage(damageAmount);
+                return;
+            }
+
+            // hitOnlyTarget이 false면 범위 내 모든 적에게 데미지
             Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, skillData.range);
 
             foreach (var hit in hits)
@@ -88,8 +124,9 @@ namespace LostSpells.Components
                 var enemy = hit.GetComponent<EnemyComponent>();
                 if (enemy != null)
                 {
-                    // TODO: Enemy에 데미지 적용 메서드 추가 필요
-                    // enemy.TakeDamage(skillData.damage);
+                    // 적에게 데미지 적용
+                    int damageAmount = Mathf.RoundToInt(skillData.damage);
+                    enemy.TakeDamage(damageAmount);
                 }
             }
         }

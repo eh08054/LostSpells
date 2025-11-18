@@ -570,10 +570,14 @@
     top: 50%;
     left: 50%;
     translate: -50% -50%;
-    width: 380px;
+    width: 450px;
     height: auto;
-    background-image: url("project://database/Assets/Templates/Fantasy Wooden GUI  Free/normal_ui_set A/UI board Large Set.png");
+    background-image: url("project://database/Assets/Templates/Fantasy Wooden GUI  Free/normal_ui_set A/UI board Medium  parchment.png");
     -unity-background-scale-mode: stretch-to-fill;
+    -unity-slice-left: 80;
+    -unity-slice-right: 80;
+    -unity-slice-top: 80;
+    -unity-slice-bottom: 80;
     border-width: 0;
     padding: 50px 35px 35px 35px;
     flex-direction: column;
@@ -594,8 +598,10 @@
 
 /* 기본 버튼 스타일 - 세로 배치 */
 .menu-popup-button {
-    width: 100%;
+    min-width: 220px;
+    max-width: 260px;
     height: 58px;
+    align-self: center;
     background-image: url("project://database/Assets/Templates/Fantasy Wooden GUI  Free/normal_ui_set A/TextBTN_Big.png");
     -unity-background-scale-mode: stretch-to-fill;
     -unity-background-image-tint-color: rgb(255, 255, 255);

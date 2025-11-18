@@ -96,7 +96,7 @@ namespace LostSpells.Systems
             AddText("main_menu_options", "설정", "Options");
             AddText("main_menu_store", "상점", "Store");
             AddText("main_menu_quit", "종료", "Quit");
-            AddText("quit_popup_title", "종료 확인", "Quit Confirmation");
+            AddText("quit_popup_title", "게임 종료", "Quit Game");
             AddText("quit_popup_message", "정말 종료하시겠습니까?", "Are you sure you want to quit?");
             AddText("quit_popup_quit", "종료", "Quit");
             AddText("quit_popup_cancel", "취소", "Cancel");
@@ -162,6 +162,13 @@ namespace LostSpells.Systems
             AddText("options_game_reset", "초기화", "Reset");
             AddText("options_game_keybindings", "키 바인딩", "Key Bindings");
             AddText("options_game_voice_recognition", "음성 인식", "Voice Recognition");
+            AddText("options_game_reset_game", "게임 초기화", "Reset Game");
+
+            // Game Reset Confirmation
+            AddText("game_reset_popup_title", "게임 초기화", "Reset Game");
+            AddText("game_reset_popup_message", "모든 게임 데이터가 삭제됩니다.\n정말 초기화하시겠습니까?", "All game data will be deleted.\nAre you sure you want to reset?");
+            AddText("game_reset_popup_confirm", "초기화", "Reset");
+            AddText("game_reset_popup_cancel", "취소", "Cancel");
 
             // Options - Key Bindings
             AddText("options_keybinding_ingame", "게임 내 조작", "In-Game Controls");

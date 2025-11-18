@@ -109,6 +109,13 @@ namespace LostSpells.Systems
             // 음성인식 언어 변경
             ChangeLanguage(languageCode);
 
+            // 스킬 목록 다시 설정 (언어에 맞는 키워드로 업데이트)
+            var skills = DataManager.Instance.GetAllSkillData();
+            if (skills != null && skills.Count > 0)
+            {
+                StartCoroutine(serverClient.SetSkills(skills));
+            }
+
             // SaveManager에도 저장
             if (SaveManager.Instance != null)
             {
@@ -359,13 +366,6 @@ namespace LostSpells.Systems
                 return;
             }
 
-            // 정확도 정보를 InGameUI에 전달
-            if (inGameUI != null && result.skill_scores != null)
-            {
-                var accuracyScores = result.skill_scores;
-                inGameUI.UpdateSkillAccuracy(accuracyScores);
-            }
-
             // 스킬 매칭 결과 처리
             if (result.best_match != null && !string.IsNullOrEmpty(result.best_match.skill))
             {
@@ -377,10 +377,24 @@ namespace LostSpells.Systems
 
                 // 스킬 실행
                 ExecuteSkill(result.best_match.skill);
+
+                // 매칭 성공 시 정확도 정보를 InGameUI에 전달
+                if (inGameUI != null)
+                {
+                    // skill_scores가 null이면 best_match만으로 Dictionary 생성
+                    var accuracyScores = result.skill_scores;
+                    if (accuracyScores == null || accuracyScores.Count == 0)
+                    {
+                        accuracyScores = new System.Collections.Generic.Dictionary<string, float>();
+                        accuracyScores[result.best_match.skill] = result.best_match.score;
+                    }
+                    inGameUI.UpdateSkillAccuracy(accuracyScores);
+                }
             }
             else
             {
-                // 매칭 실패: "인식 실패: [인식된 텍스트]" 표시
+                // 매칭 실패: 정확도를 0%로 유지 (ClearSkillAccuracy는 StartVoiceRecording에서 이미 호출됨)
+                // 인식 실패 메시지 표시
                 if (string.IsNullOrEmpty(recognizedText))
                 {
                     UpdateVoiceRecognitionDisplay("인식 실패: 음성 없음");
@@ -451,11 +465,13 @@ namespace LostSpells.Systems
         {
             if (playerComponent == null)
             {
+                Debug.LogError($"[VoiceRecognition] PlayerComponent가 null입니다!");
                 return;
             }
 
             if (activeSkills == null || activeSkills.Count == 0)
             {
+                Debug.LogError($"[VoiceRecognition] activeSkills가 비어있습니다!");
                 return;
             }
 
@@ -464,9 +480,11 @@ namespace LostSpells.Systems
                 if (skill.voiceKeyword == skillName)
                 {
                     playerComponent.CastSkill(skill);
-                    break;
+                    return;
                 }
             }
+
+            Debug.LogWarning($"[VoiceRecognition] 스킬을 찾을 수 없음: {skillName}");
         }
 
         /// <summary>

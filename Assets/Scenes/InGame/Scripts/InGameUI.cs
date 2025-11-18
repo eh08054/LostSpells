@@ -25,6 +25,7 @@ namespace LostSpells.UI
         private Label chapterInfoLabel;
         private Label waveInfoLabel;
         private VisualElement menuPopup;
+        private Label menuTitle;
 
         // 화폐 표시 Label
         private Label diamondCountLabel;
@@ -171,6 +172,7 @@ namespace LostSpells.UI
             chapterInfoLabel = root.Q<Label>("ChapterInfo");
             waveInfoLabel = root.Q<Label>("WaveInfo");
             menuPopup = root.Q<VisualElement>("MenuPopup");
+            menuTitle = menuPopup?.Q<Label>(className: "menu-title");
 
             // 화폐 표시 Label
             diamondCountLabel = root.Q<Label>("DiamondCount");
@@ -900,6 +902,10 @@ namespace LostSpells.UI
         private void UpdateLocalization()
         {
             var loc = LocalizationManager.Instance;
+
+            // 메뉴 팝업 제목 로컬라이즈
+            if (menuTitle != null)
+                menuTitle.text = loc.GetText("ingame_pause");
 
             // 메뉴 팝업 버튼들 로컬라이즈
             if (resumeButton != null)
