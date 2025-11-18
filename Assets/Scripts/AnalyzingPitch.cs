@@ -7,7 +7,7 @@ using UnityEngine;
 //이 스크립트는 오디오 클립에서 RMS 피크를 찾아 해당 구간의 주파수를 분석하고 음표로 변환한다.
 //작동 과정은 다음과 같다.
 //1. Spacebarwhisper 스크립트에서 오디오 녹음이 완료되면 AnalyzeRecordedClip 메서드를 호출한다.
-//2. 오디오를 프레임 단위로 나누고 각 프레임의 RMS 값을 계산하여 리스트에 저장한다.(여기서는 frameSize=2048, hopSize=1024로 설정)
+//2. 오디오를 프레임 단위로 나누고 각 프레임의 RMS 값을 계산하여 리스트에 저장한다.
 //3. RMS 값이 가장 높은 피크를 순서대로 찾아 해당 프레임의 시작 인덱스를 기록한다. - 이 과정을 통해 진폭이 가장 큰 구간을 찾음으로써 음절의 시작점을 추정한다.
 //4. 각 피크 구간에 대해 PitchFromYin 메서드를 사용하여 기본 주파수를 검출한다.
 //5. 검출된 주파수를 음표로 변환하고 화면에 출력한다.
@@ -18,12 +18,12 @@ using UnityEngine;
 public class AnalyzingPitch : MonoBehaviour
 {
     public int sampleRate = 44100;
-    public int frameSize = 2048;
-    public int hopSize = 1024;
     public int peakCount = 4; // 찾고 싶은 RMS 피크 개수.
     public float basicFrequency = 65.41f;
     private float highFrequency;
     private float lowFrequency;
+    private int frameSize = 2048;
+    private int hopSize = 512;
     private string[] noteNames = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
     [SerializeField] private TMP_Text myText;
     public void AnalyzeRecordedClip(AudioClip clip)
@@ -31,14 +31,18 @@ public class AnalyzingPitch : MonoBehaviour
         highFrequency = basicFrequency * 2f;
         lowFrequency = basicFrequency / 2f;
         myText.text = "Detected Notes: ";
-        if (clip == null)
+        if (clip == null) 
         {
             Debug.LogWarning("No clip recorded.");
             return;
         }
 
         int sampleCount = clip.samples;
-        Debug.Log($"Analyzing clip with {sampleCount} samples.");
+        //Debug.Log($"Analyzing clip with {sampleCount} samples.");
+
+        //frameSize = sampleCount / 40;
+        //hopSize = frameSize / 4;
+
         float[] data = new float[sampleCount];
         clip.GetData(data, 0);
 
@@ -49,7 +53,7 @@ public class AnalyzingPitch : MonoBehaviour
         for (int i = 0; i < sampleCount - frameSize; i += hopSize)
         {
             float rms = ComputeRMS(data, i, frameSize);
-            Debug.Log($"RMS at sample {i}: {rms:F5}");
+            //Debug.Log($"RMS at sample {i}: {rms:F5}");
             rmsList.Add(rms);  //rmsList와 indexList에 각각 위에서 반환된 RMS 값과 해당 프레임의 시작 인덱스를 저장
             indexList.Add(i);
         }
@@ -59,7 +63,7 @@ public class AnalyzingPitch : MonoBehaviour
 
         for (int i = 0; i < peakIndices.Count; i++)
         {
-            Debug.Log($"Found RMS Peak Top {i + 1} at sample {peakIndices[i]}");
+            //Debug.Log($"Found RMS Peak Top {i + 1} at sample {peakIndices[i]}");
         }
 
         int frequencyCount = 0;
@@ -71,9 +75,9 @@ public class AnalyzingPitch : MonoBehaviour
         foreach (int peakIndex in peakIndices)
         {
             float[] frame = new float[frameSize];
-            Array.Copy(data, peakIndex, frame, 0, frameSize);  // data 배열로부터 peakIndex에서 시작해 frameSize 길이만큼 frame 배열에 복사(예를 들어 peakIndex가 2048이면 data[2048]부터 data[4095]까지 복사)
+            Array.Copy(data, peakIndex, frame, 0, frameSize);  // data 배열로부터 peakIndex에서 시작해 frameSize 길이만큼 frame 배열에 복사
             float freq = PitchFromYin(frame, sampleRate);
-            Debug.Log("Detected frequency: " + freq);
+            //Debug.Log("Detected frequency: " + freq);
             if (freq > 0)
             {
                 if (freq < lowFrequency)
@@ -99,13 +103,11 @@ public class AnalyzingPitch : MonoBehaviour
 
                 string text = $"{note}{octave}";
                 myText.text += text + " ";
-                Debug.Log($"Peak at sample {peakIndex} → {freq:F2} Hz");
+                //Debug.Log($"Peak at sample {peakIndex} → {freq:F2} Hz");
                 frequencyCount++;
             }
-            else
-                Debug.Log($"No pitch detected at peak {peakIndex}");
-            if (frequencyCount >= peakCount)
-                break;
+            //else
+                //Debug.Log($"No pitch detected at peak {peakIndex}");
         }
     }
 
@@ -144,11 +146,11 @@ public class AnalyzingPitch : MonoBehaviour
             }
         }
 
-        Debug.Log($"Found {pairs.Count} RMS peaks above threshold {rmsThreshold:F5}");
+        //Debug.Log($"Found {pairs.Count} RMS peaks above threshold {rmsThreshold:F5}");
         // RMS 값 기준으로 내림차순 정렬
         pairs.Sort((a, b) => b.rms.CompareTo(a.rms));
 
-        int minDistance = hopSize * 2;
+        int minDistance = hopSize * 4;
         foreach (var p in pairs)
         {
             bool tooClose = false;
@@ -173,7 +175,7 @@ public class AnalyzingPitch : MonoBehaviour
     // 2. 누적 정규화 차이 함수 (Cumulative Normalized Difference Function, d'(τ)) 계산. 이 함수는 차이 함수를 정규화하여 피치 검출의 정확성을 높임.
     // 3. 절대 최소값 (Absolute Minimum) 및 임계값 이하의 첫 번째 값 찾기 (Absolute Threshold). 이 단계에서는 d'(τ)가 임계값 이하로 떨어지는 첫 번째 지점을 찾아 피치의 후보 주기를 결정함.
     // 4. 이차 보간(Parabolic Interpolation)을 사용하여 정확한 주기(Lag) 위치 계산. 이 단계에서는 발견된 주기의 정확도를 높이기 위해 보간을 수행함.
-    private float PitchFromYin(float[] buffer, int sampleRate, float threshold = 0.15f)
+    private float PitchFromYin(float[] buffer, int sampleRate, float threshold = 0.2f)
     {
         int N = buffer.Length;
         int halfN = N / 2;
@@ -182,12 +184,13 @@ public class AnalyzingPitch : MonoBehaviour
         int minLag = Mathf.Max(2, sampleRate / 1000);
         int maxLag = Mathf.Min(halfN, sampleRate / 50);
 
-        Debug.Log($"YIN Analysis: minLag= {minLag}, maxLag={maxLag}");
+        //Debug.Log($"YIN Analysis: minLag= {minLag}, maxLag={maxLag}");
 
         if (maxLag <= minLag) return -1f;
 
         // 1. 차이 함수 (Difference Function, d(τ)) 계산
-        //
+        // 차이 함수는 tau만큼 지연된 신호와 원래 신호 간의 차이를 제곱하여 합산한 값이다. 이 값이 작을수록 해당 tau에서의 자기 상관성이 높음을 의미한다.
+        // 차이 함수의 값이 작을수록 해당 프레임에서의 주기가 될 가능성이 높다.
         float[] d = new float[maxLag];
 
         // d[τ] = Σ_{j=1}^{N-τ} (x_j - x_{j+τ})^2
@@ -218,13 +221,13 @@ public class AnalyzingPitch : MonoBehaviour
             d_prime[tau] = d[tau] / (sum_d / tau);
         }
 
-        // 3. 절대 최소값 (Absolute Minimum) 및 임계값 이하의 첫 번째 값 찾기 (Absolute Threshold)
+        // 3. 임계값 이하의 첫 번째 값 찾기 (Absolute Threshold)
 
         // 임계값 이하의 첫 번째 피크(최소값) 찾기
         int periodIndex = -1;
         for (int tau = minLag; tau < maxLag; tau++)
         {
-            Debug.Log($"tau = {tau}, d_prime[tau]: " + d_prime[tau]);
+            //Debug.Log($"tau = {tau}, d_prime[tau]: " + d_prime[tau]);
             if (d_prime[tau] < threshold)
             {
                 periodIndex = tau;
@@ -239,7 +242,7 @@ public class AnalyzingPitch : MonoBehaviour
             }
         }
 
-        Debug.Log($"YIN periodIndex: {periodIndex}");
+        //Debug.Log($"YIN periodIndex: {periodIndex}");
 
         if (periodIndex <= 0) return -1f;
 
