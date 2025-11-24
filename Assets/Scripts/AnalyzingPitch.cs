@@ -150,7 +150,7 @@ public class AnalyzingPitch : MonoBehaviour
         // RMS 값 기준으로 내림차순 정렬
         pairs.Sort((a, b) => b.rms.CompareTo(a.rms));
 
-        int minDistance = hopSize * 4;
+        int minDistance = hopSize * 8;
         foreach (var p in pairs)
         {
             bool tooClose = false;

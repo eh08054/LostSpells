@@ -71,35 +71,4 @@ public class WavToWhisper : MonoBehaviour
             Debug.Log("Error: " + request.error);
         }
     }
-    IEnumerator GetTimeStamp(string url, AudioClip audio)
-    {
-        byte[] audioBytes = WavUtility.FromAudioClip(audio);
-        string base64Audio = Convert.ToBase64String(audioBytes);
-
-        AudioJson payload = new AudioJson();
-        payload.audioData = base64Audio;
-
-        string jsonData = JsonUtility.ToJson(payload);
-        byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonData);
-
-        var request = new UnityWebRequest(url, "POST");
-        request.uploadHandler = new UploadHandlerRaw(bodyRaw);
-        request.downloadHandler = new DownloadHandlerBuffer();
-        request.SetRequestHeader("Content-Type", "application/json");
-        yield return request.SendWebRequest();
-        if (request.result == UnityWebRequest.Result.Success)
-        {
-            endTime = timeNow;
-            Debug.Log("Time taken for request: " + (endTime - startTime) + " seconds");
-            var responseText = request.downloadHandler.text;
-            var jsonObj = JObject.Parse(responseText);
-            string audioBase64 = jsonObj["audio"].ToString();
-            string timeStamp = jsonObj["time_stamps"].ToString();
-            Debug.Log("Expectation: " + timeStamp);
-        }
-        else
-        {
-            Debug.Log("Error: " + request.error);
-        }
-    }
 }

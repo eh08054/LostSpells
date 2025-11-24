@@ -12,9 +12,8 @@ public class TextAnimation : MonoBehaviour
     {
         recordingText = GetComponent<TMP_Text>();
     }
-    private void Start()
+    private void OnEnable()
     {
-        recordingText = GetComponent<TMP_Text>();
         animationCoroutine = StartCoroutine(AnimateText());
     }
     private IEnumerator AnimateText()
