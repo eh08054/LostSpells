@@ -21,7 +21,8 @@ namespace LostSpells.Components
 
         [Header("Visual")]
         [SerializeField] private SpriteRenderer spriteRenderer;
-        [SerializeField] private Color enemyColor = Color.red;
+        [SerializeField] private Sprite enemySprite; // 적 스프라이트 (챕터별로 다름)
+        [SerializeField] private Animator animator; // 애니메이터
 
         [Header("UI Elements")]
         [SerializeField] private TextMeshPro nameText;
@@ -43,7 +44,7 @@ namespace LostSpells.Components
                 }
             }
 
-            // Rigidbody2D 설정 (물리 충돌용)
+            // Rigidbody2D 설정
             rb = GetComponent<Rigidbody2D>();
             if (rb == null)
             {
@@ -52,30 +53,30 @@ namespace LostSpells.Components
             rb.gravityScale = 1; // 중력 적용
             rb.constraints = RigidbodyConstraints2D.FreezeRotation; // 회전 방지
 
-            // Collider 설정 (충돌 감지용)
-            CircleCollider2D collider = GetComponent<CircleCollider2D>();
+            // BoxCollider2D 설정 (땅과 충돌하기 위함)
+            // 적들끼리는 물리적 충돌 없이 레이캐스트로만 거리 유지
+            BoxCollider2D collider = GetComponent<BoxCollider2D>();
             if (collider == null)
             {
-                collider = gameObject.AddComponent<CircleCollider2D>();
-                collider.radius = 0.4f; // 적 크기에 맞게 조정
+                collider = gameObject.AddComponent<BoxCollider2D>();
+                collider.size = new Vector2(0.8f, 0.8f);
+                collider.offset = new Vector2(0, 0);
             }
 
-            // Layer 설정 (적들끼리는 충돌하지 않도록)
-            gameObject.layer = LayerMask.NameToLayer("Enemy");
-            if (gameObject.layer == 0) // Layer가 없으면 생성 필요
-            {
-                Debug.LogWarning("Enemy Layer가 없습니다. Edit > Project Settings > Tags and Layers에서 'Enemy' Layer를 추가하세요.");
-            }
+            // 다른 적들과는 충돌하지 않도록 설정
+            // Physics2D.IgnoreLayerCollision을 사용하거나,
+            // 각 적의 Collider를 excludeLayers에 추가
+            gameObject.layer = LayerMask.NameToLayer("Default");
 
             currentHealth = maxHealth;
         }
 
         private void Start()
         {
-            // 적 색상 설정
-            if (spriteRenderer != null)
+            // 적 스프라이트 설정
+            if (spriteRenderer != null && enemySprite != null)
             {
-                spriteRenderer.color = enemyColor;
+                spriteRenderer.sprite = enemySprite;
             }
 
             // 플레이어 찾기
@@ -93,6 +94,24 @@ namespace LostSpells.Components
             if (nameText != null)
             {
                 nameText.text = enemyName;
+            }
+
+            // 모든 다른 적들과의 충돌 무시 (땅과만 충돌)
+            Collider2D myCollider = GetComponent<Collider2D>();
+            if (myCollider != null)
+            {
+                EnemyComponent[] allEnemies = FindObjectsByType<EnemyComponent>(FindObjectsSortMode.None);
+                foreach (EnemyComponent otherEnemy in allEnemies)
+                {
+                    if (otherEnemy != this)
+                    {
+                        Collider2D otherCollider = otherEnemy.GetComponent<Collider2D>();
+                        if (otherCollider != null)
+                        {
+                            Physics2D.IgnoreCollision(myCollider, otherCollider);
+                        }
+                    }
+                }
             }
 
             // 체력바 초기화
@@ -115,7 +134,54 @@ namespace LostSpells.Components
                 // stoppingDistance보다 멀면 플레이어 쪽으로 이동
                 if (distanceToPlayer > stoppingDistance)
                 {
-                    velocity.x = directionToPlayer.x * moveSpeed;
+                    // 앞에 있는 모든 적들을 확인 (RaycastAll)
+                    float checkDistance = 3.0f; // 앞쪽 체크 거리 (충분히 길게)
+                    float stopDistance = 0.6f; // 이 거리 이내에 적이 있으면 멈춤
+                    float resumeDistance = 1.2f; // 이 거리 이상 멀어져야 다시 이동
+
+                    RaycastHit2D[] hits = Physics2D.RaycastAll(
+                        transform.position,
+                        new Vector2(directionToPlayer.x, 0),
+                        checkDistance
+                    );
+
+                    // 앞에 다른 적이 있는지 확인
+                    bool canMove = true;
+                    float closestEnemyDistance = float.MaxValue;
+
+                    foreach (RaycastHit2D hit in hits)
+                    {
+                        if (hit.collider != null)
+                        {
+                            // 맞은 대상이 다른 적인지 확인
+                            EnemyComponent otherEnemy = hit.collider.GetComponent<EnemyComponent>();
+                            if (otherEnemy != null && otherEnemy != this)
+                            {
+                                float distToEnemy = hit.distance;
+                                if (distToEnemy < closestEnemyDistance)
+                                {
+                                    closestEnemyDistance = distToEnemy;
+                                }
+                            }
+                        }
+                    }
+
+                    // 현재 움직이고 있는지 확인
+                    bool isMoving = Mathf.Abs(rb.linearVelocity.x) > 0.1f;
+
+                    // 움직이고 있으면 stopDistance로, 멈춰있으면 resumeDistance로 판단
+                    float thresholdDistance = isMoving ? stopDistance : resumeDistance;
+
+                    // 가장 가까운 적까지의 거리가 임계값보다 작으면 멈춤
+                    if (closestEnemyDistance < thresholdDistance)
+                    {
+                        canMove = false;
+                    }
+
+                    if (canMove)
+                    {
+                        velocity.x = directionToPlayer.x * moveSpeed;
+                    }
                 }
                 // stoppingDistance 이내면 멈춤 (velocity.x = 0으로 유지)
             }
@@ -127,17 +193,41 @@ namespace LostSpells.Components
 
             // Rigidbody2D로 이동 (Y축 속도는 유지하여 중력 영향 받도록)
             rb.linearVelocity = velocity;
+
+            // 이동 방향에 따라 스프라이트 뒤집기
+            if (spriteRenderer != null && velocity.x != 0)
+            {
+                // 왼쪽으로 이동 시 스프라이트 뒤집기
+                spriteRenderer.flipX = velocity.x < 0;
+            }
+
+            // 애니메이터 Speed 파라미터 업데이트
+            if (animator != null && animator.runtimeAnimatorController != null)
+            {
+                float speed = Mathf.Abs(velocity.x);
+                animator.SetFloat("Speed", speed);
+            }
         }
 
         /// <summary>
         /// 적 초기화
         /// </summary>
-        public void Initialize(string name, int health, float speed)
+        public void Initialize(string name, int health, float speed, Sprite sprite = null)
         {
             enemyName = name;
             maxHealth = health;
             currentHealth = health;
             moveSpeed = speed;
+
+            // 스프라이트 설정
+            if (sprite != null)
+            {
+                enemySprite = sprite;
+                if (spriteRenderer != null)
+                {
+                    spriteRenderer.sprite = sprite;
+                }
+            }
 
             if (nameText != null)
             {
