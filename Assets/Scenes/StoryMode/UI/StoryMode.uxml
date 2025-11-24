@@ -4,12 +4,12 @@
     <Style src="/Assets/Scenes/StoryMode/UI/StoryMode.uss"/>
 
     <ui:VisualElement name="StoryMode" class="screen-container">
-
-        <!-- 배경 레이어 (맨 뒤) -->
-        <ui:VisualElement name="BackgroundLayer" class="background-layer"/>
-
-        <!-- 중경 레이어 (건물들) -->
-        <ui:VisualElement name="MiddlegroundLayer" class="middleground-layer"/>
+        <!-- 배경 레이어들 -->
+        <ui:VisualElement name="Sky" class="parallax-layer sky-layer"/>
+        <ui:VisualElement name="Mountain" class="parallax-layer mountain-layer"/>
+        <ui:VisualElement name="MiddleFar" class="parallax-layer middle-far-layer"/>
+        <ui:VisualElement name="MiddleNear" class="parallax-layer middle-near-layer"/>
+        <ui:VisualElement name="Ground" class="parallax-layer ground-layer"/>
 
         <!-- UI 컨텐츠 (맨 앞) -->
         <ui:VisualElement name="UIContent" class="ui-content">

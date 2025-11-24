@@ -2,22 +2,34 @@
    스토리 모드 화면 스타일
    ======================================== */
 
-/* 배경 레이어 (하늘) */
-.background-layer {
+/* Parallax 배경 레이어 공통 스타일 */
+.parallax-layer {
     position: absolute;
     width: 100%;
     height: 100%;
-    background-image: url("project://database/Assets/Templates/Gothicvania-Town/Art/Environment/Background/background.png");
     -unity-background-scale-mode: scale-and-crop;
+    background-repeat: repeat-x;
 }
 
-/* 중경 레이어 (건물) */
-.middleground-layer {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    background-image: url("project://database/Assets/Templates/Gothicvania-Town/Art/Environment/Background/middleground.png");
-    -unity-background-scale-mode: scale-and-crop;
+/* 각 레이어별 배경 이미지 */
+.sky-layer {
+    background-image: url("project://database/Assets/Templates/2D Scrolling Parallax Background Pack/Backgrounds/Sky/Sky-1.png");
+}
+
+.mountain-layer {
+    background-image: url("project://database/Assets/Templates/2D Scrolling Parallax Background Pack/Backgrounds/Mountain/Mountain-1.png");
+}
+
+.middle-far-layer {
+    /* Middle-Far 폴더에는 개별 Tree 이미지만 있어서 전체 배경으로 사용 불가 */
+}
+
+.middle-near-layer {
+    /* Middle-Near 폴더에는 개별 오브젝트 이미지만 있어서 전체 배경으로 사용 불가 */
+}
+
+.ground-layer {
+    background-image: url("project://database/Assets/Templates/2D Scrolling Parallax Background Pack/Backgrounds/Ground/Ground-1.png");
 }
 
 /* UI 컨텐츠 (맨 앞) */

@@ -3,38 +3,26 @@
    ======================================== */
 
 /* 전체 화면 컨테이너 */
-.screen-container {
+#InGame {
     width: 100%;
     height: 100%;
-    position: relative;
+    position: absolute;
+    top: 0;
+    left: 0;
+    flex-direction: column;
 }
 
-/* 배경 레이어 (하늘) - 게임플레이 영역을 제외하고 표시 */
-.background-layer {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    /* 배경 이미지 제거 - 게임 스프라이트가 보이도록 */
-    /* background-image: url("project://database/Assets/Templates/Gothicvania-Town/Art/Environment/Background/background.png");
-    -unity-background-scale-mode: scale-and-crop; */
-}
-
-/* 중경 레이어 (건물) - 게임플레이 영역을 제외하고 표시 */
-.middleground-layer {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    /* 배경 이미지 제거 - 게임 스프라이트가 보이도록 */
-    /* background-image: url("project://database/Assets/Templates/Gothicvania-Town/Art/Environment/Background/middleground.png");
-    -unity-background-scale-mode: scale-and-crop; */
-}
+/* 배경 레이어는 GameObject로 구현하므로 UI에서는 제거 */
 
 /* UI 컨텐츠 (맨 앞) */
-.ui-content {
+#UIContent {
     position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
     flex-direction: column;
+    pointer-events: auto;
 }
 
 /* ========== 상단 HUD 바 ========== */
@@ -43,7 +31,7 @@
     height: 80px;
     flex-direction: row;
     align-items: center;
-    background-color: rgba(0, 0, 0, 0.7);
+    background-color: rgba(0, 0, 0, 0);
     padding-left: 20px;
     padding-right: 20px;
 }
@@ -235,6 +223,7 @@
     height: 100%;
     background-color: rgba(0, 0, 0, 0);
     padding: 20px;
+    padding-top: 0;
     flex-direction: column;
     transition-property: translate;
     transition-duration: 0.3s;
@@ -270,9 +259,9 @@
 .sidebar-panel {
     width: 100%;
     min-height: 200px;
-    background-color: rgba(50, 50, 50, 0.7);
+    background-color: rgba(20, 20, 30, 0.85);
     border-width: 2px;
-    border-color: rgba(255, 255, 255, 0.3);
+    border-color: rgba(100, 150, 200, 0.4);
     border-radius: 8px;
     margin-bottom: 16px;
     padding: 16px;

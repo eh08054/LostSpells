@@ -267,6 +267,7 @@ GameObject:
   - component: {fileID: 1661840976}
   - component: {fileID: 1661840975}
   - component: {fileID: 1661840974}
+  - component: {fileID: 1661840977}
   m_Layer: 5
   m_Name: UIDocument
   m_TagString: Untagged
@@ -324,6 +325,74 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1661840977
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1661840973}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3a28a2367ff1dec4ebe4cd3b5fd3230a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LostSpells.UI.MenuParallaxBackground
+  enableScrolling: 1
+  skyScrollSpeed: 2
+  mountainScrollSpeed: 5
+  groundScrollSpeed: 10
+  enableRandomChange: 1
+  changeInterval: 10
+  skyTextures:
+  - {fileID: 2800000, guid: c47c8df4c433db64caeb53277793c90c, type: 3}
+  - {fileID: 2800000, guid: 3bd97d316cb03f348b983414b3b1ffca, type: 3}
+  - {fileID: 2800000, guid: 403b99dc442d91d46b7d6fede74bfa90, type: 3}
+  - {fileID: 2800000, guid: 3d0dfb1f36926ba40a7878bd0dc73b54, type: 3}
+  - {fileID: 2800000, guid: a66f7792578497242b6a87a4dc520726, type: 3}
+  - {fileID: 2800000, guid: f830d688e83d66540b509387cba48fe6, type: 3}
+  - {fileID: 2800000, guid: 62e5067f71f6dbd43852815fe0129992, type: 3}
+  - {fileID: 2800000, guid: 867eb9888fc2d424ba4d63c72744b4ac, type: 3}
+  - {fileID: 2800000, guid: 494b8dff0ad455f4a925c465dccd5c64, type: 3}
+  - {fileID: 2800000, guid: ac15d10dee54b14479d7bc47c4156e51, type: 3}
+  - {fileID: 2800000, guid: c6c450b6cd4a4a34391d070af6657ff5, type: 3}
+  - {fileID: 2800000, guid: 72f567ab7755a8b4888b06f7f5528614, type: 3}
+  - {fileID: 2800000, guid: 38aa8b14ccd4849468feefe861e70018, type: 3}
+  - {fileID: 2800000, guid: 1ee3e13bf18c0894ab20e4af4b8381dc, type: 3}
+  - {fileID: 2800000, guid: 307002a0a0886a84ebf86a5b8c0a0b27, type: 3}
+  - {fileID: 2800000, guid: c820b0ac0ca94434d96da599eb69110f, type: 3}
+  mountainTextures:
+  - {fileID: 2800000, guid: 220b40ed968d60a48beb59b7e3e92b4d, type: 3}
+  - {fileID: 2800000, guid: 213d9936a79129541a5ee9a5b67ab1f4, type: 3}
+  - {fileID: 2800000, guid: 6de411b7dcb400c49965f366c263d8a6, type: 3}
+  - {fileID: 2800000, guid: c7b9e23d9dc91e24f877a21fdb1118b4, type: 3}
+  - {fileID: 2800000, guid: e0df171e694294840a3d1d701fdce876, type: 3}
+  - {fileID: 2800000, guid: 182f1480cc8398249a52f88553996839, type: 3}
+  - {fileID: 2800000, guid: 6b6333362bbe1f14989f314a8105f41c, type: 3}
+  - {fileID: 2800000, guid: 6bc3fb9d7c7606647bacf7dfb97bd23a, type: 3}
+  - {fileID: 2800000, guid: 9093aee901c7ef74b933134992f86c87, type: 3}
+  groundTextures:
+  - {fileID: 2800000, guid: d166e29a9f951d34598bd2a24f1bb236, type: 3}
+  - {fileID: 2800000, guid: 281b142d20163f94ab881c5b76e51d43, type: 3}
+  - {fileID: 2800000, guid: fbb513dc009696f4b867faec8e11859f, type: 3}
+  - {fileID: 2800000, guid: 5c71a09ee144d7a489762ea7370a5ada, type: 3}
+  - {fileID: 2800000, guid: ab5dc6a5bfd1cfc4e8105e94234f2398, type: 3}
+  - {fileID: 2800000, guid: dca4feaa656e35c45b29d5b7f8f6162a, type: 3}
+  - {fileID: 2800000, guid: 27d493de3646703469790ce70f201e14, type: 3}
+  - {fileID: 2800000, guid: c4dc0804968ebfb46be1ec2199c63fa5, type: 3}
+  - {fileID: 2800000, guid: abeb969b603b14c41b8654a5fdf37165, type: 3}
+  - {fileID: 2800000, guid: 18745bb8e1bc4de46af9b31f9cd40964, type: 3}
+  - {fileID: 2800000, guid: 0c2cc223922a76f4da962877257ae02a, type: 3}
+  - {fileID: 2800000, guid: e9c033a077433794c8f6a639d2635e6e, type: 3}
+  - {fileID: 2800000, guid: b85610099fcfef5448f842d5f0c28747, type: 3}
+  - {fileID: 2800000, guid: 2df4cdc7eb9e714418e5b2133ccd109a, type: 3}
+  - {fileID: 2800000, guid: 611739a3ced78e74a883b0ebb9e3415f, type: 3}
+  - {fileID: 2800000, guid: a51f83ba674764e42b7fc63847088eb4, type: 3}
+  - {fileID: 2800000, guid: e18e83401a9195d4585dc756c7e07511, type: 3}
+  - {fileID: 2800000, guid: cede96a821f894d448e50811e4d05347, type: 3}
+  - {fileID: 2800000, guid: 82aed49735311124baf70af9c84477fe, type: 3}
+  - {fileID: 2800000, guid: a08a2067129d27c4caf17abc5d5fecab, type: 3}
+  - {fileID: 2800000, guid: 52b83e1ec1d642b4db40ace9d5a6d387, type: 3}
+  - {fileID: 2800000, guid: f3ea54461b05e15409376ff2d65313fc, type: 3}
 --- !u!1 &1908622165
 GameObject:
   m_ObjectHideFlags: 0
