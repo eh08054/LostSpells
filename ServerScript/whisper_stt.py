@@ -54,9 +54,9 @@ async def whisper_stt2(request: AudioRequest):
         confidence = math.exp(avg_logprob)
     else:
         confidence = 0.0
-    confidenceToString = str(confidence)
+    confidence_to_string = str(confidence)
 
-    nlu_result = FindActionByNLU(segments, clean_text)
+    nlu_result = FindActionByNLU(clean_text)
     if(nlu_result["action"] == "none"):
         print("Checking Levenshtein distance..." )
         for i in app.state.skillSetKorean:
@@ -99,11 +99,8 @@ def getLevenshtein(s1, s2):
         previous_row = current_row
 
     return previous_row[-1]
-def FindActionByNLU(segments, clean_text):
+def FindActionByNLU(clean_text):
     skill_evidence = "No Skill"
-    attack_keyword_check = False
-    move_keyword_check = False
-    skill_check = False
 
     result = {
         "action": "none",
@@ -112,21 +109,18 @@ def FindActionByNLU(segments, clean_text):
     }
 
     if("공격" in clean_text):
-        attack_keyword_check = True
         result["action"] = "attack"
     if("이동" in clean_text):
-        move_keyword_check = True
         result["action"] = "move"
     if hasattr(app.state, "skillSet"):
         for i in app.state.skillSetKorean:
             print(clean_text, i)
-            if clean_text == i.lower():
+            if i in clean_text:
                 print("EXIST SKILL:", i)
                 skill_evidence = i
                 result["action"] = "attack"
                 result["skill"] = True
                 result["skill_name"] = skill_evidence
-                skill_check = True
                 break
 
     return result
@@ -135,7 +129,7 @@ def AnalyzeNLU(text):
 
     result = {
         "location": "none",
-        "index": 1,
+        "index": 0,
     }
 
     loc_map = {

@@ -23,10 +23,10 @@ public class ConstantRecording : MonoBehaviour
     private float silenceTimer = 0f;
     private float recordingTimer = 0f;
 
-    private int detectionStartIndex = 0; 
+    private int detectionStartIndex = 0;
     private int sampleSize = 1024;
 
-    private bool checkTextAnimation = false;   
+    private bool checkTextAnimation = false;
 
     private void Start()
     {
@@ -38,9 +38,10 @@ public class ConstantRecording : MonoBehaviour
         while (Microphone.GetPosition(micDevice) <= 0) { }
         audioSource.clip = audioClip;
         audioSource.loop = true;
-        audioSource.Play();
     }
 
+
+    //지속적으로 마이크 내로 특정 크기 이상의 음성이 들어올 경우 (길이가 일정 시간 이상일 경우)이를 서버로 보냄.
     private void Update()
     {
         if (audioClip == null) return;
@@ -48,9 +49,10 @@ public class ConstantRecording : MonoBehaviour
         int currentPos = Microphone.GetPosition(micDevice);
 
         float rms = CalculateRMS(currentPos);
- 
+
         if (!isRecording)
         {
+            //rms가 threshold를 넘을 경우 발화 시작 판정. 
             if (rms > threshold)
             {
                 Debug.Log("Voice detected, starting recording.");
@@ -62,12 +64,13 @@ public class ConstantRecording : MonoBehaviour
         else
         {
             recordingTimer += Time.deltaTime;
-            if(!checkTextAnimation)
+            if (!checkTextAnimation)
             {
                 recordingField.gameObject.SetActive(true);
                 checkTextAnimation = true;
             }
-            if (rms < threshold / 2) 
+            //rms가 threshold / 2보다 낮을 경우 "silence" 판정 -> 1초 이상 지속 시 발화 종료 판정
+            if (rms < threshold / 2)
             {
                 silenceTimer += Time.deltaTime;
                 if (silenceTimer > silenceTimeout)
@@ -77,6 +80,7 @@ public class ConstantRecording : MonoBehaviour
                     recordingField.gameObject.SetActive(false);
                     checkTextAnimation = false;
                     Debug.Log("Total Recording Time: " + recordingTimer + " seconds");
+                    //녹음된 길이가 2초 미만일 시 서버로 전달하지 않음.
                     if (recordingTimer < 2f)
                     {
                         Debug.Log("Recording too short, discarding.");
@@ -102,6 +106,7 @@ public class ConstantRecording : MonoBehaviour
 
     }
 
+    //현재 인덱스 앞 sampleSize만큼의 음성의 RMS를 계산함.
     private float CalculateRMS(int currentPos)
     {
         int startReadPos = currentPos - sampleSize;
@@ -133,6 +138,8 @@ public class ConstantRecording : MonoBehaviour
         return Mathf.Sqrt(sum / tempSamples.Length);
     }
 
+    //발화된 시간 시간 사이의 음성 + 발화 전 0.5초를 클립에 합쳐서 whisper 서버로 보냄.
+    //0.5초를 합치는 이유는 유저가 말하기 시작한 시간과 실제 유니티 클라이언트에서 인식한 시간 사이 간격을 보정하기 위함.
     private void StopAndSend(int currentPos)
     {
         int preRollSamples = preRollSeconds * sampleRate;
@@ -177,3 +184,5 @@ public class ConstantRecording : MonoBehaviour
         analyzingPitch.AnalyzeRecordedClip(clipToSend);
     }
 }
+
+
