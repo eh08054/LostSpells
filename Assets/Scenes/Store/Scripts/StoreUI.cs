@@ -38,14 +38,71 @@ namespace LostSpells.UI
         private List<StoreItemData> diamondItems;
         private List<StoreItemData> reviveStoneItems;
 
+        // 배경 레이어 (패럴랙스 스크롤용)
+        private VisualElement skyLayer;
+        private VisualElement mountainLayer;
+        private VisualElement groundLayer;
+
+        // 배경 스크롤 오프셋
+        private float skyOffset = 0f;
+        private float mountainOffset = 0f;
+        private float groundOffset = 0f;
+
+        // 다이아 부족 팝업
+        private VisualElement insufficientDiamondPopup;
+        private Button confirmInsufficientDiamondButton;
+
         private void Awake()
         {
             uiDocument = GetComponent<UIDocument>();
         }
 
+        private void Update()
+        {
+            // 배경 스크롤 업데이트 (패럴랙스 효과)
+            UpdateBackgroundScroll();
+        }
+
+        /// <summary>
+        /// 배경 스크롤 업데이트 (패럴랙스 효과)
+        /// </summary>
+        private void UpdateBackgroundScroll()
+        {
+            if (skyLayer == null || mountainLayer == null || groundLayer == null)
+                return;
+
+            // Time.unscaledDeltaTime을 사용하여 일시정지 상태에서도 스크롤
+            float deltaTime = Time.unscaledDeltaTime;
+
+            // 각 레이어별 스크롤 속도 (퍼센트/초) - 메인메뉴와 동일한 시각적 속도를 위해 절반으로 설정 (200% 너비 보정)
+            float skySpeed = 1f;
+            float mountainSpeed = 2.5f;
+            float groundSpeed = 5f;
+
+            // 오프셋 업데이트 (0~100% 사이를 순환)
+            skyOffset += skySpeed * deltaTime;
+            mountainOffset += mountainSpeed * deltaTime;
+            groundOffset += groundSpeed * deltaTime;
+
+            // 100%를 넘으면 0으로 리셋 (레이어 너비가 200%이므로 100%가 한 사이클)
+            if (skyOffset >= 100f) skyOffset = 0f;
+            if (mountainOffset >= 100f) mountainOffset = 0f;
+            if (groundOffset >= 100f) groundOffset = 0f;
+
+            // translate로 X축 이동 (퍼센트 단위)
+            skyLayer.style.translate = new Translate(new Length(-skyOffset, LengthUnit.Percent), 0);
+            mountainLayer.style.translate = new Translate(new Length(-mountainOffset, LengthUnit.Percent), 0);
+            groundLayer.style.translate = new Translate(new Length(-groundOffset, LengthUnit.Percent), 0);
+        }
+
         private void OnEnable()
         {
             var root = uiDocument.rootVisualElement;
+
+            // 배경 레이어 찾기
+            skyLayer = root.Q<VisualElement>("Sky");
+            mountainLayer = root.Q<VisualElement>("Mountain");
+            groundLayer = root.Q<VisualElement>("Ground");
 
             // UI 요소 찾기
             backButton = root.Q<Button>("BackButton");
@@ -64,6 +121,10 @@ namespace LostSpells.UI
             if (reviveStonePanel != null)
                 reviveStoneProductGrid = reviveStonePanel.Q<VisualElement>("ProductGrid");
 
+            // 다이아 부족 팝업 찾기
+            insufficientDiamondPopup = root.Q<VisualElement>("InsufficientDiamondPopup");
+            confirmInsufficientDiamondButton = root.Q<Button>("ConfirmInsufficientDiamondButton");
+
             // 이벤트 등록
             if (backButton != null)
                 backButton.clicked += OnBackButtonClicked;
@@ -73,6 +134,9 @@ namespace LostSpells.UI
 
             if (reviveStoneButton != null)
                 reviveStoneButton.clicked += OnReviveStoneButtonClicked;
+
+            if (confirmInsufficientDiamondButton != null)
+                confirmInsufficientDiamondButton.clicked += OnConfirmInsufficientDiamondButtonClicked;
 
             // 상품 데이터 초기화
             InitializeStoreItems();
@@ -104,6 +168,9 @@ namespace LostSpells.UI
 
             if (reviveStoneButton != null)
                 reviveStoneButton.clicked -= OnReviveStoneButtonClicked;
+
+            if (confirmInsufficientDiamondButton != null)
+                confirmInsufficientDiamondButton.clicked -= OnConfirmInsufficientDiamondButtonClicked;
 
             // Localization 이벤트 해제
             UnregisterLocalizationEvents();
@@ -148,6 +215,21 @@ namespace LostSpells.UI
 
             if (reviveStoneButton != null)
                 reviveStoneButton.text = loc.GetText("store_revive_stone");
+
+            // 다이아 부족 팝업 텍스트 업데이트
+            if (insufficientDiamondPopup != null)
+            {
+                var insufficientTitle = insufficientDiamondPopup.Q<Label>("InsufficientDiamondTitle");
+                if (insufficientTitle != null)
+                    insufficientTitle.text = loc.GetText("insufficient_diamond_title");
+
+                var insufficientMessage = insufficientDiamondPopup.Q<Label>("InsufficientDiamondMessage");
+                if (insufficientMessage != null)
+                    insufficientMessage.text = loc.GetText("insufficient_diamond_message");
+
+                if (confirmInsufficientDiamondButton != null)
+                    confirmInsufficientDiamondButton.text = loc.GetText("confirm");
+            }
 
             // BackButton은 이미지만 사용하므로 텍스트 설정 안함
         }
@@ -203,16 +285,27 @@ namespace LostSpells.UI
 
         private void OnBackButtonClicked()
         {
-            // Additive로 로드되었는지 확인 (씬이 여러 개면 Additive 로드)
-            if (SceneManager.sceneCount > 1)
+            // Store 씬이 Additive로 로드되었는지 확인
+            bool isLoadedAdditively = false;
+            for (int i = 0; i < SceneManager.sceneCount; i++)
             {
-                // InGame에서 Additive로 로드된 경우 - 현재 씬만 언로드하고 게임 재개
-                Time.timeScale = 1f;
+                UnityEngine.SceneManagement.Scene scene = SceneManager.GetSceneAt(i);
+                if (scene.name == "Store" && SceneManager.sceneCount > 1)
+                {
+                    isLoadedAdditively = true;
+                    break;
+                }
+            }
+
+            if (isLoadedAdditively)
+            {
+                // Additive로 로드된 경우 - 자신을 언로드
+                // Time.timeScale은 InGame에서 이미 0으로 설정되어 있음 (일시정지 상태 유지)
                 SceneManager.UnloadSceneAsync("Store");
             }
             else
             {
-                // 메인메뉴에서 일반 로드된 경우 - 이전 씬으로 이동
+                // 단독으로 로드된 경우 - 이전 씬으로 이동
                 string previousScene = SceneNavigationManager.Instance.GetPreviousScene();
                 SceneManager.LoadScene(previousScene);
             }
@@ -389,13 +482,44 @@ namespace LostSpells.UI
                 }
                 else
                 {
-                    // TODO: 부족하다는 팝업 표시
+                    // 다이아 부족 팝업 표시
+                    ShowInsufficientDiamondPopup();
                 }
             }
 
             // UI 업데이트
             saveData = SaveManager.Instance.GetCurrentSaveData();
             UpdateCurrencyDisplay();
+        }
+
+        /// <summary>
+        /// 다이아 부족 팝업 표시
+        /// </summary>
+        private void ShowInsufficientDiamondPopup()
+        {
+            if (insufficientDiamondPopup != null)
+            {
+                insufficientDiamondPopup.style.display = DisplayStyle.Flex;
+            }
+        }
+
+        /// <summary>
+        /// 다이아 부족 팝업 숨김
+        /// </summary>
+        private void HideInsufficientDiamondPopup()
+        {
+            if (insufficientDiamondPopup != null)
+            {
+                insufficientDiamondPopup.style.display = DisplayStyle.None;
+            }
+        }
+
+        /// <summary>
+        /// 다이아 부족 팝업 확인 버튼 클릭
+        /// </summary>
+        private void OnConfirmInsufficientDiamondButtonClicked()
+        {
+            HideInsufficientDiamondPopup();
         }
 
         // ========== 테스트용 메서드 (나중에 실제 구매 로직으로 교체) ==========

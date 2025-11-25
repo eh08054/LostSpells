@@ -169,12 +169,6 @@ namespace LostSpells.UI
         {
             changeTimer += Time.deltaTime;
 
-            // 디버그: 타이머 상태 출력 (5초마다)
-            if (Mathf.FloorToInt(changeTimer) % 5 == 0 && changeTimer % 1 < Time.deltaTime)
-            {
-                Debug.Log($"[MenuParallax] Timer: {changeTimer:F1}s / {changeInterval}s, Textures: {skyTextures?.Length ?? 0}");
-            }
-
             if (changeTimer >= changeInterval)
             {
                 changeTimer = 0f;
@@ -194,8 +188,6 @@ namespace LostSpells.UI
 
                 currentVariant = newVariant;
                 ApplyBackgroundVariant(currentVariant);
-
-                Debug.Log($"[MenuParallax] ✅ Background changed to variant {currentVariant + 1}/{skyTextures.Length}");
             }
         }
 

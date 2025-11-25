@@ -31,11 +31,8 @@ namespace LostSpells.Systems
             {
                 yield return request.SendWebRequest();
 
-                if (request.result != UnityWebRequest.Result.Success)
-                {
-                    Debug.LogWarning($"음성인식 서버 연결 실패: {request.error}");
-                    Debug.LogWarning("음성인식을 사용하려면 서버를 시작하세요.");
-                }
+                // 음성인식 서버 연결 실패는 정상 상황이므로 경고 로그 제거
+                // 서버가 필요한 경우에만 사용자가 수동으로 시작하면 됨
             }
         }
 

@@ -33,19 +33,13 @@ namespace LostSpells.Data
             // 싱글톤 인스턴스 체크
             if (instance != null && instance != this)
             {
+                Debug.LogWarning($"[SaveManager] 중복된 SaveManager 인스턴스가 감지되어 제거됩니다. (GameObject: {gameObject.name})");
                 Destroy(gameObject);
                 return;
             }
 
             instance = this;
             DontDestroyOnLoad(gameObject);
-
-            // 에디터에서 씬 언로드 경고를 방지
-#if UNITY_EDITOR
-            gameObject.hideFlags = HideFlags.HideAndDontSave;
-#else
-            gameObject.hideFlags = HideFlags.DontSave;
-#endif
 
             // 저장 파일 경로 설정
             saveFilePath = Path.Combine(Application.persistentDataPath, "PlayerSaveData.json");
@@ -63,11 +57,35 @@ namespace LostSpells.Data
             }
         }
 
-        private void OnApplicationQuit()
+        // OnApplicationQuit은 Unity 에디터에서 불안정하게 여러 번 호출될 수 있으므로 제거
+        // 대신 에디터 플레이 모드 종료 시(ExitingPlayMode)에만 저장
+
+#if UNITY_EDITOR
+        private static bool editorEventRegistered = false;
+
+        // 에디터에서 플레이 모드 종료 시 저장
+        [UnityEditor.InitializeOnLoadMethod]
+        private static void InitializeOnLoad()
         {
-            // 게임 종료 시 자동 저장
-            SaveGame();
+            // 이벤트 중복 등록 방지
+            if (!editorEventRegistered)
+            {
+                UnityEditor.EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+                editorEventRegistered = true;
+            }
         }
+
+        private static void OnPlayModeStateChanged(UnityEditor.PlayModeStateChange state)
+        {
+            if (state == UnityEditor.PlayModeStateChange.ExitingPlayMode)
+            {
+                if (instance != null)
+                {
+                    instance.SaveGame();
+                }
+            }
+        }
+#endif
 
         private void OnApplicationPause(bool pauseStatus)
         {
@@ -131,7 +149,7 @@ namespace LostSpells.Data
             }
             catch (Exception e)
             {
-                Debug.LogError($"게임 데이터 로드 실패: {e.Message}");
+                Debug.LogError($"[SaveManager] 게임 데이터 로드 실패: {e.Message}\n{e.StackTrace}");
                 currentSaveData = PlayerSaveData.CreateDefault();
             }
         }
@@ -145,6 +163,7 @@ namespace LostSpells.Data
             {
                 if (currentSaveData == null)
                 {
+                    Debug.LogWarning("[SaveManager] SaveGame - currentSaveData가 null입니다.");
                     return;
                 }
 
@@ -157,7 +176,7 @@ namespace LostSpells.Data
             }
             catch (Exception e)
             {
-                Debug.LogError($"게임 데이터 저장 실패: {e.Message}");
+                Debug.LogError($"[SaveManager] 게임 데이터 저장 실패: {e.Message}\n{e.StackTrace}");
             }
         }
 

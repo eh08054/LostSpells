@@ -28,6 +28,9 @@ namespace LostSpells.Systems
         private int currentChapterId = -1;
         private int currentWaveNumber = 1;
 
+        // 이전 씬 정보 (상점 등에서 돌아갈 때 사용)
+        private string previousScene = "";
+
         private void Awake()
         {
             if (instance != null && instance != this)
@@ -116,6 +119,30 @@ namespace LostSpells.Systems
         {
             currentChapterId = -1;
             currentWaveNumber = 1;
+        }
+
+        /// <summary>
+        /// 이전 씬 설정 (상점 등으로 이동할 때 호출)
+        /// </summary>
+        public void SetPreviousScene(string sceneName)
+        {
+            previousScene = sceneName;
+        }
+
+        /// <summary>
+        /// 이전 씬 가져오기
+        /// </summary>
+        public string GetPreviousScene()
+        {
+            return previousScene;
+        }
+
+        /// <summary>
+        /// 이전 씬이 인게임인지 확인
+        /// </summary>
+        public bool IsFromInGame()
+        {
+            return previousScene == "InGame";
         }
     }
 }

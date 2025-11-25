@@ -46,8 +46,28 @@ namespace LostSpells.Camera
 
         private void LateUpdate()
         {
+            // 타겟이 없으면 플레이어 찾기 (런타임 생성된 플레이어 대응)
             if (target == null)
-                return;
+            {
+                // 먼저 태그로 찾기 시도
+                GameObject player = GameObject.FindGameObjectWithTag("Player");
+
+                // 태그로 못 찾으면 이름으로 찾기
+                if (player == null)
+                {
+                    player = GameObject.Find("Player");
+                }
+
+                if (player != null)
+                {
+                    target = player.transform;
+                    Debug.Log("[CameraFollow] 플레이어를 찾았습니다: " + player.name);
+                }
+                else
+                {
+                    return;
+                }
+            }
 
             // 현재 카메라 위치
             Vector3 currentPos = transform.position;

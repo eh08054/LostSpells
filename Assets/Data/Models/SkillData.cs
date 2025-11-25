@@ -24,6 +24,10 @@ namespace LostSpells.Data
         public float damage = 50f;
         public float range = 5f;
 
+        // 투사체 관련
+        public float projectileSpeed = 10f;
+        public float projectileLifetime = 3f;
+
         // 비주얼 (경로 문자열로 저장)
         public string iconPath;
         public string effectPrefabPath;
@@ -62,7 +66,13 @@ namespace LostSpells.Data
     [Serializable]
     public enum SkillType
     {
-        Attack,     // 공격
-        Defense     // 방어
+        Attack,         // 공격
+        Defense,        // 방어
+        Fireball,       // 화염구
+        IceSpike,       // 얼음 가시
+        Lightning,      // 번개
+        EarthRock,      // 대지의 바위
+        HolyLight,      // 신성한 빛
+        VoidBlast       // 암흑 폭발
     }
 }

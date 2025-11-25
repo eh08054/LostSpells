@@ -51,8 +51,10 @@ namespace LostSpells.Background
             mainCamera = UnityEngine.Camera.main;
         }
 
-        void Update()
+        void LateUpdate()
         {
+            // LateUpdate를 사용하여 카메라 이동 후 타일 재배치
+            // Time.timeScale과 무관하게 실행됨
             UpdateInfiniteTiling();
         }
 

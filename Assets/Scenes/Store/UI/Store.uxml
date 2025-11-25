@@ -74,6 +74,20 @@
             </ui:VisualElement>
 
         </ui:VisualElement>
+
+        <!-- 다이아 부족 팝업 (기본 숨김) -->
+        <ui:VisualElement name="InsufficientDiamondPopup" class="menu-popup" style="display: none;">
+            <ui:Label text="Insufficient Diamonds" name="InsufficientDiamondTitle" class="menu-title"/>
+
+            <!-- 안내 메시지 -->
+            <ui:Label text="You don't have enough diamonds to purchase this item." name="InsufficientDiamondMessage" class="insufficient-message"/>
+
+            <!-- 확인 버튼 (중앙 배치) -->
+            <ui:VisualElement name="InsufficientDiamondButtonContainer" class="insufficient-button-container">
+                <ui:Button text="Confirm" name="ConfirmInsufficientDiamondButton" class="game-over-button"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
         </ui:VisualElement>
 
     </ui:VisualElement>

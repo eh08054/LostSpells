@@ -200,6 +200,34 @@ namespace LostSpells.UI
 
         #endregion
 
+        #region Debug Methods
+
+        private void LogSaveFileInfo()
+        {
+            var saveManager = LostSpells.Data.SaveManager.Instance;
+            string savePath = saveManager.GetSaveFilePath();
+            bool exists = saveManager.SaveFileExists();
+            var saveData = saveManager.GetCurrentSaveData();
+
+            Debug.Log("========== 저장 파일 정보 ==========");
+            Debug.Log($"저장 파일 경로: {savePath}");
+            Debug.Log($"파일 존재 여부: {exists}");
+            if (saveData != null)
+            {
+                Debug.Log($"다이아몬드: {saveData.diamonds}");
+                Debug.Log($"부활석: {saveData.reviveStones}");
+                Debug.Log($"골드: {saveData.gold}");
+                Debug.Log($"마지막 저장 시간: {saveData.lastSaveTime}");
+            }
+            else
+            {
+                Debug.LogWarning("세이브 데이터가 null입니다!");
+            }
+            Debug.Log("===================================");
+        }
+
+        #endregion
+
         #region Quit Confirmation Control
 
         private void ShowQuitConfirmation()

@@ -136,6 +136,105 @@
                     <ui:Button text="Main Menu" name="MainMenuButton" class="menu-popup-button"/>
                 </ui:VisualElement>
 
+                <!-- 게임오버 팝업 (기본 숨김) - 중앙 배치 -->
+                <ui:VisualElement name="GameOverPopup" class="menu-popup" style="display: none;">
+                    <ui:Label text="GAME OVER" class="menu-title"/>
+
+                    <!-- 점수 영역 (중앙) -->
+                    <ui:VisualElement name="ScoreArea" class="score-area">
+                        <ui:Label text="Score" class="score-label"/>
+                        <ui:Label text="0" name="ScoreValue" class="score-value"/>
+                    </ui:VisualElement>
+
+                    <!-- 버튼들 (가로 배치) -->
+                    <ui:VisualElement name="GameOverButtons" class="game-over-buttons">
+                        <ui:Button text="Retry" name="RetryButton" class="game-over-button"/>
+                        <ui:Button text="Revive" name="ReviveButton" class="game-over-button"/>
+                        <ui:Button text="Main Menu" name="GameOverMainMenuButton" class="game-over-button"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <!-- 부활 확인 팝업 (기본 숨김) - 중앙 배치 -->
+                <ui:VisualElement name="ReviveConfirmPopup" class="menu-popup" style="display: none;">
+                    <ui:Label text="Revive?" name="ReviveConfirmTitle" class="menu-title"/>
+
+                    <!-- 부활석 정보 표시 -->
+                    <ui:VisualElement name="ReviveStoneInfo" class="revive-stone-info">
+                        <ui:Label text="Current Revive Stones:" name="CurrentReviveStoneLabel" class="revive-info-label"/>
+                        <ui:Label text="5" name="CurrentReviveStoneValue" class="revive-info-value"/>
+
+                        <ui:Label text="→" class="revive-arrow"/>
+
+                        <ui:Label text="After Revive:" name="AfterReviveStoneLabel" class="revive-info-label"/>
+                        <ui:Label text="4" name="AfterReviveStoneValue" class="revive-info-value-after"/>
+                    </ui:VisualElement>
+
+                    <!-- 버튼들 (가로 배치) -->
+                    <ui:VisualElement name="ReviveConfirmButtons" class="game-over-buttons">
+                        <ui:Button text="Revive" name="ConfirmReviveButton" class="game-over-button"/>
+                        <ui:Button text="Cancel" name="CancelReviveButton" class="game-over-button"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <!-- 부활석 부족 팝업 (기본 숨김) - 중앙 배치 -->
+                <ui:VisualElement name="InsufficientReviveStonePopup" class="menu-popup" style="display: none;">
+                    <ui:Label text="Insufficient Revive Stones" name="InsufficientTitle" class="menu-title"/>
+
+                    <!-- 안내 메시지 -->
+                    <ui:Label text="You don't have enough revive stones." name="InsufficientMessage" class="insufficient-message"/>
+
+                    <!-- 확인 버튼 (중앙 배치) -->
+                    <ui:VisualElement name="InsufficientButtonContainer" class="insufficient-button-container">
+                        <ui:Button text="Confirm" name="ConfirmInsufficientButton" class="game-over-button"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <!-- 상점 팝업 (기본 숨김) - 전체 화면 -->
+                <ui:VisualElement name="StorePopup" class="store-popup" style="display: none;">
+                    <!-- 상단 헤더 -->
+                    <ui:VisualElement name="StoreHeader" class="store-header">
+                        <!-- 닫기 버튼 -->
+                        <ui:Button text="✕" name="StoreCloseButton" class="store-close-button"/>
+
+                        <!-- 제목 -->
+                        <ui:Label text="Store" name="StoreTitle" class="menu-title"/>
+
+                        <!-- 화폐 표시 -->
+                        <ui:VisualElement name="StoreCurrency" class="store-currency">
+                            <ui:VisualElement class="header-currency-bar">
+                                <ui:VisualElement class="currency-icon-large diamond-icon"/>
+                                <ui:Label text="0" name="StoreDiamondCount" class="currency-amount"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="header-currency-bar">
+                                <ui:VisualElement class="currency-icon-large revive-stone-icon"/>
+                                <ui:Label text="0" name="StoreReviveStoneCount" class="currency-amount"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+
+                    <!-- 컨텐츠 영역 -->
+                    <ui:VisualElement name="StoreContent" class="store-content">
+                        <!-- 카테고리 버튼 -->
+                        <ui:VisualElement name="StoreCategory" class="store-category">
+                            <ui:Button text="Diamonds" name="StoreDiamondButton" class="store-category-button"/>
+                            <ui:Button text="Revive Stones" name="StoreReviveStoneButton" class="store-category-button"/>
+                        </ui:VisualElement>
+
+                        <!-- 상품 목록 -->
+                        <ui:VisualElement name="StoreProducts" class="store-products">
+                            <!-- 다이아몬드 상품 -->
+                            <ui:ScrollView name="StoreDiamondPanel" class="store-product-panel">
+                                <ui:VisualElement name="StoreDiamondGrid" class="store-product-grid"/>
+                            </ui:ScrollView>
+
+                            <!-- 부활석 상품 -->
+                            <ui:ScrollView name="StoreReviveStonePanel" class="store-product-panel" style="display: none;">
+                                <ui:VisualElement name="StoreReviveStoneGrid" class="store-product-grid"/>
+                            </ui:ScrollView>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
             </ui:VisualElement>
 
         </ui:VisualElement>

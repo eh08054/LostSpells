@@ -27,6 +27,43 @@ namespace LostSpells.UI
         private VisualElement menuPopup;
         private Label menuTitle;
 
+        // 게임오버 팝업 관련
+        private VisualElement gameOverPopup;
+        private Label gameOverTitle;
+        private Label scoreLabel;
+        private Label scoreValue;
+        private Button retryButton;
+        private Button reviveButton;
+        private Button gameOverMainMenuButton;
+
+        // 부활 확인 팝업
+        private VisualElement reviveConfirmPopup;
+        private Label reviveConfirmTitle;
+        private Label currentReviveStoneLabel;
+        private Label currentReviveStoneValue;
+        private Label afterReviveStoneLabel;
+        private Label afterReviveStoneValue;
+        private Button confirmReviveButton;
+        private Button cancelReviveButton;
+
+        // 부활석 부족 팝업
+        private VisualElement insufficientReviveStonePopup;
+        private Label insufficientTitle;
+        private Label insufficientMessage;
+        private Button confirmInsufficientButton;
+
+        // 상점 팝업
+        private VisualElement storePopup;
+        private Button storeCloseButton;
+        private Label storeDiamondCount;
+        private Label storeReviveStoneCount;
+        private Button storeDiamondButton;
+        private Button storeReviveStoneButton;
+        private ScrollView storeDiamondPanel;
+        private ScrollView storeReviveStonePanel;
+        private VisualElement storeDiamondGrid;
+        private VisualElement storeReviveStoneGrid;
+
         // 화폐 표시 Label
         private Label diamondCountLabel;
         private Label reviveStoneCountLabel;
@@ -215,6 +252,43 @@ namespace LostSpells.UI
             storeButton = root.Q<Button>("StoreButton");
             mainMenuButton = root.Q<Button>("MainMenuButton");
 
+            // 게임오버 팝업 UI 요소
+            gameOverPopup = root.Q<VisualElement>("GameOverPopup");
+            gameOverTitle = gameOverPopup?.Q<Label>(className: "menu-title");
+            scoreLabel = root.Q<Label>("ScoreLabel");
+            scoreValue = root.Q<Label>("ScoreValue");
+            retryButton = root.Q<Button>("RetryButton");
+            reviveButton = root.Q<Button>("ReviveButton");
+            gameOverMainMenuButton = root.Q<Button>("GameOverMainMenuButton");
+
+            // 부활 확인 팝업 UI 요소
+            reviveConfirmPopup = root.Q<VisualElement>("ReviveConfirmPopup");
+            reviveConfirmTitle = root.Q<Label>("ReviveConfirmTitle");
+            currentReviveStoneLabel = root.Q<Label>("CurrentReviveStoneLabel");
+            currentReviveStoneValue = root.Q<Label>("CurrentReviveStoneValue");
+            afterReviveStoneLabel = root.Q<Label>("AfterReviveStoneLabel");
+            afterReviveStoneValue = root.Q<Label>("AfterReviveStoneValue");
+            confirmReviveButton = root.Q<Button>("ConfirmReviveButton");
+            cancelReviveButton = root.Q<Button>("CancelReviveButton");
+
+            // 부활석 부족 팝업 UI 요소
+            insufficientReviveStonePopup = root.Q<VisualElement>("InsufficientReviveStonePopup");
+            insufficientTitle = root.Q<Label>("InsufficientTitle");
+            insufficientMessage = root.Q<Label>("InsufficientMessage");
+            confirmInsufficientButton = root.Q<Button>("ConfirmInsufficientButton");
+
+            // 상점 팝업 UI 요소
+            storePopup = root.Q<VisualElement>("StorePopup");
+            storeCloseButton = root.Q<Button>("StoreCloseButton");
+            storeDiamondCount = root.Q<Label>("StoreDiamondCount");
+            storeReviveStoneCount = root.Q<Label>("StoreReviveStoneCount");
+            storeDiamondButton = root.Q<Button>("StoreDiamondButton");
+            storeReviveStoneButton = root.Q<Button>("StoreReviveStoneButton");
+            storeDiamondPanel = root.Q<ScrollView>("StoreDiamondPanel");
+            storeReviveStonePanel = root.Q<ScrollView>("StoreReviveStonePanel");
+            storeDiamondGrid = root.Q<VisualElement>("StoreDiamondGrid");
+            storeReviveStoneGrid = root.Q<VisualElement>("StoreReviveStoneGrid");
+
             // 이벤트 등록
             if (menuButton != null)
                 menuButton.clicked += OnMenuButtonClicked;
@@ -230,6 +304,37 @@ namespace LostSpells.UI
 
             if (mainMenuButton != null)
                 mainMenuButton.clicked += OnMainMenuButtonClicked;
+
+            // 게임오버 팝업 버튼 이벤트
+            if (retryButton != null)
+                retryButton.clicked += OnRetryButtonClicked;
+
+            if (reviveButton != null)
+                reviveButton.clicked += OnReviveButtonClicked;
+
+            if (gameOverMainMenuButton != null)
+                gameOverMainMenuButton.clicked += OnGameOverMainMenuButtonClicked;
+
+            // 부활 확인 팝업 버튼 이벤트
+            if (confirmReviveButton != null)
+                confirmReviveButton.clicked += OnConfirmReviveButtonClicked;
+
+            if (cancelReviveButton != null)
+                cancelReviveButton.clicked += OnCancelReviveButtonClicked;
+
+            // 부활석 부족 팝업 버튼 이벤트
+            if (confirmInsufficientButton != null)
+                confirmInsufficientButton.clicked += OnConfirmInsufficientButtonClicked;
+
+            // 상점 팝업 버튼 이벤트
+            if (storeCloseButton != null)
+                storeCloseButton.clicked += OnStoreCloseButtonClicked;
+
+            if (storeDiamondButton != null)
+                storeDiamondButton.clicked += OnStoreDiamondButtonClicked;
+
+            if (storeReviveStoneButton != null)
+                storeReviveStoneButton.clicked += OnStoreReviveStoneButtonClicked;
 
             // 스킬 카테고리 버튼 이벤트
             if (allSkillButton != null)
@@ -795,10 +900,11 @@ namespace LostSpells.UI
         /// </summary>
         private void OnSceneUnloaded(Scene scene)
         {
-            // Options나 Store 씬이 언로드되면 사이드바 다시 표시
+            // Options나 Store 씬이 언로드되면 사이드바 다시 표시하고 게임 재개
             if (scene.name == "Options" || scene.name == "Store")
             {
                 ShowSidebars();
+                ResumeGame(); // 게임 재개
 
                 // Options에서 언어가 변경되었을 수 있으므로 UI 업데이트
                 if (scene.name == "Options")
@@ -807,6 +913,13 @@ namespace LostSpells.UI
                     LocalizationManager.Instance.OnLanguageChanged += UpdateLocalization;
                     // 현재 언어로 UI 업데이트
                     UpdateLocalization();
+                }
+
+                // Store에서 화폐가 변경되었을 수 있으므로 UI 업데이트
+                if (scene.name == "Store")
+                {
+                    saveData = SaveManager.Instance.GetCurrentSaveData();
+                    UpdateCurrencyDisplay();
                 }
             }
         }
@@ -920,6 +1033,48 @@ namespace LostSpells.UI
             if (storeButton != null)
                 storeButton.text = loc.GetText("main_menu_store");
 
+            // 게임오버 팝업 로컬라이즈
+            if (gameOverTitle != null)
+                gameOverTitle.text = loc.GetText("gameover_title");
+
+            if (scoreLabel != null)
+                scoreLabel.text = loc.GetText("gameover_score");
+
+            if (retryButton != null)
+                retryButton.text = loc.GetText("gameover_retry");
+
+            if (reviveButton != null)
+                reviveButton.text = loc.GetText("gameover_revive");
+
+            if (gameOverMainMenuButton != null)
+                gameOverMainMenuButton.text = loc.GetText("gameover_quit");
+
+            // 부활 확인 팝업 로컬라이즈
+            if (reviveConfirmTitle != null)
+                reviveConfirmTitle.text = loc.GetText("revive_confirm_title");
+
+            if (currentReviveStoneLabel != null)
+                currentReviveStoneLabel.text = loc.GetText("revive_current_stones");
+
+            if (afterReviveStoneLabel != null)
+                afterReviveStoneLabel.text = loc.GetText("revive_after_stones");
+
+            if (confirmReviveButton != null)
+                confirmReviveButton.text = loc.GetText("revive_confirm_button");
+
+            if (cancelReviveButton != null)
+                cancelReviveButton.text = loc.GetText("revive_cancel_button");
+
+            // 부활석 부족 팝업 로컬라이즈
+            if (insufficientTitle != null)
+                insufficientTitle.text = loc.GetText("insufficient_revive_title");
+
+            if (insufficientMessage != null)
+                insufficientMessage.text = loc.GetText("insufficient_revive_message");
+
+            if (confirmInsufficientButton != null)
+                confirmInsufficientButton.text = loc.GetText("insufficient_confirm");
+
             // 스킬 카테고리 버튼 텍스트 업데이트
             if (allSkillButton != null)
                 allSkillButton.text = loc.GetText("skill_category_all");
@@ -936,6 +1091,336 @@ namespace LostSpells.UI
 
             // 스킬 목록 다시 로드 (스킬 이름이 언어별로 다름)
             LoadSkills();
+        }
+
+        /// <summary>
+        /// 게임오버 팝업 표시
+        /// </summary>
+        public void ShowGameOver()
+        {
+            if (gameOverPopup != null)
+            {
+                gameOverPopup.style.display = DisplayStyle.Flex;
+                Time.timeScale = 0; // 게임 일시정지
+            }
+        }
+
+        /// <summary>
+        /// 재도전 버튼 클릭
+        /// </summary>
+        private void OnRetryButtonClicked()
+        {
+            Time.timeScale = 1; // 게임 재개
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name); // 현재 씬 다시 로드
+        }
+
+        /// <summary>
+        /// 부활 버튼 클릭 - 부활석이 있으면 확인 팝업, 없으면 아무것도 안함
+        /// </summary>
+        private void OnReviveButtonClicked()
+        {
+            PlayerSaveData currentSaveData = SaveManager.Instance.GetCurrentSaveData();
+            int currentReviveStones = currentSaveData.reviveStones;
+
+            // 부활석이 있으면 확인 팝업 표시
+            if (currentReviveStones > 0)
+            {
+                // 현재 부활석 개수와 부활 후 개수 표시
+                if (currentReviveStoneValue != null)
+                    currentReviveStoneValue.text = currentReviveStones.ToString();
+
+                if (afterReviveStoneValue != null)
+                    afterReviveStoneValue.text = (currentReviveStones - 1).ToString();
+
+                // 게임오버 팝업 숨기고 부활 확인 팝업 표시
+                if (gameOverPopup != null)
+                    gameOverPopup.style.display = DisplayStyle.None;
+
+                if (reviveConfirmPopup != null)
+                    reviveConfirmPopup.style.display = DisplayStyle.Flex;
+            }
+            else
+            {
+                // 부활석이 없으면 부족 팝업 표시
+                if (gameOverPopup != null)
+                    gameOverPopup.style.display = DisplayStyle.None;
+
+                if (insufficientReviveStonePopup != null)
+                    insufficientReviveStonePopup.style.display = DisplayStyle.Flex;
+            }
+        }
+
+        /// <summary>
+        /// 부활 확인 버튼 클릭 - 실제로 부활 실행
+        /// </summary>
+        private void OnConfirmReviveButtonClicked()
+        {
+            // 부활석 소비
+            if (SaveManager.Instance.SpendReviveStones(1))
+            {
+                // 플레이어 부활
+                if (playerComponent != null)
+                {
+                    playerComponent.Revive();
+                }
+
+                // 부활 확인 팝업 닫기
+                if (reviveConfirmPopup != null)
+                {
+                    reviveConfirmPopup.style.display = DisplayStyle.None;
+                }
+
+                Time.timeScale = 1; // 게임 재개
+
+                // 화폐 UI 업데이트
+                UpdateCurrencyDisplay();
+
+                Debug.Log("부활 완료! 남은 부활석: " + SaveManager.Instance.GetCurrentSaveData().reviveStones);
+            }
+        }
+
+        /// <summary>
+        /// 부활 취소 버튼 클릭 - 게임오버 팝업으로 돌아가기
+        /// </summary>
+        private void OnCancelReviveButtonClicked()
+        {
+            // 부활 확인 팝업 숨기고 게임오버 팝업 다시 표시
+            if (reviveConfirmPopup != null)
+                reviveConfirmPopup.style.display = DisplayStyle.None;
+
+            if (gameOverPopup != null)
+                gameOverPopup.style.display = DisplayStyle.Flex;
+        }
+
+        /// <summary>
+        /// 상점 가기 버튼 클릭 - 상점 팝업 열기
+        /// </summary>
+        private void OnGoToStoreButtonClicked()
+        {
+            // 부족 팝업 숨기고 상점 팝업 표시
+            if (insufficientReviveStonePopup != null)
+                insufficientReviveStonePopup.style.display = DisplayStyle.None;
+
+            if (storePopup != null)
+            {
+                storePopup.style.display = DisplayStyle.Flex;
+
+                // 화폐 표시 업데이트
+                UpdateStoreCurrencyDisplay();
+
+                // 상품 목록 생성 (처음 한번만)
+                if (storeDiamondGrid != null && storeDiamondGrid.childCount == 0)
+                {
+                    PopulateStoreProducts();
+                }
+
+                // 다이아몬드 탭 기본 표시
+                ShowStoreDiamondPanel();
+            }
+        }
+
+        /// <summary>
+        /// 상점 닫기 버튼 클릭
+        /// </summary>
+        private void OnStoreCloseButtonClicked()
+        {
+            if (storePopup != null)
+                storePopup.style.display = DisplayStyle.None;
+
+            // 게임오버 팝업으로 복귀
+            if (gameOverPopup != null)
+                gameOverPopup.style.display = DisplayStyle.Flex;
+
+            // 화폐 UI 업데이트
+            UpdateCurrencyDisplay();
+        }
+
+        /// <summary>
+        /// 상점 다이아몬드 탭 클릭
+        /// </summary>
+        private void OnStoreDiamondButtonClicked()
+        {
+            ShowStoreDiamondPanel();
+        }
+
+        /// <summary>
+        /// 상점 부활석 탭 클릭
+        /// </summary>
+        private void OnStoreReviveStoneButtonClicked()
+        {
+            ShowStoreReviveStonePanel();
+        }
+
+        /// <summary>
+        /// 다이아몬드 패널 표시
+        /// </summary>
+        private void ShowStoreDiamondPanel()
+        {
+            if (storeDiamondPanel != null)
+                storeDiamondPanel.style.display = DisplayStyle.Flex;
+
+            if (storeReviveStonePanel != null)
+                storeReviveStonePanel.style.display = DisplayStyle.None;
+        }
+
+        /// <summary>
+        /// 부활석 패널 표시
+        /// </summary>
+        private void ShowStoreReviveStonePanel()
+        {
+            if (storeDiamondPanel != null)
+                storeDiamondPanel.style.display = DisplayStyle.None;
+
+            if (storeReviveStonePanel != null)
+                storeReviveStonePanel.style.display = DisplayStyle.Flex;
+        }
+
+        /// <summary>
+        /// 상점 화폐 표시 업데이트
+        /// </summary>
+        private void UpdateStoreCurrencyDisplay()
+        {
+            PlayerSaveData currentSaveData = SaveManager.Instance.GetCurrentSaveData();
+
+            if (storeDiamondCount != null)
+                storeDiamondCount.text = currentSaveData.diamonds.ToString();
+
+            if (storeReviveStoneCount != null)
+                storeReviveStoneCount.text = currentSaveData.reviveStones.ToString();
+        }
+
+        /// <summary>
+        /// 상점 상품 목록 생성
+        /// </summary>
+        private void PopulateStoreProducts()
+        {
+            // 다이아몬드 상품 (테스트용 - 실제로는 다이아로 부활석 구매)
+            var reviveStoneItems = new List<(int quantity, int price)>
+            {
+                (1, 1),
+                (5, 4),
+                (10, 8),
+                (25, 18),
+                (50, 32),
+                (100, 55)
+            };
+
+            // 부활석 상품 카드 생성
+            if (storeReviveStoneGrid != null)
+            {
+                storeReviveStoneGrid.Clear();
+                foreach (var item in reviveStoneItems)
+                {
+                    var card = CreateStoreProductCard(item.quantity, item.price, true);
+                    storeReviveStoneGrid.Add(card);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 상품 카드 생성
+        /// </summary>
+        private VisualElement CreateStoreProductCard(int quantity, int price, bool isReviveStone)
+        {
+            var card = new VisualElement();
+            card.AddToClassList("product-card");
+
+            // 아이템 정보 행
+            var infoRow = new VisualElement();
+            infoRow.AddToClassList("product-info-row");
+
+            var icon = new VisualElement();
+            icon.AddToClassList("product-icon-large");
+            icon.AddToClassList(isReviveStone ? "revive-stone-icon-product" : "diamond-icon-product");
+            infoRow.Add(icon);
+
+            var multiplication = new Label("X");
+            multiplication.AddToClassList("multiplication-sign");
+            infoRow.Add(multiplication);
+
+            var quantityLabel = new Label($"{quantity:N0}");
+            quantityLabel.AddToClassList("product-quantity");
+            infoRow.Add(quantityLabel);
+
+            card.Add(infoRow);
+
+            // 가격 (다이아몬드)
+            var priceContainer = new VisualElement();
+            priceContainer.AddToClassList("product-price-container");
+
+            var priceIcon = new VisualElement();
+            priceIcon.AddToClassList("product-price-icon");
+            priceContainer.Add(priceIcon);
+
+            var priceMultiplication = new Label("X");
+            priceMultiplication.AddToClassList("price-multiplication-sign");
+            priceContainer.Add(priceMultiplication);
+
+            var priceText = new Label($"{price:N0}");
+            priceText.AddToClassList("product-price-text");
+            priceContainer.Add(priceText);
+
+            card.Add(priceContainer);
+
+            // 구매 버튼
+            var buyButton = new Button();
+            buyButton.text = "BUY";
+            buyButton.AddToClassList("buy-button");
+            buyButton.clicked += () => OnStoreBuyButtonClicked(quantity, price, isReviveStone);
+            card.Add(buyButton);
+
+            return card;
+        }
+
+        /// <summary>
+        /// 상점 구매 버튼 클릭
+        /// </summary>
+        private void OnStoreBuyButtonClicked(int quantity, int price, bool isReviveStone)
+        {
+            if (isReviveStone)
+            {
+                // 다이아몬드로 부활석 구매
+                if (SaveManager.Instance.SpendDiamonds(price))
+                {
+                    SaveManager.Instance.AddReviveStones(quantity);
+                    UpdateStoreCurrencyDisplay();
+                    Debug.Log($"부활석 {quantity}개 구매 완료!");
+                }
+                else
+                {
+                    Debug.Log("다이아몬드가 부족합니다!");
+                }
+            }
+        }
+
+        /// <summary>
+        /// 부활석 부족 팝업 확인 버튼 - 게임오버 팝업으로 돌아가기
+        /// </summary>
+        private void OnConfirmInsufficientButtonClicked()
+        {
+            // 부족 팝업 숨기고 게임오버 팝업 다시 표시
+            if (insufficientReviveStonePopup != null)
+                insufficientReviveStonePopup.style.display = DisplayStyle.None;
+
+            if (gameOverPopup != null)
+                gameOverPopup.style.display = DisplayStyle.Flex;
+        }
+
+        /// <summary>
+        /// 게임오버 종료 버튼 클릭 - 현재 게임모드 화면으로
+        /// </summary>
+        private void OnGameOverMainMenuButtonClicked()
+        {
+            Time.timeScale = 1; // 게임 재개
+
+            // 현재 챕터 ID로 게임모드 판별
+            int chapterId = GameStateManager.Instance.GetCurrentChapterId();
+
+            // 챕터 ID가 0 이상이면 스토리모드, -1이면 무한모드
+            string targetScene = chapterId >= 0 ? "StoryMode" : "EndlessMode";
+
+            GameStateManager.Instance.ResetGameState(); // 게임 상태 초기화
+            SceneManager.LoadScene(targetScene);
         }
     }
 }

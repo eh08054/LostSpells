@@ -18,6 +18,8 @@ namespace LostSpells.Components
         [SerializeField] private int currentHealth;
         [SerializeField] private float moveSpeed = 2f;
         [SerializeField] private float stoppingDistance = 1.5f; // 플레이어와 유지할 거리
+        [SerializeField] private int attackDamage = 10; // 공격 데미지
+        [SerializeField] private float attackCooldown = 1f; // 공격 쿨다운 (초)
 
         [Header("Visual")]
         [SerializeField] private SpriteRenderer spriteRenderer;
@@ -31,6 +33,7 @@ namespace LostSpells.Components
 
         private Transform player;
         private Rigidbody2D rb;
+        private float lastAttackTime = 0f; // 마지막 공격 시간
 
         private void Awake()
         {
@@ -134,34 +137,39 @@ namespace LostSpells.Components
                 // stoppingDistance보다 멀면 플레이어 쪽으로 이동
                 if (distanceToPlayer > stoppingDistance)
                 {
-                    // 앞에 있는 모든 적들을 확인 (RaycastAll)
-                    float checkDistance = 3.0f; // 앞쪽 체크 거리 (충분히 길게)
                     float stopDistance = 0.6f; // 이 거리 이내에 적이 있으면 멈춤
                     float resumeDistance = 1.2f; // 이 거리 이상 멀어져야 다시 이동
 
-                    RaycastHit2D[] hits = Physics2D.RaycastAll(
-                        transform.position,
-                        new Vector2(directionToPlayer.x, 0),
-                        checkDistance
-                    );
-
-                    // 앞에 다른 적이 있는지 확인
+                    // 나와 플레이어 사이에 있는 적들만 확인
                     bool canMove = true;
                     float closestEnemyDistance = float.MaxValue;
 
-                    foreach (RaycastHit2D hit in hits)
+                    EnemyComponent[] allEnemies = FindObjectsByType<EnemyComponent>(FindObjectsSortMode.None);
+                    foreach (EnemyComponent otherEnemy in allEnemies)
                     {
-                        if (hit.collider != null)
+                        if (otherEnemy == this) continue;
+
+                        float myX = transform.position.x;
+                        float otherX = otherEnemy.transform.position.x;
+                        float playerX = player.position.x;
+
+                        // 나와 플레이어 사이에 있는 적인지 확인
+                        bool isBetween = false;
+                        if (playerX > myX) // 플레이어가 오른쪽에 있음
                         {
-                            // 맞은 대상이 다른 적인지 확인
-                            EnemyComponent otherEnemy = hit.collider.GetComponent<EnemyComponent>();
-                            if (otherEnemy != null && otherEnemy != this)
+                            isBetween = (otherX > myX && otherX < playerX);
+                        }
+                        else // 플레이어가 왼쪽에 있음
+                        {
+                            isBetween = (otherX < myX && otherX > playerX);
+                        }
+
+                        if (isBetween)
+                        {
+                            float distToEnemy = Mathf.Abs(otherX - myX);
+                            if (distToEnemy < closestEnemyDistance)
                             {
-                                float distToEnemy = hit.distance;
-                                if (distToEnemy < closestEnemyDistance)
-                                {
-                                    closestEnemyDistance = distToEnemy;
-                                }
+                                closestEnemyDistance = distToEnemy;
                             }
                         }
                     }
@@ -184,6 +192,12 @@ namespace LostSpells.Components
                     }
                 }
                 // stoppingDistance 이내면 멈춤 (velocity.x = 0으로 유지)
+
+                // stoppingDistance 이내면 플레이어 공격
+                if (distanceToPlayer <= stoppingDistance)
+                {
+                    TryAttackPlayer();
+                }
             }
             else
             {
@@ -194,10 +208,16 @@ namespace LostSpells.Components
             // Rigidbody2D로 이동 (Y축 속도는 유지하여 중력 영향 받도록)
             rb.linearVelocity = velocity;
 
-            // 이동 방향에 따라 스프라이트 뒤집기
-            if (spriteRenderer != null && velocity.x != 0)
+            // 스프라이트를 항상 플레이어 방향으로 뒤집기
+            if (spriteRenderer != null && player != null)
             {
-                // 왼쪽으로 이동 시 스프라이트 뒤집기
+                float dirX = player.position.x - transform.position.x;
+                // 플레이어가 왼쪽에 있으면 true (스프라이트 뒤집기)
+                spriteRenderer.flipX = dirX < 0;
+            }
+            else if (spriteRenderer != null && velocity.x != 0)
+            {
+                // 플레이어가 없을 때는 이동 방향에 따라
                 spriteRenderer.flipX = velocity.x < 0;
             }
 
@@ -235,6 +255,27 @@ namespace LostSpells.Components
             }
 
             UpdateHealthBar();
+        }
+
+        /// <summary>
+        /// 플레이어 공격 시도
+        /// </summary>
+        private void TryAttackPlayer()
+        {
+            if (Time.time - lastAttackTime >= attackCooldown && player != null)
+            {
+                PlayerComponent playerComponent = player.GetComponent<PlayerComponent>();
+                if (playerComponent != null)
+                {
+                    // 넉백 방향 계산 (플레이어 - 적)
+                    Vector2 knockbackDirection = (player.position - transform.position).normalized;
+                    // Y축 성분을 추가해서 위로 띄움
+                    knockbackDirection = new Vector2(knockbackDirection.x, 1f).normalized;
+
+                    playerComponent.TakeDamage(attackDamage, knockbackDirection);
+                    lastAttackTime = Time.time;
+                }
+            }
         }
 
         /// <summary>
@@ -279,8 +320,36 @@ namespace LostSpells.Components
         /// </summary>
         private void Die()
         {
+            // Death 애니메이션 재생
+            if (animator != null && animator.runtimeAnimatorController != null)
+            {
+                animator.SetBool("IsDead", true);
+            }
+
+            // 이동 멈추기
+            if (rb != null)
+            {
+                rb.linearVelocity = Vector2.zero;
+                rb.gravityScale = 0;
+            }
+
+            // 충돌 비활성화
+            Collider2D collider = GetComponent<Collider2D>();
+            if (collider != null)
+            {
+                collider.enabled = false;
+            }
+
+            // 체력바와 이름 숨기기
+            if (healthBarBackground != null)
+                healthBarBackground.gameObject.SetActive(false);
+            if (nameText != null)
+                nameText.gameObject.SetActive(false);
+
+            // Death 애니메이션 길이 후에 제거 (0.5초)
+            Destroy(gameObject, 0.5f);
+
             // TODO: 경험치/골드 드랍
-            Destroy(gameObject);
         }
 
         /// <summary>

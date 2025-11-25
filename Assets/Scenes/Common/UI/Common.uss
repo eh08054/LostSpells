@@ -143,3 +143,94 @@
     justify-content: center;
     padding: var(--spacing-xlarge);
 }
+
+/* ========== 팝업 스타일 ========== */
+
+/* 메뉴 팝업 */
+.menu-popup {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    translate: -50% -50%;
+    width: 550px;
+    height: auto;
+    background-image: url("project://database/Assets/Templates/Fantasy Wooden GUI  Free/normal_ui_set A/UI board Medium  parchment.png");
+    -unity-background-scale-mode: stretch-to-fill;
+    -unity-slice-left: 80;
+    -unity-slice-right: 80;
+    -unity-slice-top: 80;
+    -unity-slice-bottom: 80;
+    border-width: 0;
+    padding: 50px 40px 40px 40px;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.menu-title {
+    font-size: 34px;
+    color: rgb(80, 40, 20);
+    -unity-font-style: bold;
+    text-shadow: 2px 2px 5px rgba(255, 255, 255, 0.5);
+    margin-bottom: 22px;
+    -unity-text-align: middle-center;
+    -unity-text-outline-width: 1.5px;
+    -unity-text-outline-color: rgba(255, 255, 255, 0.3);
+    letter-spacing: 1px;
+    white-space: normal;
+    overflow: hidden;
+    text-overflow: clip;
+}
+
+/* 팝업 메시지 */
+.insufficient-message {
+    font-size: 17px;
+    color: rgb(60, 40, 30);
+    -unity-font-style: normal;
+    -unity-text-align: middle-center;
+    text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.3);
+    margin-top: 15px;
+    margin-bottom: 25px;
+    white-space: normal;
+    line-height: 26px;
+    overflow: hidden;
+    text-overflow: clip;
+    max-width: 100%;
+}
+
+/* 팝업 버튼 컨테이너 */
+.insufficient-button-container {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+
+/* 팝업 버튼 스타일 */
+.game-over-button {
+    min-width: 110px;
+    max-width: 110px;
+    height: 50px;
+    background-image: url("project://database/Assets/Templates/Fantasy Wooden GUI  Free/normal_ui_set A/TextBTN_Big.png");
+    -unity-background-scale-mode: stretch-to-fill;
+    -unity-background-image-tint-color: rgb(255, 255, 255);
+    border-width: 0;
+    color: rgb(255, 240, 220);
+    font-size: 16px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    transition-property: scale, -unity-background-image-tint-color;
+    transition-duration: 0.15s;
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.9);
+    -unity-text-outline-width: 1px;
+    -unity-text-outline-color: rgba(80, 40, 20, 0.8);
+    letter-spacing: 1px;
+    scale: 1.0;
+}
+
+.game-over-button:hover {
+    scale: 1.05;
+}
+
+.game-over-button:active {
+    scale: 0.95;
+    -unity-background-image-tint-color: rgb(180, 180, 180);
+}

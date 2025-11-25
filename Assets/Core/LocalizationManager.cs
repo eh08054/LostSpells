@@ -199,6 +199,9 @@ namespace LostSpells.Systems
             AddText("store_diamond", "다이아몬드", "Diamonds");
             AddText("store_revive_stone", "부활석", "Revive Stones");
             AddText("store_back", "돌아가기", "Back");
+            AddText("insufficient_diamond_title", "다이아 부족", "Insufficient Diamonds");
+            AddText("insufficient_diamond_message", "다이아몬드가 부족하여 구매할 수 없습니다.", "You don't have enough diamonds to purchase this item.");
+            AddText("confirm", "확인", "Confirm");
 
             // In-Game
             AddText("ingame_pause", "일시정지", "Pause");
@@ -210,6 +213,25 @@ namespace LostSpells.Systems
             AddText("ingame_wave", "웨이브", "Wave");
             AddText("ingame_score", "점수", "Score");
             AddText("ingame_chapter", "챕터", "Chapter");
+
+            // Game Over
+            AddText("gameover_title", "게임 오버", "GAME OVER");
+            AddText("gameover_score", "점수", "Score");
+            AddText("gameover_retry", "재도전", "Retry");
+            AddText("gameover_revive", "부활", "Revive");
+            AddText("gameover_quit", "종료", "Quit");
+
+            // Revive Confirm Popup
+            AddText("revive_confirm_title", "부활하시겠습니까?", "Revive?");
+            AddText("revive_current_stones", "보유 부활석:", "Current Revive Stones:");
+            AddText("revive_after_stones", "부활 후:", "After Revive:");
+            AddText("revive_confirm_button", "부활", "Revive");
+            AddText("revive_cancel_button", "취소", "Cancel");
+
+            // Insufficient Revive Stone Popup
+            AddText("insufficient_revive_title", "부활석 부족", "Insufficient Revive Stones");
+            AddText("insufficient_revive_message", "부활석이 부족합니다.", "You don't have enough revive stones.");
+            AddText("insufficient_confirm", "확인", "Confirm");
 
             // Skill Categories
             AddText("skill_category_all", "전체", "All");

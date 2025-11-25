@@ -21,15 +21,20 @@ namespace LostSpells.Components
         [SerializeField] private float manaRegenRate = 5f; // 초당 마나 회복량
         [SerializeField] private float healthRegenRate = 5f; // 초당 체력 회복량
         [SerializeField] private float moveSpeed = 5f;
-        [SerializeField] private float jumpForce = 5f; // 점프 힘
+        [SerializeField] private float jumpForce = 10f; // 점프 힘
         [SerializeField] private float knockbackForce = 3f; // 넉백 힘
 
         [Header("Skill System")]
         [SerializeField] private Transform skillCastPoint; // 스킬 발사 위치 (없으면 플레이어 중심 사용)
+        [SerializeField] private LostSpells.Data.SkillData[] availableSkills = new LostSpells.Data.SkillData[6]; // 사용 가능한 스킬 (최대 6개: 1~6 키)
+        [SerializeField] private GameObject skillProjectilePrefab; // 투사체 프리팹
+
+        private float[] skillCooldowns = new float[6]; // 각 스킬의 쿨다운
 
         [Header("Visual")]
         [SerializeField] private SpriteRenderer spriteRenderer;
         [SerializeField] private Color playerColor = Color.blue;
+        [SerializeField] private Animator animator; // 애니메이터
 
         [Header("UI Elements")]
         [SerializeField] private TextMeshPro nameText;
@@ -61,7 +66,7 @@ namespace LostSpells.Components
             {
                 rb = gameObject.AddComponent<Rigidbody2D>();
             }
-            rb.gravityScale = 1; // 중력 적용
+            rb.gravityScale = 3; // 중력 강하게 적용 (빠른 낙하)
             rb.constraints = RigidbodyConstraints2D.FreezeRotation; // 회전 방지
 
             // Collider 설정 (충돌 감지용)
@@ -82,12 +87,6 @@ namespace LostSpells.Components
 
         private void Start()
         {
-            // 플레이어 색상 설정
-            if (spriteRenderer != null)
-            {
-                spriteRenderer.color = playerColor;
-            }
-
             // 이름 설정
             if (nameText != null)
             {
@@ -96,6 +95,15 @@ namespace LostSpells.Components
 
             // 체력바 초기화
             UpdateHealthBar();
+
+            // 스킬 데이터 초기화
+            InitializeDefaultSkills();
+
+            // 투사체 프리팹 자동 생성
+            if (skillProjectilePrefab == null)
+            {
+                CreateProjectilePrefab();
+            }
         }
 
         private void Update()
@@ -107,6 +115,12 @@ namespace LostSpells.Components
 
             // 체력 자동 회복
             RegenerateHealth();
+
+            // 스킬 쿨다운 감소
+            UpdateSkillCooldowns();
+
+            // 스킬 입력 처리
+            HandleSkillInput();
 
             // 넉백 중에는 이동 불가
             if (isKnockedBack) return;
@@ -153,6 +167,13 @@ namespace LostSpells.Components
             {
                 spriteRenderer.flipX = false;
             }
+
+            // 애니메이터 Speed 파라미터 업데이트
+            if (animator != null && animator.runtimeAnimatorController != null)
+            {
+                float speed = Mathf.Abs(velocity2.x);
+                animator.SetFloat("Speed", speed);
+            }
         }
 
         /// <summary>
@@ -172,11 +193,63 @@ namespace LostSpells.Components
         }
 
         /// <summary>
+        /// 데미지 받기 (넉백 포함)
+        /// </summary>
+        public void TakeDamage(int damage, Vector2 knockbackDirection)
+        {
+            currentHealth -= damage;
+            currentHealth = Mathf.Max(0, currentHealth);
+
+            UpdateHealthBar();
+
+            // 넉백 적용
+            if (rb != null && !isKnockedBack)
+            {
+                rb.linearVelocity = knockbackDirection.normalized * knockbackForce;
+                isKnockedBack = true;
+                IgnoreAllEnemyCollisions(true);
+            }
+
+            if (currentHealth <= 0)
+            {
+                Die();
+            }
+        }
+
+        /// <summary>
         /// 플레이어 사망
         /// </summary>
         private void Die()
         {
-            // TODO: 게임 오버 처리
+            // Death 애니메이션 재생
+            if (animator != null && animator.runtimeAnimatorController != null)
+            {
+                animator.SetBool("IsDead", true);
+            }
+
+            // 이동 멈추기
+            if (rb != null)
+            {
+                rb.linearVelocity = Vector2.zero;
+                rb.gravityScale = 0;
+            }
+
+            // 충돌 비활성화 (모든 Collider)
+            Collider2D[] colliders = GetComponents<Collider2D>();
+            foreach (var collider in colliders)
+            {
+                collider.enabled = false;
+            }
+
+            // 입력 비활성화 (플레이어가 더 이상 조작할 수 없도록)
+            enabled = false;
+
+            // 게임 오버 UI 표시
+            LostSpells.UI.InGameUI inGameUI = FindFirstObjectByType<LostSpells.UI.InGameUI>();
+            if (inGameUI != null)
+            {
+                inGameUI.ShowGameOver();
+            }
         }
 
         /// <summary>
@@ -188,6 +261,48 @@ namespace LostSpells.Components
             currentHealth = Mathf.Min(currentHealth, maxHealth);
 
             UpdateHealthBar();
+        }
+
+        /// <summary>
+        /// 부활 - 체력 전체 회복 및 상태 초기화
+        /// </summary>
+        public void Revive()
+        {
+            // 체력 100% 회복
+            currentHealth = maxHealth;
+            UpdateHealthBar();
+
+            // Death 애니메이션 해제 및 Idle 상태로 강제 전환
+            if (animator != null && animator.runtimeAnimatorController != null)
+            {
+                animator.SetBool("IsDead", false);
+                animator.SetFloat("Speed", 0f);
+
+                // 애니메이터를 강제로 Idle 상태로 전환
+                animator.Play("Idle", 0, 0f);
+            }
+
+            // 물리 재활성화
+            if (rb != null)
+            {
+                rb.gravityScale = 3;
+                rb.linearVelocity = Vector2.zero; // 속도 초기화
+            }
+
+            // 충돌 재활성화 (모든 Collider)
+            Collider2D[] colliders = GetComponents<Collider2D>();
+            Debug.Log($"[Revive] 총 {colliders.Length}개의 Collider 재활성화 중");
+            foreach (var collider in colliders)
+            {
+                collider.enabled = true;
+                Debug.Log($"[Revive] Collider 재활성화: {collider.GetType().Name}, isTrigger: {collider.isTrigger}");
+            }
+
+            // 넉백 상태 해제
+            isKnockedBack = false;
+
+            // 입력 재활성화
+            enabled = true;
         }
 
         /// <summary>
@@ -561,6 +676,222 @@ namespace LostSpells.Components
                     }
                     return defaultKey;
             }
+        }
+
+        // ========== 스킬 시스템 ==========
+
+        /// <summary>
+        /// 기본 스킬 데이터 초기화 (스킬 데이터가 설정되지 않은 경우)
+        /// </summary>
+        private void InitializeDefaultSkills()
+        {
+            // 이미 스킬이 설정되어 있으면 초기화하지 않음
+            bool hasSkills = false;
+            for (int i = 0; i < availableSkills.Length; i++)
+            {
+                if (availableSkills[i] != null)
+                {
+                    hasSkills = true;
+                    break;
+                }
+            }
+
+            if (hasSkills) return;
+
+            // 기본 스킬 6개 생성
+            availableSkills[0] = CreateSkill("fireball", "Fireball", "화염구", LostSpells.Data.SkillType.Fireball,
+                "Fire/FireBall", 15, 2f, 20, 12f);
+
+            availableSkills[1] = CreateSkill("icespike", "Ice Spike", "얼음 가시", LostSpells.Data.SkillType.IceSpike,
+                "Ice/IceSpike", 12, 1.8f, 15, 10f);
+
+            availableSkills[2] = CreateSkill("lightning", "Thunder Strike", "번개", LostSpells.Data.SkillType.Lightning,
+                "Electricity/ElectricLightning01", 18, 2.5f, 25, 15f);
+
+            availableSkills[3] = CreateSkill("earthrock", "Stone Bullet", "돌 탄환", LostSpells.Data.SkillType.EarthRock,
+                "Earth/EarthRock", 10, 1.5f, 12, 8f);
+
+            availableSkills[4] = CreateSkill("holylight", "Divine Ray", "신성한 광선", LostSpells.Data.SkillType.HolyLight,
+                "Holy/HolyProjectile", 20, 3f, 30, 14f);
+
+            availableSkills[5] = CreateSkill("voidblast", "Void Orb", "암흑 구체", LostSpells.Data.SkillType.VoidBlast,
+                "Void/VoidBall", 25, 3.5f, 35, 10f);
+        }
+
+        /// <summary>
+        /// 스킬 데이터 생성
+        /// </summary>
+        private LostSpells.Data.SkillData CreateSkill(string id, string nameEn, string nameKo,
+            LostSpells.Data.SkillType type, string vfxPath, int manaCost, float cooldown, int damage, float speed)
+        {
+            return new LostSpells.Data.SkillData
+            {
+                skillId = id,
+                skillName = nameKo,
+                skillNameEn = nameEn,
+                skillType = type,
+                manaCost = manaCost,
+                cooldown = cooldown,
+                damage = damage,
+                projectileSpeed = speed,
+                projectileLifetime = 3f,
+                effectPrefabPath = $"Templates/Pixel Art/PixelArtRPGVFX/Prefabs/{vfxPath}"
+            };
+        }
+
+        /// <summary>
+        /// 투사체 프리팹 자동 생성
+        /// </summary>
+        private void CreateProjectilePrefab()
+        {
+            GameObject projectile = new GameObject("SkillProjectile");
+
+            // CircleCollider2D 추가 (트리거)
+            CircleCollider2D collider = projectile.AddComponent<CircleCollider2D>();
+            collider.radius = 0.3f;
+            collider.isTrigger = true;
+
+            // Rigidbody2D 추가 (Kinematic)
+            Rigidbody2D rb2d = projectile.AddComponent<Rigidbody2D>();
+            rb2d.bodyType = RigidbodyType2D.Kinematic;
+            rb2d.gravityScale = 0f;
+
+            // SkillProjectile 컴포넌트 추가
+            projectile.AddComponent<SkillProjectile>();
+
+            skillProjectilePrefab = projectile;
+        }
+
+        /// <summary>
+        /// 스킬 쿨다운 업데이트
+        /// </summary>
+        private void UpdateSkillCooldowns()
+        {
+            for (int i = 0; i < skillCooldowns.Length; i++)
+            {
+                if (skillCooldowns[i] > 0)
+                {
+                    skillCooldowns[i] -= Time.deltaTime;
+                    if (skillCooldowns[i] < 0)
+                        skillCooldowns[i] = 0;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 스킬 입력 처리 (1~6 키)
+        /// </summary>
+        private void HandleSkillInput()
+        {
+            if (Keyboard.current == null) return;
+
+            // 1~6 키 체크
+            for (int i = 0; i < 6; i++)
+            {
+                Key skillKey = Key.Digit1 + i; // Digit1, Digit2, ..., Digit6
+                if (Keyboard.current[skillKey].wasPressedThisFrame)
+                {
+                    CastSkill(i);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 스킬 시전
+        /// </summary>
+        private void CastSkill(int skillIndex)
+        {
+            // 유효성 검사
+            if (skillIndex < 0 || skillIndex >= availableSkills.Length)
+                return;
+
+            LostSpells.Data.SkillData skill = availableSkills[skillIndex];
+            if (skill == null)
+                return;
+
+            // 쿨다운 체크
+            if (skillCooldowns[skillIndex] > 0)
+                return;
+
+            // 마나 체크
+            if (currentMana < skill.manaCost)
+                return;
+
+            // 마나 소모
+            currentMana -= (int)skill.manaCost;
+
+            // 쿨다운 시작
+            skillCooldowns[skillIndex] = skill.cooldown;
+
+            // 투사체 발사
+            FireProjectile(skill);
+        }
+
+        /// <summary>
+        /// 투사체 발사
+        /// </summary>
+        private void FireProjectile(LostSpells.Data.SkillData skill)
+        {
+            // 발사 위치 결정
+            Vector3 spawnPosition = skillCastPoint != null ? skillCastPoint.position : transform.position;
+
+            // 발사 방향 결정 (플레이어가 보는 방향)
+            Vector3 direction = spriteRenderer.flipX ? Vector3.left : Vector3.right;
+
+            // VFX 프리팹 로드
+            GameObject vfxPrefab = null;
+            if (!string.IsNullOrEmpty(skill.effectPrefabPath))
+            {
+                vfxPrefab = UnityEngine.Resources.Load<GameObject>(skill.effectPrefabPath);
+            }
+
+            // 투사체 생성
+            if (skillProjectilePrefab != null)
+            {
+                GameObject projectile = Instantiate(skillProjectilePrefab, spawnPosition, Quaternion.identity);
+
+                // SkillProjectile 컴포넌트 초기화
+                SkillProjectile projectileScript = projectile.GetComponent<SkillProjectile>();
+                if (projectileScript == null)
+                {
+                    projectileScript = projectile.AddComponent<SkillProjectile>();
+                }
+
+                projectileScript.Initialize(
+                    (int)skill.damage,
+                    skill.projectileSpeed,
+                    skill.projectileLifetime,
+                    direction,
+                    vfxPrefab
+                );
+
+                // 투사체에 VFX 이펙트를 자식으로 추가 (발사 중 이펙트)
+                if (vfxPrefab != null)
+                {
+                    GameObject vfx = Instantiate(vfxPrefab, projectile.transform);
+                    vfx.transform.localPosition = Vector3.zero;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 특정 스킬의 쿨다운 확인
+        /// </summary>
+        public float GetSkillCooldown(int skillIndex)
+        {
+            if (skillIndex < 0 || skillIndex >= skillCooldowns.Length)
+                return 0f;
+            return skillCooldowns[skillIndex];
+        }
+
+        /// <summary>
+        /// 특정 스킬 정보 가져오기
+        /// </summary>
+        public LostSpells.Data.SkillData GetSkill(int skillIndex)
+        {
+            if (skillIndex < 0 || skillIndex >= availableSkills.Length)
+                return null;
+            return availableSkills[skillIndex];
         }
     }
 }

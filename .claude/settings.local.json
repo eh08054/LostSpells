@@ -38,7 +38,11 @@
       "Bash(cat:*)",
       "Bash(if [ ! -d \"Assets/Animations/Enemy\" ])",
       "Bash(then echo \"Directory does not exist\")",
-      "Bash(else echo \"Directory exists\")"
+      "Bash(else echo \"Directory exists\")",
+      "Bash(for i in 0 1 2 3 4 5)",
+      "Bash(do echo \"Death_$i:\")",
+      "Bash(echo:*)",
+      "Bash(del \"Assets\\Core\\Components\\Player\\SkillData.cs\" \"Assets\\Core\\Components\\Player\\SkillData.cs.meta\")"
     ],
     "deny": [],
     "ask": []
