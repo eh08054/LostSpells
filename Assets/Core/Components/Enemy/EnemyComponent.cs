@@ -69,7 +69,7 @@ namespace LostSpells.Components
             // 다른 적들과는 충돌하지 않도록 설정
             // Physics2D.IgnoreLayerCollision을 사용하거나,
             // 각 적의 Collider를 excludeLayers에 추가
-            gameObject.layer = LayerMask.NameToLayer("Default");
+            gameObject.layer = LayerMask.NameToLayer("Enemy");
 
             currentHealth = maxHealth;
         }
