@@ -1,0 +1,7 @@
+# Whisper 음성 인식 (CPU 버전)
+openai-whisper
+
+# FastAPI 서버
+fastapi==0.115.0
+uvicorn==0.32.0
+python-multipart==0.0.9

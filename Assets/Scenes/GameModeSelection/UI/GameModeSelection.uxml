@@ -1,0 +1,43 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements"
+        editor-extension-mode="False">
+    <!-- USS 스타일시트 자동 적용 -->
+    <Style src="/Assets/Scenes/Common/UI/Common.uss"/>
+    <Style src="/Assets/Scenes/GameModeSelection/UI/GameModeSelection.uss"/>
+
+    <!-- 전체 화면 컨테이너 -->
+    <ui:VisualElement name="GameModeSelection" class="screen-container">
+        <!-- 배경 레이어들 -->
+        <ui:VisualElement name="Sky" class="parallax-layer sky-layer"/>
+        <ui:VisualElement name="Mountain" class="parallax-layer mountain-layer"/>
+        <ui:VisualElement name="MiddleFar" class="parallax-layer middle-far-layer"/>
+        <ui:VisualElement name="MiddleNear" class="parallax-layer middle-near-layer"/>
+        <ui:VisualElement name="Ground" class="parallax-layer ground-layer"/>
+
+        <!-- UI 컨텐츠 (맨 앞) -->
+        <ui:VisualElement name="UIContent" class="ui-content">
+            <!-- 상단 헤더 바 -->
+            <ui:VisualElement name="HeaderBar" class="header-bar">
+            <!-- 왼쪽 영역 -->
+            <ui:VisualElement name="HeaderLeft" class="header-side header-left">
+                <ui:Button text="" name="BackButton" class="back-button"/>
+            </ui:VisualElement>
+
+            <!-- 중앙 제목 -->
+            <ui:Label text="Select Game Mode" name="HeaderTitle" class="header-title"/>
+
+            <!-- 오른쪽 영역 (균형 유지용) -->
+            <ui:VisualElement name="HeaderRight" class="header-side"/>
+        </ui:VisualElement>
+
+            <!-- 컨텐츠 영역 -->
+            <ui:VisualElement name="ContentArea" class="content-area">
+                <!-- 버튼 컨테이너 -->
+                <ui:VisualElement name="ButtonContainer" class="button-container">
+                    <ui:Button text="Story Mode" name="StoryModeButton" class="menu-button"/>
+                    <ui:Button text="Endless Mode" name="EndlessModeButton" class="menu-button"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+    </ui:VisualElement>
+</ui:UXML>

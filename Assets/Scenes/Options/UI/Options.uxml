@@ -1,0 +1,198 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements"
+        editor-extension-mode="False">
+    <!-- USS 스타일시트 자동 적용 -->
+    <Style src="/Assets/Scenes/Common/UI/Common.uss"/>
+    <Style src="/Assets/Scenes/Options/UI/Options.uss"/>
+
+    <!-- 전체 화면 컨테이너 -->
+    <ui:VisualElement name="Options" class="screen-container">
+        <!-- 배경 레이어들 -->
+        <ui:VisualElement name="Sky" class="parallax-layer sky-layer"/>
+        <ui:VisualElement name="Mountain" class="parallax-layer mountain-layer"/>
+        <ui:VisualElement name="MiddleFar" class="parallax-layer middle-far-layer"/>
+        <ui:VisualElement name="MiddleNear" class="parallax-layer middle-near-layer"/>
+        <ui:VisualElement name="Ground" class="parallax-layer ground-layer"/>
+
+        <!-- UI 컨텐츠 (맨 앞) -->
+        <ui:VisualElement name="UIContent" class="ui-content">
+            <!-- 상단 헤더 바 -->
+            <ui:VisualElement name="HeaderBar" class="header-bar">
+            <!-- 왼쪽 영역 -->
+            <ui:VisualElement name="HeaderLeft" class="header-side header-left">
+                <ui:Button text="" name="BackButton" class="back-button"/>
+            </ui:VisualElement>
+
+            <!-- 중앙 제목 -->
+            <ui:Label text="Options" name="HeaderTitle" class="header-title"/>
+
+            <!-- 오른쪽 영역 -->
+            <ui:VisualElement name="HeaderRight" class="header-side"/>
+        </ui:VisualElement>
+
+        <!-- 컨텐츠 영역 -->
+        <ui:VisualElement name="ContentArea" class="content-area options-content">
+            <!-- 상단 패널 헤더 (제목 + 리셋 버튼) -->
+            <ui:VisualElement name="PanelHeaderBar" class="panel-header-bar">
+                <ui:Label text="Audio Settings" name="CurrentPanelTitle" class="current-panel-title"/>
+                <ui:VisualElement class="panel-reset-container">
+                    <ui:Button text="Reset" name="CurrentPanelResetButton" class="panel-reset-button"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <!-- 좌우 패널 영역 -->
+            <ui:VisualElement name="PanelsContainer" class="panels-container">
+                <!-- 왼쪽 패널: 카테고리 버튼들 -->
+                <ui:VisualElement name="LeftPanel" class="left-panel">
+                    <ui:Button text="Audio" name="AudioButton" class="category-button"/>
+                    <ui:Button text="Graphics" name="GraphicsButton" class="category-button"/>
+                    <ui:Button text="Language" name="LanguageButton" class="category-button"/>
+                    <ui:Button text="Game" name="GameButton" class="category-button"/>
+                </ui:VisualElement>
+
+                <!-- 오른쪽 패널 컨테이너 -->
+                <ui:VisualElement name="RightPanelContainer" class="right-panel-container">
+                    <!-- 오디오 설정 패널 -->
+                    <ui:VisualElement name="AudioPanel" class="settings-panel-wrapper">
+                        <ui:ScrollView name="AudioPanelScroll" class="panel-scroll">
+                            <ui:VisualElement class="panel-content">
+                                <!-- 마이크 설정 -->
+                                <ui:VisualElement class="setting-row">
+                                    <ui:Label text="Microphone Device" name="MicrophoneLabel" class="setting-label"/>
+                                    <ui:VisualElement name="MicrophoneDropdownContainer" class="custom-dropdown-container">
+                                        <ui:Button name="MicrophoneDropdownButton" class="custom-dropdown-button">
+                                            <ui:Label name="MicrophoneDropdownLabel" text="Default" class="custom-dropdown-label"/>
+                                            <ui:VisualElement class="custom-dropdown-arrow"/>
+                                        </ui:Button>
+                                        <ui:VisualElement name="MicrophoneDropdownList" class="custom-dropdown-list">
+                                            <!-- 항목들은 스크립트에서 동적으로 추가 -->
+                                        </ui:VisualElement>
+                                    </ui:VisualElement>
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                        </ui:ScrollView>
+                    </ui:VisualElement>
+
+                    <!-- 그래픽 설정 패널 -->
+                    <ui:VisualElement name="GraphicsPanel" class="settings-panel-wrapper" style="display: none;">
+                        <ui:ScrollView name="GraphicsPanelScroll" class="panel-scroll">
+                            <ui:VisualElement class="panel-content">
+                            </ui:VisualElement>
+                        </ui:ScrollView>
+                    </ui:VisualElement>
+
+                    <!-- 언어 설정 패널 -->
+                    <ui:VisualElement name="LanguagePanel" class="settings-panel-wrapper" style="display: none;">
+                        <ui:ScrollView name="LanguagePanelScroll" class="panel-scroll">
+                            <ui:VisualElement class="panel-content">
+                                <!-- UI 언어 -->
+                                <ui:VisualElement class="setting-row">
+                                    <ui:Label text="UI Language" name="UILanguageLabel" class="setting-label"/>
+                                    <ui:VisualElement name="UILanguageDropdownContainer" class="custom-dropdown-container">
+                                        <ui:Button name="UILanguageDropdownButton" class="custom-dropdown-button">
+                                            <ui:Label name="UILanguageDropdownLabel" text="Korean" class="custom-dropdown-label"/>
+                                            <ui:VisualElement class="custom-dropdown-arrow"/>
+                                        </ui:Button>
+                                        <ui:VisualElement name="UILanguageDropdownList" class="custom-dropdown-list">
+                                            <!-- 항목들은 스크립트에서 동적으로 추가 -->
+                                        </ui:VisualElement>
+                                    </ui:VisualElement>
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                        </ui:ScrollView>
+                    </ui:VisualElement>
+
+                    <!-- 게임 설정 패널 -->
+                    <ui:VisualElement name="GamePanel" class="settings-panel-wrapper" style="display: none;">
+                        <ui:ScrollView name="GamePanelScroll" class="panel-scroll">
+                            <ui:VisualElement class="panel-content">
+                                <!-- 키 바인딩 섹션 -->
+                                <ui:VisualElement class="setting-row" style="flex-direction: row; justify-content: flex-start; align-items: center;">
+                                    <ui:Label text="Key Bindings" name="KeyBindingsHeader" class="section-title" style="cursor: pointer;"/>
+                                    <ui:Button text="" name="KeyBindingsToggleButton" class="section-toggle" style="margin-left: 10px;"/>
+                                </ui:VisualElement>
+
+                                <!-- 키 바인딩 설정 영역 (숨김) -->
+                                <ui:VisualElement name="KeyBindingArea" style="display: none;">
+                                    <!-- InGame Scene Keys -->
+                                    <ui:VisualElement name="InGameKeys" class="keybinding-section">
+                                        <ui:Label text="In-Game Controls" class="scene-title"/>
+
+                                        <ui:VisualElement class="keybinding-row">
+                                            <ui:Label text="Move Left:" class="keybinding-label"/>
+                                            <ui:Button name="MoveLeftKey" text="A" class="key-button"/>
+                                        </ui:VisualElement>
+
+                                        <ui:VisualElement class="keybinding-row">
+                                            <ui:Label text="Move Right:" class="keybinding-label"/>
+                                            <ui:Button name="MoveRightKey" text="D" class="key-button"/>
+                                        </ui:VisualElement>
+
+                                        <ui:VisualElement class="keybinding-row">
+                                            <ui:Label text="Jump:" class="keybinding-label"/>
+                                            <ui:Button name="JumpKey" text="W" class="key-button"/>
+                                        </ui:VisualElement>
+
+                                        <ui:VisualElement class="keybinding-row">
+                                            <ui:Label text="Voice Recording:" class="keybinding-label"/>
+                                            <ui:Button name="VoiceRecordKey" text="Space" class="key-button"/>
+                                        </ui:VisualElement>
+
+                                        <ui:VisualElement class="keybinding-row">
+                                            <ui:Label text="Skill Panel:" class="keybinding-label"/>
+                                            <ui:Button name="SkillPanelKey" text="Tab" class="key-button"/>
+                                        </ui:VisualElement>
+                                    </ui:VisualElement>
+
+                                    <!-- Store Scene Keys -->
+                                    <ui:VisualElement name="StoreKeys" class="keybinding-section" style="display: none;">
+                                        <ui:Label text="Store Controls" class="scene-title"/>
+                                        <!-- Store 씬에 키보드 조작이 있다면 여기에 추가 -->
+                                    </ui:VisualElement>
+                                </ui:VisualElement>
+
+                                <!-- 음성 인식 섹션 -->
+                                <ui:VisualElement class="setting-row" style="flex-direction: row; justify-content: flex-start; align-items: center;">
+                                    <ui:Label text="Voice Recognition" name="VoiceRecognitionHeader" class="section-title" style="cursor: pointer;"/>
+                                    <ui:Button text="" name="VoiceRecognitionToggleButton" class="section-toggle" style="margin-left: 10px;"/>
+                                </ui:VisualElement>
+
+                                <!-- 음성 인식 설정 영역 (숨김) -->
+                                <ui:VisualElement name="VoiceRecognitionArea" style="display: none;">
+                                    <ui:VisualElement class="voice-recognition-section">
+                                        <!-- 서버 연결 상태 -->
+                                        <ui:VisualElement class="setting-row" style="margin-top: 0;">
+                                            <ui:Label text="Voice Server Status:" class="setting-label"/>
+                                            <ui:Label text="Checking..." name="ServerStatusLabel" class="setting-label server-status-text"/>
+                                        </ui:VisualElement>
+                                    </ui:VisualElement>
+                                </ui:VisualElement>
+
+                                <!-- 게임 초기화 -->
+                                <ui:VisualElement class="setting-row">
+                                    <ui:Label text="Reset Game" name="ResetGameLabel" class="setting-label"/>
+                                    <ui:Button text="Reset Game" name="ResetGameButton" class="reset-game-button"/>
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                        </ui:ScrollView>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <!-- 게임 초기화 확인 팝업 (초기에는 숨김) -->
+            <ui:VisualElement name="GameResetConfirmation" class="game-reset-confirmation">
+                <ui:VisualElement class="game-reset-popup-container">
+                    <ui:VisualElement class="game-reset-popup">
+                        <ui:Label text="Reset Game" name="GameResetTitle" class="game-reset-title"/>
+                        <ui:Label text="All game data will be deleted.&#10;Are you sure?" name="GameResetMessage" class="game-reset-message"/>
+                        <ui:VisualElement name="GameResetButtons" class="game-reset-buttons">
+                            <ui:Button text="Reset" name="ConfirmResetButton" class="game-reset-button-confirm"/>
+                            <ui:Button text="Cancel" name="CancelResetButton" class="game-reset-button-cancel"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        </ui:VisualElement>
+
+    </ui:VisualElement>
+</ui:UXML>

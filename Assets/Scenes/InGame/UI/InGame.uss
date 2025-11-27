@@ -1,0 +1,1003 @@
+/* ========================================
+   인게임 화면 스타일
+   ======================================== */
+
+/* 전체 화면 컨테이너 */
+#InGame {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    flex-direction: column;
+}
+
+/* 배경 레이어는 GameObject로 구현하므로 UI에서는 제거 */
+
+/* UI 컨텐츠 (맨 앞) */
+#UIContent {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+    pointer-events: auto;
+}
+
+/* ========== 상단 HUD 바 ========== */
+.hud-bar {
+    width: 100%;
+    height: 80px;
+    flex-direction: row;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0);
+    padding-left: 20px;
+    padding-right: 20px;
+}
+
+/* 왼쪽 섹션 */
+.left-section {
+    flex-direction: row;
+    align-items: center;
+    flex-grow: 0;
+}
+
+/* 중앙 섹션 */
+.center-section {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    flex-grow: 1;
+}
+
+/* 오른쪽 섹션 */
+.right-section {
+    flex-direction: row;
+    align-items: center;
+    flex-grow: 0;
+    gap: 15px;
+}
+
+/* ========== 음성인식 결과 패널 (스킬창 내부) ========== */
+.voice-recognition-panel {
+    width: 100%;
+    min-height: 45px;
+    background-color: rgba(20, 20, 30, 0.9);
+    border-radius: 6px;
+    border-width: 2px;
+    border-color: rgba(100, 200, 255, 0.6);
+    padding: 10px 12px;
+    margin-top: 0;
+    margin-bottom: 12px;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0; /* 패널이 축소되지 않도록 방지 */
+}
+
+.voice-recognition-text {
+    font-size: 15px;
+    color: rgb(255, 255, 255);
+    -unity-text-align: middle-center;
+    -unity-font-style: bold;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: normal;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* ========== 메뉴 버튼 ========== */
+.menu-button {
+    width: 50px;
+    height: 50px;
+    min-width: 50px;
+    min-height: 50px;
+    background-image: url("project://database/Assets/Templates/2D%20Casual%20UI/Sprite/GUI.png#GUI_36");
+    -unity-background-scale-mode: scale-to-fit;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    margin-right: 16px;
+    padding: 0;
+    transition-property: scale;
+    transition-duration: 0.15s;
+}
+
+.menu-button:hover {
+    background-color: rgba(0, 0, 0, 0);
+    scale: 1.1;
+}
+
+.menu-button:active {
+    background-color: rgba(0, 0, 0, 0);
+    scale: 0.9;
+}
+
+.menu-button:focus {
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+}
+
+/* ========== 챕터 정보 ========== */
+.chapter-info {
+    font-size: 20px;
+    color: rgb(255, 255, 255);
+    -unity-font-style: bold;
+    -unity-text-align: middle-left;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    -unity-text-outline-width: 1px;
+    -unity-text-outline-color: rgba(0, 0, 0, 0.5);
+}
+
+/* ========== 웨이브 정보 ========== */
+.wave-info {
+    font-size: 28px;
+    color: rgb(255, 255, 255);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    -unity-text-outline-width: 1px;
+    -unity-text-outline-color: rgba(0, 0, 0, 0.5);
+}
+
+/* ========== 화폐 디스플레이 (상점 스타일) ========== */
+
+/* 화폐 바 컨테이너 */
+.header-currency-bar {
+    flex-direction: row;
+    align-items: center;
+    height: 45px;
+    margin-left: 8px;
+
+    /* GUI_9 배경 - 전체 바에 적용 */
+    background-image: url("project://database/Assets/Templates/2D%20Casual%20UI/Sprite/GUI.png#GUI_9");
+    -unity-background-scale-mode: stretch-to-fill;
+    min-width: 120px;
+    padding-left: 8px;
+    padding-right: 8px;
+    flex-shrink: 0;
+}
+
+/* 큰 아이콘 (박스 왼쪽 모서리) */
+.currency-icon-large {
+    width: 50px;
+    height: 50px;
+    margin-left: -8px;
+    margin-right: 8px;
+    -unity-background-scale-mode: scale-to-fit;
+    flex-shrink: 0;
+}
+
+.diamond-icon {
+    background-image: url("project://database/Assets/Templates/2D%20Casual%20UI/Sprite/GUI.png#GUI_22");
+}
+
+.revive-stone-icon {
+    background-image: url("project://database/Assets/Templates/2D%20Casual%20UI/Sprite/GUI.png#GUI_20");
+}
+
+/* 바 컨텐츠 - 오른쪽 정렬 영역 */
+.currency-bar-content {
+    flex-direction: row;
+    align-items: center;
+    flex-grow: 1;
+    justify-content: flex-end;
+}
+
+/* 숫자 텍스트 */
+.currency-amount {
+    font-size: 20px;
+    color: rgb(255, 255, 255);
+    -unity-font-style: bold;
+    -unity-text-align: middle-right;
+    margin-right: 8px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* + 버튼 - GUI_60 */
+.currency-plus-button {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    margin-right: 16px;
+
+    /* GUI_60 배경 */
+    background-image: url("project://database/Assets/Templates/2D%20Casual%20UI/Sprite/GUI.png#GUI_60");
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+/* ========== 게임플레이 영역 ========== */
+.gameplay-area {
+    width: 100%;
+    flex-grow: 1;
+    flex-direction: row;
+    justify-content: space-between; /* 양쪽 사이드바를 화면 양 끝에 배치 */
+}
+
+/* ========== 왼쪽 사이드바 ========== */
+.left-sidebar {
+    width: 300px;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0);
+    padding: 20px;
+    padding-top: 0;
+    flex-direction: column;
+    transition-property: translate;
+    transition-duration: 0.3s;
+    transition-timing-function: ease-in-out;
+    position: relative;
+}
+
+/* 사이드바 숨김 상태 */
+.left-sidebar.sidebar-hidden {
+    translate: -320px 0;
+}
+
+/* ========== 오른쪽 사이드바 (스킬창) ========== */
+.right-sidebar {
+    width: 350px;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0);
+    padding: 20px;
+    padding-top: 0; /* 상단 HUD와 붙어있으므로 상단 패딩 제거 */
+    flex-direction: column;
+    position: relative;
+    transition-property: translate;
+    transition-duration: 0.3s;
+    transition-timing-function: ease-in-out;
+}
+
+/* 사이드바 숨김 상태 */
+.right-sidebar.sidebar-hidden {
+    translate: 370px 0;
+}
+
+/* 사이드바 패널 */
+.sidebar-panel {
+    width: 100%;
+    min-height: 200px;
+    background-color: rgba(20, 20, 30, 0.85);
+    border-width: 2px;
+    border-color: rgba(100, 150, 200, 0.4);
+    border-radius: 8px;
+    margin-bottom: 16px;
+    padding: 16px;
+}
+
+/* 스킬 패널 - 남은 공간 차지 */
+#SkillPanel {
+    flex-grow: 1;
+    margin-bottom: 0;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* 패널 제목 */
+.panel-title {
+    font-size: 18px;
+    color: rgb(255, 255, 255);
+    -unity-font-style: bold;
+    -unity-text-align: upper-center;
+    margin-bottom: 12px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+/* ========== 플레이어 정보 패널 ========== */
+.player-info-panel {
+    min-height: auto;
+}
+
+.player-info-content {
+    flex-direction: row;
+    width: 100%;
+    align-items: center;
+}
+
+/* 레벨 박스 */
+.level-box {
+    width: 60px;
+    height: 60px;
+    background-color: rgba(100, 100, 100, 0.8);
+    border-width: 2px;
+    border-color: rgb(255, 255, 255);
+    border-radius: 50%;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    position: relative;
+    overflow: hidden;
+}
+
+/* 경험치 바 */
+.exp-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 65%;
+    background-color: rgba(100, 150, 255, 0.6);
+}
+
+.level-value {
+    font-size: 20px;
+    color: rgb(255, 255, 255);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    position: relative;
+}
+
+/* 스탯 컨테이너 */
+.stats-container {
+    flex-direction: column;
+    flex-grow: 1;
+    justify-content: center;
+}
+
+/* 스탯 바 컨테이너 */
+.stat-bar-container {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.stat-label {
+    font-size: 14px;
+    color: rgb(255, 255, 255);
+    -unity-font-style: bold;
+    min-width: 30px;
+    margin-right: 8px;
+}
+
+/* 스탯 바 배경 */
+.stat-bar-bg {
+    flex-grow: 1;
+    height: 24px;
+    background-color: rgba(0, 0, 0, 0.6);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.5);
+    border-radius: 4px;
+    position: relative;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 스탯 바 */
+.stat-bar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 80%;
+    border-radius: 3px;
+}
+
+.hp-bar {
+    background-color: rgb(200, 50, 50);
+}
+
+.mp-bar {
+    background-color: rgb(50, 100, 200);
+}
+
+/* 스탯 텍스트 */
+.stat-text {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    font-size: 12px;
+    color: rgb(255, 255, 255);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* ========== 스킬 카테고리 스크롤뷰 ========== */
+.skill-category-scroll-view {
+    width: 100%;
+    height: auto;
+    margin-bottom: 12px;
+    flex-shrink: 0; /* 탭 버튼이 축소되지 않도록 방지 */
+}
+
+/* 스크롤바 숨기기 */
+.skill-category-scroll-view > .unity-scroll-view__horizontal-scroller {
+    height: 0;
+    min-height: 0;
+    max-height: 0;
+    display: none;
+    visibility: hidden;
+}
+
+.skill-category-scroll-view > .unity-scroll-view__vertical-scroller {
+    width: 0;
+    min-width: 0;
+    max-width: 0;
+    display: none;
+    visibility: hidden;
+}
+
+/* ========== 스킬 카테고리 버튼 ========== */
+.skill-category-buttons {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    margin-bottom: 0;
+}
+
+.skill-category-button {
+    flex-grow: 0;
+    flex-shrink: 0;
+    min-width: 70px;
+    height: 32px;
+    margin-left: 3px;
+    margin-right: 3px;
+    padding-left: 8px;
+    padding-right: 8px;
+    background-color: rgba(80, 80, 80, 0.7);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    color: rgb(200, 200, 200);
+    font-size: 14px;
+    -unity-font-style: bold;
+    transition-property: background-color, scale;
+    transition-duration: 0.15s;
+}
+
+.skill-category-button:hover {
+    background-color: rgba(100, 100, 100, 0.8);
+    scale: 1.02;
+}
+
+.skill-category-button:active {
+    background-color: rgba(120, 120, 120, 0.9);
+    scale: 0.98;
+}
+
+.skill-category-button:focus {
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* ========== 스킬 스크롤뷰 ========== */
+.skill-scroll-view {
+    width: 100%;
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.skill-scroll-view.hidden {
+    display: none;
+}
+
+/* 스크롤바 완전히 숨기기 */
+.skill-scroll-view > .unity-scroll-view__vertical-scroller {
+    width: 0;
+    min-width: 0;
+    max-width: 0;
+    display: none;
+    visibility: hidden;
+}
+
+.skill-scroll-view > .unity-scroll-view__horizontal-scroller {
+    height: 0;
+    min-height: 0;
+    max-height: 0;
+    display: none;
+    visibility: hidden;
+}
+
+/* ScrollView 내부 컨텐츠 영역 */
+.skill-scroll-view > .unity-scroll-view__content-container {
+    overflow: visible;
+}
+
+/* ========== 스킬 목록 ========== */
+.skill-list {
+    width: 100%;
+    flex-direction: column;
+}
+
+/* 스킬 카테고리 헤더 (All 탭용) */
+.skill-category-header {
+    font-size: 17px;
+    color: rgb(255, 215, 0);
+    -unity-font-style: bold;
+    -unity-text-align: middle-left;
+    margin-top: 12px;
+    margin-bottom: 10px;
+    padding-left: 5px;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+.skill-item {
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    background-color: rgba(70, 70, 70, 0.5);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    padding: 10px;
+    margin-bottom: 6px;
+}
+
+.skill-level {
+    font-size: 14px;
+    color: rgb(255, 215, 0);
+    -unity-font-style: bold;
+    min-width: 50px;
+    margin-right: 10px;
+    -unity-text-align: middle-left;
+}
+
+.skill-name {
+    font-size: 15px;
+    color: rgb(255, 255, 255);
+    -unity-font-style: bold;
+    flex-grow: 1;
+    -unity-text-align: middle-left;
+}
+
+.skill-accuracy {
+    font-size: 15px;
+    color: rgb(255, 255, 255);
+    -unity-font-style: bold;
+    min-width: 50px;
+    -unity-text-align: middle-right;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* ========== 메뉴 팝업 ========== */
+.menu-popup {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    translate: -50% -50%;
+    width: 450px;
+    height: auto;
+    background-image: url("project://database/Assets/Templates/Fantasy Wooden GUI  Free/normal_ui_set A/UI board Medium  parchment.png");
+    -unity-background-scale-mode: stretch-to-fill;
+    -unity-slice-left: 80;
+    -unity-slice-right: 80;
+    -unity-slice-top: 80;
+    -unity-slice-bottom: 80;
+    border-width: 0;
+    padding: 50px 35px 35px 35px;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.menu-title {
+    font-size: 38px;
+    color: rgb(80, 40, 20);
+    -unity-font-style: bold;
+    text-shadow: 2px 2px 5px rgba(255, 255, 255, 0.5);
+    margin-bottom: 22px;
+    -unity-text-align: middle-center;
+    -unity-text-outline-width: 1.5px;
+    -unity-text-outline-color: rgba(255, 255, 255, 0.3);
+    letter-spacing: 2px;
+}
+
+/* 기본 버튼 스타일 - 세로 배치 */
+.menu-popup-button {
+    min-width: 220px;
+    max-width: 260px;
+    height: 58px;
+    align-self: center;
+    background-image: url("project://database/Assets/Templates/Fantasy Wooden GUI  Free/normal_ui_set A/TextBTN_Big.png");
+    -unity-background-scale-mode: stretch-to-fill;
+    -unity-background-image-tint-color: rgb(255, 255, 255);
+    border-width: 0;
+    color: rgb(255, 240, 220);
+    font-size: 20px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    transition-property: scale, -unity-background-image-tint-color;
+    transition-duration: 0.15s;
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.9);
+    -unity-text-outline-width: 1px;
+    -unity-text-outline-color: rgba(80, 40, 20, 0.8);
+    letter-spacing: 1.5px;
+    margin-bottom: 11px;
+    scale: 1.0;
+}
+
+/* 호버 효과 - 살짝 확대 */
+.menu-popup-button:hover {
+    scale: 1.02;
+}
+
+/* 액티브 효과 - 어둡게, 살짝 축소 */
+.menu-popup-button:active {
+    scale: 0.98;
+    -unity-background-image-tint-color: rgb(180, 180, 180);
+}
+
+/* ========== 게임오버 팝업 ========== */
+/* 점수 영역 */
+.score-area {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 30px;
+    padding: 20px;
+    background-color: rgba(80, 40, 20, 0.3);
+    border-radius: 15px;
+    border-width: 2px;
+    border-color: rgba(255, 220, 180, 0.5);
+}
+
+.score-label {
+    font-size: 24px;
+    color: rgb(120, 80, 50);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    margin-bottom: 10px;
+    text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.3);
+}
+
+.score-value {
+    font-size: 48px;
+    color: rgb(255, 200, 100);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.8);
+    -unity-text-outline-width: 2px;
+    -unity-text-outline-color: rgba(80, 40, 20, 0.8);
+}
+
+/* 게임오버 버튼 컨테이너 (가로 배치) */
+.game-over-buttons {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+/* 게임오버 버튼 스타일 (가로 배치용) */
+.game-over-button {
+    min-width: 110px;
+    max-width: 110px;
+    height: 50px;
+    background-image: url("project://database/Assets/Templates/Fantasy Wooden GUI  Free/normal_ui_set A/TextBTN_Big.png");
+    -unity-background-scale-mode: stretch-to-fill;
+    -unity-background-image-tint-color: rgb(255, 255, 255);
+    border-width: 0;
+    color: rgb(255, 240, 220);
+    font-size: 16px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    transition-property: scale, -unity-background-image-tint-color;
+    transition-duration: 0.15s;
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.9);
+    -unity-text-outline-width: 1px;
+    -unity-text-outline-color: rgba(80, 40, 20, 0.8);
+    letter-spacing: 1px;
+    scale: 1.0;
+}
+
+.game-over-button:hover {
+    scale: 1.05;
+}
+
+.game-over-button:active {
+    scale: 0.95;
+    -unity-background-image-tint-color: rgb(180, 180, 180);
+}
+
+/* ========== 부활 확인 팝업 ========== */
+.revive-stone-info {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+    margin-bottom: 30px;
+    padding: 20px;
+    background-color: rgba(80, 40, 20, 0.3);
+    border-radius: 15px;
+    border-width: 2px;
+    border-color: rgba(255, 220, 180, 0.5);
+}
+
+.revive-info-label {
+    font-size: 14px;
+    color: rgb(255, 230, 200);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+.revive-info-value {
+    font-size: 24px;
+    color: rgb(100, 220, 255);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.9);
+    -unity-text-outline-width: 1px;
+    -unity-text-outline-color: rgba(0, 100, 150, 0.8);
+}
+
+.revive-arrow {
+    font-size: 28px;
+    color: rgb(255, 200, 100);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.9);
+}
+
+.revive-info-value-after {
+    font-size: 24px;
+    color: rgb(255, 200, 100);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.9);
+    -unity-text-outline-width: 1px;
+    -unity-text-outline-color: rgba(150, 100, 50, 0.8);
+}
+
+/* ========== 부활석 부족 팝업 ========== */
+.insufficient-message {
+    font-size: 18px;
+    color: rgb(60, 40, 30);
+    -unity-font-style: normal;
+    -unity-text-align: middle-center;
+    text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.3);
+    margin-top: 20px;
+    margin-bottom: 30px;
+    white-space: normal;
+    line-height: 28px;
+}
+
+.insufficient-button-container {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+/* ========== 상점 팝업 ========== */
+.store-popup {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgb(15, 10, 20);
+    flex-direction: column;
+    z-index: 1000;
+}
+
+.store-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background-color: rgba(80, 40, 20, 0.8);
+    border-bottom-width: 2px;
+    border-bottom-color: rgba(255, 220, 180, 0.5);
+}
+
+.store-close-button {
+    width: 40px;
+    height: 40px;
+    font-size: 24px;
+    color: rgb(255, 220, 200);
+    background-color: rgba(150, 50, 50, 0.8);
+    border-radius: 8px;
+    border-width: 2px;
+    border-color: rgba(255, 100, 100, 0.5);
+    -unity-text-align: middle-center;
+    -unity-font-style: bold;
+}
+
+.store-close-button:hover {
+    background-color: rgba(200, 50, 50, 0.9);
+    scale: 1.1;
+}
+
+.store-currency {
+    flex-direction: row;
+    gap: 20px;
+}
+
+.store-content {
+    flex-grow: 1;
+    flex-direction: row;
+    padding: 20px;
+    gap: 20px;
+}
+
+.store-category {
+    flex-direction: column;
+    width: 200px;
+    gap: 10px;
+}
+
+.store-category-button {
+    height: 60px;
+    background-color: rgba(80, 40, 20, 0.8);
+    border-radius: 10px;
+    border-width: 2px;
+    border-color: rgba(255, 220, 180, 0.5);
+    color: rgb(255, 220, 200);
+    font-size: 18px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.9);
+}
+
+.store-category-button:hover {
+    background-color: rgba(120, 60, 30, 0.9);
+    scale: 1.05;
+}
+
+.store-products {
+    flex-grow: 1;
+}
+
+.store-product-panel {
+    width: 100%;
+    height: 100%;
+}
+
+.store-product-grid {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 20px;
+    padding: 10px;
+}
+
+/* 상품 카드 */
+.product-card {
+    width: 200px;
+    height: 240px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    margin-right: 20px;
+    margin-bottom: 20px;
+
+    background-image: url("project://database/Assets/Templates/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/UI%20board%20Large%20%20parchment.png");
+    -unity-background-scale-mode: stretch-to-fill;
+    -unity-background-image-tint-color: rgb(255, 255, 255);
+
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+
+    transition-property: -unity-background-image-tint-color, scale;
+    transition-duration: 0.15s;
+}
+
+.product-card:hover {
+    -unity-background-image-tint-color: rgb(255, 250, 240);
+    scale: 1.03;
+}
+
+.best-value-badge {
+    position: absolute;
+    top: -10px;
+    right: 10px;
+    padding: 6px 12px;
+    background-color: rgb(255, 215, 0);
+    border-radius: 12px;
+    font-size: 12px;
+    color: rgb(139, 69, 19);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+}
+
+.product-info-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    margin-top: 16px;
+    margin-bottom: 16px;
+}
+
+.product-icon-large {
+    width: 56px;
+    height: 56px;
+    -unity-background-scale-mode: scale-to-fit;
+    flex-shrink: 0;
+}
+
+.diamond-icon-product {
+    background-image: url("project://database/Assets/Templates/2D%20Casual%20UI/Sprite/GUI.png#GUI_22");
+}
+
+.revive-stone-icon-product {
+    background-image: url("project://database/Assets/Templates/2D%20Casual%20UI/Sprite/GUI.png#GUI_20");
+}
+
+.multiplication-sign {
+    font-size: 32px;
+    color: rgb(80, 60, 40);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    margin-left: 8px;
+    margin-right: 8px;
+}
+
+.product-quantity {
+    font-size: 36px;
+    color: rgb(139, 69, 19);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+}
+
+.product-price {
+    font-size: 20px;
+    color: rgb(139, 69, 19);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    margin-bottom: 12px;
+}
+
+.product-price-container {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+}
+
+.product-price-icon {
+    width: 24px;
+    height: 24px;
+    background-image: url("project://database/Assets/Templates/2D%20Casual%20UI/Sprite/GUI.png#GUI_22");
+    -unity-background-scale-mode: scale-to-fit;
+    flex-shrink: 0;
+}
+
+.price-multiplication-sign {
+    font-size: 18px;
+    color: rgb(80, 60, 40);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    margin-left: 4px;
+    margin-right: 4px;
+}
+
+.product-price-text {
+    font-size: 20px;
+    color: rgb(139, 69, 19);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+}
+
+.buy-button {
+    width: 100%;
+    min-height: 40px;
+    padding: 8px;
+
+    background-image: url("project://database/Assets/Templates/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/TextBTN_Big.png");
+    -unity-background-scale-mode: stretch-to-fill;
+    -unity-background-image-tint-color: rgb(255, 255, 255);
+
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    color: rgb(255, 255, 255);
+    font-size: 14px;
+    -unity-font-style: bold;
+    -unity-text-outline-width: 1px;
+    -unity-text-outline-color: rgb(40, 30, 20);
+    transition-property: scale;
+    transition-duration: 0.15s;
+}
+
+.buy-button:hover {
+    scale: 1.05;
+}
+
+.buy-button:active {
+    scale: 0.95;
+}

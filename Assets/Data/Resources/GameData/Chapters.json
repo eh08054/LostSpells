@@ -1,0 +1,333 @@
+{
+  "chapters": [
+    {
+      "chapterId": 0,
+      "chapterName": "Tutorial",
+      "chapterNameKo": "튜토리얼",
+      "chapterDescription": "Learn the basics of spell casting and combat",
+      "chapterDescriptionKo": "마법 시전과 전투의 기본을 배우세요",
+      "sinName": "",
+      "sinColor": { "r": 0.5, "g": 0.5, "b": 0.5, "a": 1.0 },
+      "recommendedLevel": 1,
+      "difficulty": 1,
+      "requiredLevel": 1,
+      "requiredChapterId": -1,
+      "waves": [
+        {
+          "waveNumber": 1,
+          "monstersToSpawn": [
+            { "monsterId": "slime_basic", "count": 3, "spawnInterval": 2.0 }
+          ]
+        },
+        {
+          "waveNumber": 2,
+          "monstersToSpawn": [
+            { "monsterId": "slime_basic", "count": 5, "spawnInterval": 1.5 }
+          ]
+        }
+      ],
+      "goldReward": 50,
+      "expReward": 25,
+      "firstClearBonusGold": 50,
+      "thumbnailPath": "",
+      "backgroundImagePath": "",
+      "iconPath": "",
+      "bgmPath": ""
+    },
+    {
+      "chapterId": 1,
+      "chapterName": "Pride",
+      "chapterNameKo": "교만",
+      "chapterDescription": "Face the sin of Pride and its arrogant minions",
+      "chapterDescriptionKo": "교만의 죄악과 그 오만한 하수인들을 마주하세요",
+      "sinName": "Pride",
+      "sinColor": { "r": 0.8, "g": 0.2, "b": 0.2, "a": 1.0 },
+      "recommendedLevel": 3,
+      "difficulty": 2,
+      "requiredLevel": 1,
+      "requiredChapterId": 0,
+      "waves": [
+        {
+          "waveNumber": 1,
+          "monstersToSpawn": [
+            { "monsterId": "goblin_basic", "count": 3, "spawnInterval": 2.5 }
+          ]
+        },
+        {
+          "waveNumber": 2,
+          "monstersToSpawn": [
+            { "monsterId": "slime_basic", "count": 4, "spawnInterval": 2.0 },
+            { "monsterId": "goblin_basic", "count": 2, "spawnInterval": 3.0 }
+          ]
+        },
+        {
+          "waveNumber": 3,
+          "monstersToSpawn": [
+            { "monsterId": "goblin_basic", "count": 5, "spawnInterval": 2.0 }
+          ]
+        }
+      ],
+      "goldReward": 100,
+      "expReward": 50,
+      "firstClearBonusGold": 100,
+      "thumbnailPath": "",
+      "backgroundImagePath": "",
+      "iconPath": "",
+      "bgmPath": ""
+    },
+    {
+      "chapterId": 2,
+      "chapterName": "Greed",
+      "chapterNameKo": "탐욕",
+      "chapterDescription": "Defeat the manifestation of endless desire",
+      "chapterDescriptionKo": "끝없는 욕망의 화신을 물리치세요",
+      "sinName": "Greed",
+      "sinColor": { "r": 1.0, "g": 0.84, "b": 0.0, "a": 1.0 },
+      "recommendedLevel": 5,
+      "difficulty": 3,
+      "requiredLevel": 3,
+      "requiredChapterId": 1,
+      "waves": [
+        {
+          "waveNumber": 1,
+          "monstersToSpawn": [
+            { "monsterId": "goblin_basic", "count": 4, "spawnInterval": 2.0 }
+          ]
+        },
+        {
+          "waveNumber": 2,
+          "monstersToSpawn": [
+            { "monsterId": "orc_basic", "count": 2, "spawnInterval": 3.0 }
+          ]
+        },
+        {
+          "waveNumber": 3,
+          "monstersToSpawn": [
+            { "monsterId": "goblin_basic", "count": 3, "spawnInterval": 1.5 },
+            { "monsterId": "orc_basic", "count": 2, "spawnInterval": 3.0 }
+          ]
+        }
+      ],
+      "goldReward": 150,
+      "expReward": 75,
+      "firstClearBonusGold": 150,
+      "thumbnailPath": "",
+      "backgroundImagePath": "",
+      "iconPath": "",
+      "bgmPath": ""
+    },
+    {
+      "chapterId": 3,
+      "chapterName": "Lust",
+      "chapterNameKo": "색욕",
+      "chapterDescription": "Resist the temptations of forbidden desires",
+      "chapterDescriptionKo": "금지된 욕망의 유혹에 저항하세요",
+      "sinName": "Lust",
+      "sinColor": { "r": 0.9, "g": 0.3, "b": 0.6, "a": 1.0 },
+      "recommendedLevel": 7,
+      "difficulty": 3,
+      "requiredLevel": 5,
+      "requiredChapterId": 2,
+      "waves": [
+        {
+          "waveNumber": 1,
+          "monstersToSpawn": [
+            { "monsterId": "slime_basic", "count": 8, "spawnInterval": 1.0 }
+          ]
+        },
+        {
+          "waveNumber": 2,
+          "monstersToSpawn": [
+            { "monsterId": "goblin_basic", "count": 5, "spawnInterval": 1.5 }
+          ]
+        },
+        {
+          "waveNumber": 3,
+          "monstersToSpawn": [
+            { "monsterId": "orc_basic", "count": 3, "spawnInterval": 2.5 }
+          ]
+        }
+      ],
+      "goldReward": 200,
+      "expReward": 100,
+      "firstClearBonusGold": 200,
+      "thumbnailPath": "",
+      "backgroundImagePath": "",
+      "iconPath": "",
+      "bgmPath": ""
+    },
+    {
+      "chapterId": 4,
+      "chapterName": "Envy",
+      "chapterNameKo": "질투",
+      "chapterDescription": "Overcome the green-eyed monsters of jealousy",
+      "chapterDescriptionKo": "질투의 초록 눈 괴물들을 극복하세요",
+      "sinName": "Envy",
+      "sinColor": { "r": 0.2, "g": 0.8, "b": 0.2, "a": 1.0 },
+      "recommendedLevel": 9,
+      "difficulty": 4,
+      "requiredLevel": 7,
+      "requiredChapterId": 3,
+      "waves": [
+        {
+          "waveNumber": 1,
+          "monstersToSpawn": [
+            { "monsterId": "goblin_basic", "count": 6, "spawnInterval": 1.5 }
+          ]
+        },
+        {
+          "waveNumber": 2,
+          "monstersToSpawn": [
+            { "monsterId": "orc_basic", "count": 4, "spawnInterval": 2.0 }
+          ]
+        },
+        {
+          "waveNumber": 3,
+          "monstersToSpawn": [
+            { "monsterId": "slime_basic", "count": 5, "spawnInterval": 1.0 },
+            { "monsterId": "goblin_basic", "count": 3, "spawnInterval": 1.5 },
+            { "monsterId": "orc_basic", "count": 2, "spawnInterval": 2.5 }
+          ]
+        }
+      ],
+      "goldReward": 250,
+      "expReward": 125,
+      "firstClearBonusGold": 250,
+      "thumbnailPath": "",
+      "backgroundImagePath": "",
+      "iconPath": "",
+      "bgmPath": ""
+    },
+    {
+      "chapterId": 5,
+      "chapterName": "Gluttony",
+      "chapterNameKo": "폭식",
+      "chapterDescription": "Survive the endless hunger of gluttony",
+      "chapterDescriptionKo": "폭식의 끝없는 굶주림에서 살아남으세요",
+      "sinName": "Gluttony",
+      "sinColor": { "r": 0.6, "g": 0.3, "b": 0.0, "a": 1.0 },
+      "recommendedLevel": 11,
+      "difficulty": 4,
+      "requiredLevel": 9,
+      "requiredChapterId": 4,
+      "waves": [
+        {
+          "waveNumber": 1,
+          "monstersToSpawn": [
+            { "monsterId": "slime_basic", "count": 10, "spawnInterval": 0.8 }
+          ]
+        },
+        {
+          "waveNumber": 2,
+          "monstersToSpawn": [
+            { "monsterId": "goblin_basic", "count": 7, "spawnInterval": 1.2 }
+          ]
+        },
+        {
+          "waveNumber": 3,
+          "monstersToSpawn": [
+            { "monsterId": "orc_basic", "count": 5, "spawnInterval": 1.8 }
+          ]
+        }
+      ],
+      "goldReward": 300,
+      "expReward": 150,
+      "firstClearBonusGold": 300,
+      "thumbnailPath": "",
+      "backgroundImagePath": "",
+      "iconPath": "",
+      "bgmPath": ""
+    },
+    {
+      "chapterId": 6,
+      "chapterName": "Wrath",
+      "chapterNameKo": "분노",
+      "chapterDescription": "Withstand the fury of uncontrolled rage",
+      "chapterDescriptionKo": "통제할 수 없는 분노의 격렬함을 견뎌내세요",
+      "sinName": "Wrath",
+      "sinColor": { "r": 1.0, "g": 0.0, "b": 0.0, "a": 1.0 },
+      "recommendedLevel": 13,
+      "difficulty": 5,
+      "requiredLevel": 11,
+      "requiredChapterId": 5,
+      "waves": [
+        {
+          "waveNumber": 1,
+          "monstersToSpawn": [
+            { "monsterId": "orc_basic", "count": 5, "spawnInterval": 1.5 }
+          ]
+        },
+        {
+          "waveNumber": 2,
+          "monstersToSpawn": [
+            { "monsterId": "goblin_basic", "count": 8, "spawnInterval": 1.0 },
+            { "monsterId": "orc_basic", "count": 3, "spawnInterval": 2.0 }
+          ]
+        },
+        {
+          "waveNumber": 3,
+          "monstersToSpawn": [
+            { "monsterId": "slime_basic", "count": 6, "spawnInterval": 0.8 },
+            { "monsterId": "goblin_basic", "count": 6, "spawnInterval": 1.0 },
+            { "monsterId": "orc_basic", "count": 4, "spawnInterval": 1.5 }
+          ]
+        }
+      ],
+      "goldReward": 350,
+      "expReward": 175,
+      "firstClearBonusGold": 350,
+      "thumbnailPath": "",
+      "backgroundImagePath": "",
+      "iconPath": "",
+      "bgmPath": ""
+    },
+    {
+      "chapterId": 7,
+      "chapterName": "Sloth",
+      "chapterNameKo": "나태",
+      "chapterDescription": "Break free from the chains of laziness",
+      "chapterDescriptionKo": "게으름의 사슬에서 벗어나세요",
+      "sinName": "Sloth",
+      "sinColor": { "r": 0.4, "g": 0.4, "b": 0.6, "a": 1.0 },
+      "recommendedLevel": 15,
+      "difficulty": 5,
+      "requiredLevel": 13,
+      "requiredChapterId": 6,
+      "waves": [
+        {
+          "waveNumber": 1,
+          "monstersToSpawn": [
+            { "monsterId": "slime_basic", "count": 12, "spawnInterval": 0.7 }
+          ]
+        },
+        {
+          "waveNumber": 2,
+          "monstersToSpawn": [
+            { "monsterId": "goblin_basic", "count": 10, "spawnInterval": 0.9 }
+          ]
+        },
+        {
+          "waveNumber": 3,
+          "monstersToSpawn": [
+            { "monsterId": "orc_basic", "count": 7, "spawnInterval": 1.3 }
+          ]
+        },
+        {
+          "waveNumber": 4,
+          "monstersToSpawn": [
+            { "monsterId": "slime_basic", "count": 8, "spawnInterval": 0.6 },
+            { "monsterId": "goblin_basic", "count": 6, "spawnInterval": 0.9 },
+            { "monsterId": "orc_basic", "count": 5, "spawnInterval": 1.2 }
+          ]
+        }
+      ],
+      "goldReward": 400,
+      "expReward": 200,
+      "firstClearBonusGold": 400,
+      "thumbnailPath": "",
+      "backgroundImagePath": "",
+      "iconPath": "",
+      "bgmPath": ""
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "monsters": [
+    {
+      "monsterName": "슬라임",
+      "monsterId": "slime_basic",
+      "health": 50.0,
+      "moveSpeed": 2.0,
+      "attackPower": 5.0,
+      "defense": 2.0,
+      "goldReward": 5,
+      "expReward": 3,
+      "monsterPrefabPath": "Prefabs/Monsters/Slime",
+      "monsterIconPath": "Icons/Monsters/Slime"
+    },
+    {
+      "monsterName": "고블린",
+      "monsterId": "goblin_basic",
+      "health": 80.0,
+      "moveSpeed": 3.0,
+      "attackPower": 10.0,
+      "defense": 5.0,
+      "goldReward": 10,
+      "expReward": 5,
+      "monsterPrefabPath": "Prefabs/Monsters/Goblin",
+      "monsterIconPath": "Icons/Monsters/Goblin"
+    },
+    {
+      "monsterName": "오크",
+      "monsterId": "orc_basic",
+      "health": 150.0,
+      "moveSpeed": 2.5,
+      "attackPower": 20.0,
+      "defense": 10.0,
+      "goldReward": 20,
+      "expReward": 10,
+      "monsterPrefabPath": "Prefabs/Monsters/Orc",
+      "monsterIconPath": "Icons/Monsters/Orc"
+    }
+  ]
+}

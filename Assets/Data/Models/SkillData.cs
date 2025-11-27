@@ -1,0 +1,78 @@
+using System;
+
+namespace LostSpells.Data
+{
+    /// <summary>
+    /// 스킬 데이터 (JSON 직렬화 가능)
+    /// </summary>
+    [Serializable]
+    public class SkillData
+    {
+        // 기본 정보
+        public string skillId;
+        public string skillName;        // 한국어 이름
+        public string skillNameEn;      // 영어 이름
+        public string skillDescription; // 한국어 설명
+        public string skillDescriptionEn; // 영어 설명
+
+        // 스킬 타입
+        public SkillType skillType = SkillType.Attack;
+
+        // 능력치
+        public float cooldown = 5f;
+        public float manaCost = 10f;
+        public float damage = 50f;
+        public float range = 5f;
+
+        // 투사체 관련
+        public float projectileSpeed = 10f;
+        public float projectileLifetime = 3f;
+
+        // 비주얼 (경로 문자열로 저장)
+        public string iconPath;
+        public string effectPrefabPath;
+
+        // 음성 인식용 키워드 (예: "파이어볼", "힐", "텔레포트")
+        public string voiceKeyword;
+
+        /// <summary>
+        /// 현재 언어에 맞는 스킬 이름 반환
+        /// </summary>
+        public string GetLocalizedName()
+        {
+            var currentLanguage = LostSpells.Systems.LocalizationManager.Instance.CurrentLanguage;
+            if (currentLanguage == LostSpells.Systems.Language.Korean)
+                return !string.IsNullOrEmpty(skillName) ? skillName : skillNameEn;
+            else
+                return !string.IsNullOrEmpty(skillNameEn) ? skillNameEn : skillName;
+        }
+
+        /// <summary>
+        /// 현재 언어에 맞는 스킬 설명 반환
+        /// </summary>
+        public string GetLocalizedDescription()
+        {
+            var currentLanguage = LostSpells.Systems.LocalizationManager.Instance.CurrentLanguage;
+            if (currentLanguage == LostSpells.Systems.Language.Korean)
+                return !string.IsNullOrEmpty(skillDescription) ? skillDescription : skillDescriptionEn;
+            else
+                return !string.IsNullOrEmpty(skillDescriptionEn) ? skillDescriptionEn : skillDescription;
+        }
+    }
+
+    /// <summary>
+    /// 스킬 타입
+    /// </summary>
+    [Serializable]
+    public enum SkillType
+    {
+        Attack,         // 공격
+        Defense,        // 방어
+        Fireball,       // 화염구
+        IceSpike,       // 얼음 가시
+        Lightning,      // 번개
+        EarthRock,      // 대지의 바위
+        HolyLight,      // 신성한 빛
+        VoidBlast       // 암흑 폭발
+    }
+}
