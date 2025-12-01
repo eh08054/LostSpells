@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -154,7 +155,7 @@ namespace LostSpells.UI
 
             if (isLocked)
             {
-                // 잠금 오버레이 레이어 생성
+                // 잠금 오버레이 레이어 생성 (시각적 표시만)
                 var lockOverlay = new VisualElement();
                 lockOverlay.AddToClassList("lock-overlay");
 
@@ -165,11 +166,9 @@ namespace LostSpells.UI
 
                 chapterButton.Add(lockOverlay);
             }
-            else
-            {
-                // 클릭 이벤트 등록
-                chapterButton.clicked += () => OnChapterButtonClicked(chapterData);
-            }
+
+            // 잠금 여부와 관계없이 클릭 이벤트 등록
+            chapterButton.clicked += () => OnChapterButtonClicked(chapterData);
 
             // 컨테이너에 추가
             chapterListContainer.Add(chapterButton);
@@ -183,13 +182,24 @@ namespace LostSpells.UI
             // GameStateManager에 선택한 챕터 정보 저장
             GameStateManager.Instance.StartChapter(chapterData.chapterId);
 
-            // InGame 씬으로 이동
-            SceneManager.LoadScene("InGame");
+            // InGame 씬으로 비동기 이동
+            StartCoroutine(LoadSceneAsync("InGame"));
         }
 
         private void OnBackButtonClicked()
         {
-            SceneManager.LoadScene("GameModeSelection");
+            StartCoroutine(LoadSceneAsync("GameModeSelection"));
+        }
+
+        private IEnumerator LoadSceneAsync(string sceneName)
+        {
+            AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(sceneName);
+
+            // 로딩이 완료될 때까지 대기
+            while (!asyncLoad.isDone)
+            {
+                yield return null;
+            }
         }
 
         private void UpdateLocalization()

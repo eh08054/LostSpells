@@ -953,7 +953,7 @@ namespace LostSpells.UI
             // 게임 시간 복구 및 게임 상태 초기화
             Time.timeScale = 1f;
             GameStateManager.Instance.ResetGameState();
-            SceneManager.LoadScene("MainMenu");
+            SceneManager.LoadScene("Menu");
         }
 
         /// <summary>
@@ -1407,20 +1407,13 @@ namespace LostSpells.UI
         }
 
         /// <summary>
-        /// 게임오버 종료 버튼 클릭 - 현재 게임모드 화면으로
+        /// 게임오버 종료 버튼 클릭 - 메뉴 화면으로
         /// </summary>
         private void OnGameOverMainMenuButtonClicked()
         {
             Time.timeScale = 1; // 게임 재개
-
-            // 현재 챕터 ID로 게임모드 판별
-            int chapterId = GameStateManager.Instance.GetCurrentChapterId();
-
-            // 챕터 ID가 0 이상이면 스토리모드, -1이면 무한모드
-            string targetScene = chapterId >= 0 ? "StoryMode" : "EndlessMode";
-
             GameStateManager.Instance.ResetGameState(); // 게임 상태 초기화
-            SceneManager.LoadScene(targetScene);
+            SceneManager.LoadScene("Menu");
         }
     }
 }

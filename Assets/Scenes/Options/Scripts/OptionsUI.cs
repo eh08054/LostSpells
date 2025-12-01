@@ -50,6 +50,10 @@ namespace LostSpells.UI
         // Audio 패널 컨트롤
         private CustomDropdown microphoneDropdown;
 
+        // Graphics 패널 컨트롤
+        private CustomDropdown qualityDropdown;
+        private CustomDropdown screenModeDropdown;
+
         // Language 패널 컨트롤
         private CustomDropdown uiLanguageDropdown;
 
@@ -143,6 +147,8 @@ namespace LostSpells.UI
 
             // 드롭다운 정리
             microphoneDropdown?.Dispose();
+            qualityDropdown?.Dispose();
+            screenModeDropdown?.Dispose();
             uiLanguageDropdown?.Dispose();
 
             // 접기/펼치기 섹션 정리
@@ -245,6 +251,10 @@ namespace LostSpells.UI
 
             // Audio 패널 컨트롤
             microphoneDropdown = new CustomDropdown(root, "MicrophoneDropdownContainer", "MicrophoneDropdownButton", "MicrophoneDropdownLabel", "MicrophoneDropdownList");
+
+            // Graphics 패널 컨트롤
+            qualityDropdown = new CustomDropdown(root, "QualityDropdownContainer", "QualityDropdownButton", "QualityDropdownLabel", "QualityDropdownList");
+            screenModeDropdown = new CustomDropdown(root, "ScreenModeDropdownContainer", "ScreenModeDropdownButton", "ScreenModeDropdownLabel", "ScreenModeDropdownList");
 
             // Language 패널 컨트롤
             uiLanguageDropdown = new CustomDropdown(root, "UILanguageDropdownContainer", "UILanguageDropdownButton", "UILanguageDropdownLabel", "UILanguageDropdownList");
@@ -356,6 +366,9 @@ namespace LostSpells.UI
             // Audio 설정 로드
             LoadAudioSettings();
 
+            // Graphics 설정 로드
+            LoadGraphicsSettings();
+
             // Language 설정 로드
             LoadLanguageSettings();
 
@@ -383,6 +396,91 @@ namespace LostSpells.UI
 
                 // 드롭다운 설정
                 microphoneDropdown.SetItems(microphones, selectedMicrophone, OnMicrophoneChanged);
+            }
+        }
+
+        // 해상도 옵션 (너비x높이)
+        private static readonly (int width, int height, string name)[] resolutionOptions = new[]
+        {
+            (1280, 720, "1280x720 (HD)"),
+            (1600, 900, "1600x900"),
+            (1920, 1080, "1920x1080 (FHD)"),
+            (2560, 1440, "2560x1440 (QHD)")
+        };
+
+        private void LoadGraphicsSettings()
+        {
+            // 화질(해상도) 설정
+            if (qualityDropdown != null)
+            {
+                List<string> qualities = new List<string>();
+                foreach (var res in resolutionOptions)
+                {
+                    qualities.Add(res.name);
+                }
+
+                int qualityIndex = Mathf.Clamp(saveData.qualityLevel, 0, resolutionOptions.Length - 1);
+                string selectedQuality = resolutionOptions[qualityIndex].name;
+
+                qualityDropdown.SetItems(qualities, selectedQuality, OnQualityChanged);
+            }
+
+            // 화면 모드 설정
+            if (screenModeDropdown != null)
+            {
+                List<string> screenModes = new List<string> { "Windowed", "Fullscreen" };
+                int modeIndex = Mathf.Clamp(saveData.screenMode, 0, 1); // 0: Windowed, 1: Fullscreen
+                string selectedMode = screenModes[modeIndex];
+
+                screenModeDropdown.SetItems(screenModes, selectedMode, OnScreenModeChanged);
+            }
+
+            // 현재 설정 적용
+            ApplyGraphicsSettings();
+        }
+
+        private void OnQualityChanged(string value)
+        {
+            if (saveData != null)
+            {
+                // 선택된 해상도 찾기
+                for (int i = 0; i < resolutionOptions.Length; i++)
+                {
+                    if (resolutionOptions[i].name == value)
+                    {
+                        saveData.qualityLevel = i;
+                        break;
+                    }
+                }
+
+                ApplyGraphicsSettings();
+            }
+        }
+
+        private void OnScreenModeChanged(string value)
+        {
+            if (saveData != null)
+            {
+                saveData.screenMode = (value == "Windowed") ? 0 : 1;
+                saveData.isFullScreen = (saveData.screenMode == 1);
+                ApplyGraphicsSettings();
+            }
+        }
+
+        private void ApplyGraphicsSettings()
+        {
+            int qualityIndex = Mathf.Clamp(saveData.qualityLevel, 0, resolutionOptions.Length - 1);
+            var resolution = resolutionOptions[qualityIndex];
+
+            if (saveData.screenMode == 0) // Windowed
+            {
+                // 창모드: 선택한 해상도로 창 크기 변경
+                Screen.SetResolution(resolution.width, resolution.height, FullScreenMode.Windowed);
+            }
+            else // Fullscreen
+            {
+                // 전체화면: 선택한 해상도로 전체화면
+                Screen.SetResolution(resolution.width, resolution.height, FullScreenMode.ExclusiveFullScreen);
             }
         }
 
@@ -499,6 +597,15 @@ namespace LostSpells.UI
             var micLabel = root.Q<Label>("MicrophoneLabel");
             if (micLabel != null)
                 micLabel.text = loc.GetText("options_audio_microphone");
+
+            // Graphics Panel labels
+            var qualityLabel = root.Q<Label>("QualityLabel");
+            if (qualityLabel != null)
+                qualityLabel.text = loc.GetText("options_graphics_quality");
+
+            var screenModeLabel = root.Q<Label>("ScreenModeLabel");
+            if (screenModeLabel != null)
+                screenModeLabel.text = loc.GetText("options_graphics_screen_mode");
 
             // Language Panel labels
             var uiLanguageLabel = root.Q<Label>("UILanguageLabel");
@@ -681,8 +788,16 @@ namespace LostSpells.UI
 
         private void OnGraphicsReset()
         {
-            // Graphics 패널 리셋 기능 (필요시 구현)
-            // 현재는 빈 메서드로 유지
+            if (saveData != null)
+            {
+                // 기본값으로 리셋 (1920x1080 FHD, Fullscreen 모드)
+                saveData.qualityLevel = 2; // 1920x1080
+                saveData.screenMode = 1;   // Fullscreen
+                saveData.isFullScreen = true;
+
+                // UI 다시 로드
+                LoadGraphicsSettings();
+            }
         }
 
         // Language 패널 이벤트 핸들러

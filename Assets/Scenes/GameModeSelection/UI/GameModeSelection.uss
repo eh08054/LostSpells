@@ -5,8 +5,7 @@
     position: absolute;
     width: 100%;
     height: 100%;
-    -unity-background-scale-mode: scale-and-crop;
-    background-repeat: repeat-x;
+    overflow: hidden;
 }
 
 /* 각 레이어별 배경 이미지 */

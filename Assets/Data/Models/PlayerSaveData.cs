@@ -74,6 +74,8 @@ namespace LostSpells.Data
 
         // 설정
         public bool isFullScreen = true;
+        public int qualityLevel = 2; // 0: 1280x720, 1: 1600x900, 2: 1920x1080, 3: 2560x1440
+        public int screenMode = 1;   // 0: Windowed, 1: Fullscreen
 
         // 오디오 장치 설정
         public string microphoneDeviceId = "";
@@ -125,6 +127,8 @@ namespace LostSpells.Data
                 unlockedSkills = new List<string>(),
                 purchasedItems = new List<string>(),
                 isFullScreen = true,
+                qualityLevel = 2,
+                screenMode = 1,
                 microphoneDeviceId = "",
                 uiLanguage = "Korean",
                 voiceRecognitionLanguage = "ko",

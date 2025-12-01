@@ -4,9 +4,9 @@
 /* Parallax 배경 레이어 공통 스타일 */
 .parallax-layer {
     position: absolute;
-    width: 200%;
+    width: 100%;
     height: 100%;
-    -unity-background-scale-mode: stretch-to-fill;
+    overflow: hidden;
 }
 
 /* 각 레이어별 배경 이미지 */

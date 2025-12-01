@@ -76,6 +76,33 @@
                     <ui:VisualElement name="GraphicsPanel" class="settings-panel-wrapper" style="display: none;">
                         <ui:ScrollView name="GraphicsPanelScroll" class="panel-scroll">
                             <ui:VisualElement class="panel-content">
+                                <!-- 화질 설정 -->
+                                <ui:VisualElement class="setting-row">
+                                    <ui:Label text="Quality" name="QualityLabel" class="setting-label"/>
+                                    <ui:VisualElement name="QualityDropdownContainer" class="custom-dropdown-container">
+                                        <ui:Button name="QualityDropdownButton" class="custom-dropdown-button">
+                                            <ui:Label name="QualityDropdownLabel" text="High" class="custom-dropdown-label"/>
+                                            <ui:VisualElement class="custom-dropdown-arrow"/>
+                                        </ui:Button>
+                                        <ui:VisualElement name="QualityDropdownList" class="custom-dropdown-list">
+                                            <!-- 항목들은 스크립트에서 동적으로 추가 -->
+                                        </ui:VisualElement>
+                                    </ui:VisualElement>
+                                </ui:VisualElement>
+
+                                <!-- 화면 모드 설정 -->
+                                <ui:VisualElement class="setting-row">
+                                    <ui:Label text="Screen Mode" name="ScreenModeLabel" class="setting-label"/>
+                                    <ui:VisualElement name="ScreenModeDropdownContainer" class="custom-dropdown-container">
+                                        <ui:Button name="ScreenModeDropdownButton" class="custom-dropdown-button">
+                                            <ui:Label name="ScreenModeDropdownLabel" text="Fullscreen" class="custom-dropdown-label"/>
+                                            <ui:VisualElement class="custom-dropdown-arrow"/>
+                                        </ui:Button>
+                                        <ui:VisualElement name="ScreenModeDropdownList" class="custom-dropdown-list">
+                                            <!-- 항목들은 스크립트에서 동적으로 추가 -->
+                                        </ui:VisualElement>
+                                    </ui:VisualElement>
+                                </ui:VisualElement>
                             </ui:VisualElement>
                         </ui:ScrollView>
                     </ui:VisualElement>

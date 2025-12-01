@@ -201,9 +201,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LostSpells.UI.MenuParallaxBackground
   enableScrolling: 1
-  skyScrollSpeed: 2
-  mountainScrollSpeed: 5
-  groundScrollSpeed: 10
+  skyScrollSpeed: 30
+  mountainScrollSpeed: 60
+  groundScrollSpeed: 120
   enableRandomChange: 1
   changeInterval: 10
   skyTextures:

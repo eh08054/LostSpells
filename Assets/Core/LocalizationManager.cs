@@ -149,6 +149,8 @@ namespace LostSpells.Systems
             // Options - Graphics Panel
             AddText("options_graphics_title", "그래픽 설정", "Graphics Settings");
             AddText("options_graphics_reset", "초기화", "Reset");
+            AddText("options_graphics_quality", "해상도", "Resolution");
+            AddText("options_graphics_screen_mode", "화면 모드", "Screen Mode");
 
             // Options - Language Panel
             AddText("options_language_title", "언어 설정", "Language Settings");

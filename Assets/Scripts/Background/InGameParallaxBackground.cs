@@ -1,10 +1,11 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 namespace LostSpells.Background
 {
     /// <summary>
     /// 인게임 패럴랙스 배경 시스템 (2D Scrolling Parallax Background Pack 사용)
-    /// 챕터 ID에 따라 자동으로 배경 선택
+    /// GameStateManager의 맵 설정에 따라 자동으로 배경 선택
     /// 무한 타일링 지원
     /// </summary>
     public class InGameParallaxBackground : MonoBehaviour
@@ -14,19 +15,10 @@ namespace LostSpells.Background
         public SpriteRenderer mountainRenderer;
         public SpriteRenderer groundRenderer;
 
-        [Header("배경 스프라이트")]
-        public Sprite[] skySprites;
-        public Sprite[] mountainSprites;
-        public Sprite[] groundSprites;
-
         [Header("패럴랙스 스크롤 속도")]
         public float skySpeed = 0.5f;
         public float mountainSpeed = 1.5f;
         public float groundSpeed = 3f;
-
-        [Header("설정")]
-        public bool useChapterBackground = true;
-        public int manualBackgroundIndex = 0;
 
         private UnityEngine.Camera mainCamera;
 
@@ -39,16 +31,108 @@ namespace LostSpells.Background
         private float mountainTileWidth;
         private float groundTileWidth;
 
+        // 스프라이트 캐시 (static으로 씬 전환 시에도 유지)
+        private static Dictionary<string, Sprite> spriteCache = new Dictionary<string, Sprite>();
+
+        // 타일링 업데이트 최적화
+        private float lastCameraX;
+        private const float UPDATE_THRESHOLD = 0.5f;
+
         void Start()
         {
-            int bgIndex = GetBackgroundIndex();
-            ApplyBackgroundVariant(bgIndex);
+            // 메인 카메라 찾기
+            mainCamera = UnityEngine.Camera.main;
+
+            // GameStateManager의 맵 설정 적용 (필요한 텍스처만 로드)
+            ApplyMapFromGameState();
+
+            // 카메라 높이에 맞게 스케일 조정
+            ScaleToFitCamera();
 
             // 무한 타일링 설정
             SetupInfiniteTiling();
+        }
 
-            // 메인 카메라 찾기
-            mainCamera = UnityEngine.Camera.main;
+        private void ScaleToFitCamera()
+        {
+            if (mainCamera == null || !mainCamera.orthographic)
+                return;
+
+            // 카메라의 월드 높이 계산
+            float cameraHeight = mainCamera.orthographicSize * 2f;
+
+            // 각 레이어의 스프라이트를 카메라 높이에 맞게 스케일
+            ScaleSpriteToHeight(skyRenderer, cameraHeight);
+            ScaleSpriteToHeight(mountainRenderer, cameraHeight);
+            ScaleSpriteToHeight(groundRenderer, cameraHeight);
+        }
+
+        private void ScaleSpriteToHeight(SpriteRenderer renderer, float targetHeight)
+        {
+            if (renderer == null || renderer.sprite == null)
+                return;
+
+            float spriteHeight = renderer.sprite.bounds.size.y;
+            float scale = targetHeight / spriteHeight;
+
+            renderer.transform.localScale = new Vector3(scale, scale, 1f);
+        }
+
+        private Sprite LoadSprite(string folder, int number)
+        {
+            string path = $"Backgrounds/{folder}/{folder}-{number}";
+
+            // 캐시에서 먼저 확인
+            if (spriteCache.TryGetValue(path, out Sprite cachedSprite))
+            {
+                return cachedSprite;
+            }
+
+            // 캐시에 없으면 로드
+            Texture2D tex = Resources.Load<Texture2D>(path);
+
+            if (tex != null)
+            {
+                Sprite sprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f), 100f);
+                sprite.name = tex.name;
+                spriteCache[path] = sprite; // 캐시에 저장
+                return sprite;
+            }
+
+            Debug.LogWarning($"[InGameParallax] Failed to load texture: {path}");
+            return null;
+        }
+
+        private void ApplyMapFromGameState()
+        {
+            var gameState = LostSpells.Systems.GameStateManager.Instance;
+
+            int skyNumber = 12;
+            int mountainNumber = 1;
+            int groundNumber = 1;
+
+            if (gameState != null)
+            {
+                skyNumber = gameState.GetCurrentSkyNumber();
+                mountainNumber = gameState.GetCurrentMountainNumber();
+                groundNumber = gameState.GetCurrentGroundNumber();
+            }
+
+            // 필요한 스프라이트만 로드
+            Sprite skySprite = LoadSprite("Sky", skyNumber);
+            Sprite mountainSprite = LoadSprite("Mountain", mountainNumber);
+            Sprite groundSprite = LoadSprite("Ground", groundNumber);
+
+            if (skyRenderer != null && skySprite != null)
+                skyRenderer.sprite = skySprite;
+
+            if (mountainRenderer != null && mountainSprite != null)
+                mountainRenderer.sprite = mountainSprite;
+
+            if (groundRenderer != null && groundSprite != null)
+                groundRenderer.sprite = groundSprite;
+
+            Debug.Log($"[InGameParallax] Applied Map: Sky-{skyNumber}, Mountain-{mountainNumber}, Ground-{groundNumber}");
         }
 
         void LateUpdate()
@@ -65,34 +149,32 @@ namespace LostSpells.Background
             mountainTiles[1] = mountainRenderer;
             groundTiles[1] = groundRenderer;
 
-            // 타일 너비 계산
+            // 타일 너비 계산 (스케일 적용된 실제 월드 너비)
             if (skyRenderer != null && skyRenderer.sprite != null)
             {
-                skyTileWidth = skyRenderer.sprite.bounds.size.x;
-                CreateTiles(skyTiles, skyRenderer, "Sky");
+                skyTileWidth = skyRenderer.sprite.bounds.size.x * skyRenderer.transform.localScale.x;
+                CreateTiles(skyTiles, skyRenderer, "Sky", skyTileWidth);
             }
 
             if (mountainRenderer != null && mountainRenderer.sprite != null)
             {
-                mountainTileWidth = mountainRenderer.sprite.bounds.size.x;
-                CreateTiles(mountainTiles, mountainRenderer, "Mountain");
+                mountainTileWidth = mountainRenderer.sprite.bounds.size.x * mountainRenderer.transform.localScale.x;
+                CreateTiles(mountainTiles, mountainRenderer, "Mountain", mountainTileWidth);
             }
 
             if (groundRenderer != null && groundRenderer.sprite != null)
             {
-                groundTileWidth = groundRenderer.sprite.bounds.size.x;
-                CreateTiles(groundTiles, groundRenderer, "Ground");
+                groundTileWidth = groundRenderer.sprite.bounds.size.x * groundRenderer.transform.localScale.x;
+                CreateTiles(groundTiles, groundRenderer, "Ground", groundTileWidth);
             }
         }
 
-        private void CreateTiles(SpriteRenderer[] tiles, SpriteRenderer original, string layerName)
+        private void CreateTiles(SpriteRenderer[] tiles, SpriteRenderer original, string layerName, float worldWidth)
         {
-            float tileWidth = original.sprite.bounds.size.x;
-
             // 왼쪽 타일 생성
             GameObject leftTile = new GameObject($"{layerName}_Left");
             leftTile.transform.SetParent(original.transform.parent);
-            leftTile.transform.position = original.transform.position + Vector3.left * tileWidth;
+            leftTile.transform.position = original.transform.position + Vector3.left * worldWidth;
             leftTile.transform.localScale = original.transform.localScale;
             SpriteRenderer leftRenderer = leftTile.AddComponent<SpriteRenderer>();
             leftRenderer.sprite = original.sprite;
@@ -103,7 +185,7 @@ namespace LostSpells.Background
             // 오른쪽 타일 생성
             GameObject rightTile = new GameObject($"{layerName}_Right");
             rightTile.transform.SetParent(original.transform.parent);
-            rightTile.transform.position = original.transform.position + Vector3.right * tileWidth;
+            rightTile.transform.position = original.transform.position + Vector3.right * worldWidth;
             rightTile.transform.localScale = original.transform.localScale;
             SpriteRenderer rightRenderer = rightTile.AddComponent<SpriteRenderer>();
             rightRenderer.sprite = original.sprite;
@@ -112,52 +194,17 @@ namespace LostSpells.Background
             tiles[2] = rightRenderer;
         }
 
-        private int GetBackgroundIndex()
-        {
-            if (!useChapterBackground)
-                return manualBackgroundIndex;
-
-            if (LostSpells.Systems.GameStateManager.Instance != null)
-            {
-                int chapterId = LostSpells.Systems.GameStateManager.Instance.GetCurrentChapterId();
-
-                if (chapterId >= 0 && chapterId < 8)
-                {
-                    return chapterId;
-                }
-            }
-
-            return manualBackgroundIndex;
-        }
-
-        private void ApplyBackgroundVariant(int index)
-        {
-            index = Mathf.Clamp(index, 0, 7);
-
-            int skyIndex = index % 4;
-            int mountainIndex = index % 4;
-            int groundIndex = index % 4;
-
-            if (skySprites != null && skySprites.Length > skyIndex && skyRenderer != null)
-            {
-                skyRenderer.sprite = skySprites[skyIndex];
-            }
-
-            if (mountainSprites != null && mountainSprites.Length > mountainIndex && mountainRenderer != null)
-            {
-                mountainRenderer.sprite = mountainSprites[mountainIndex];
-            }
-
-            if (groundSprites != null && groundSprites.Length > groundIndex && groundRenderer != null)
-            {
-                groundRenderer.sprite = groundSprites[groundIndex];
-            }
-        }
-
         private void UpdateInfiniteTiling()
         {
             if (mainCamera == null)
                 return;
+
+            // 카메라가 일정 거리 이상 이동했을 때만 업데이트
+            float currentCameraX = mainCamera.transform.position.x;
+            if (Mathf.Abs(currentCameraX - lastCameraX) < UPDATE_THRESHOLD)
+                return;
+
+            lastCameraX = currentCameraX;
 
             // 각 레이어별로 타일 재배치
             RepositionTiles(skyTiles, skyTileWidth);
@@ -196,11 +243,5 @@ namespace LostSpells.Background
             }
         }
 
-        public void SetBackgroundIndex(int index)
-        {
-            manualBackgroundIndex = Mathf.Clamp(index, 0, 7);
-            useChapterBackground = false;
-            ApplyBackgroundVariant(manualBackgroundIndex);
-        }
     }
 }
