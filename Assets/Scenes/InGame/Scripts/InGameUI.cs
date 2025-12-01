@@ -1422,5 +1422,34 @@ namespace LostSpells.UI
             GameStateManager.Instance.ResetGameState(); // 게임 상태 초기화
             SceneManager.LoadScene(targetScene);
         }
+
+        public void SettingsOrdered()
+        {
+            OnSettingsButtonClicked();
+        }
+        public void MenuOrdered()
+        {
+            OnMenuButtonClicked();
+        }
+        public void MainMenuOrdered()
+        {
+            OnMainMenuButtonClicked();
+        }
+        public void RevivalOrdered()
+        {
+            OnReviveButtonClicked();
+        }
+        public void ResumeOrdered()
+        {
+            OnResumeButtonClicked();
+        }
+        public void ShopOredered()
+        {
+            OnStoreButtonClicked();
+        }
+        public void ShopCloseOrdered()
+        {
+            OnStoreCloseButtonClicked();
+        }
     }
 }

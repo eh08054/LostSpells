@@ -222,6 +222,10 @@ namespace LostSpells.Systems
                 result.recognized_text = serverResponse.text;
                 result.processing_time = serverResponse.processing_time;
 
+                result.action = serverResponse.action;
+                result.order = serverResponse.order;
+
+                Debug.Log("스킬명: " + serverResponse.matched_skill);
                 // best_match 설정
                 result.best_match = new BestMatch
                 {
@@ -237,6 +241,9 @@ namespace LostSpells.Systems
                         result.skill_scores[candidate.name] = candidate.confidence;
                     }
                 }
+                result.direction = serverResponse.direction;
+                result.location = serverResponse.location;
+
             }
             catch (Exception e)
             {
@@ -250,6 +257,8 @@ namespace LostSpells.Systems
         [Serializable]
         private class ServerRecognitionResponse
         {
+            public string action;
+            public string order;
             public bool success;
             public string text;
             public string matched_skill;
@@ -257,6 +266,8 @@ namespace LostSpells.Systems
             public SkillCandidate[] candidates;
             public float processing_time;
             public string error;
+            public string direction;
+            public int location;
         }
 
         [Serializable]
@@ -273,11 +284,15 @@ namespace LostSpells.Systems
     [Serializable]
     public class RecognitionResult
     {
+        public string action;
+        public string order;
         public string status;
         public string recognized_text;
         public float processing_time;
         public BestMatch best_match;
         public System.Collections.Generic.Dictionary<string, float> skill_scores;
+        public string direction;
+        public int location;
     }
 
     [Serializable]

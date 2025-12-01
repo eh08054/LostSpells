@@ -83,6 +83,7 @@ class SkillMatcher:
         ]
 
         return {
+            "action": "attack",
             "matched": best_skill if best_score >= threshold else None,
             "confidence": round(best_score, 2),
             "candidates": candidates

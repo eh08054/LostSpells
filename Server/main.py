@@ -11,6 +11,7 @@ import time
 
 from whisper_handler import WhisperHandler
 from skill_matcher import SkillMatcher
+from choose_action import ChooseActions
 
 app = FastAPI(title="Lost Spells Voice Server")
 
@@ -26,6 +27,7 @@ app.add_middleware(
 # Whisper 및 Skill Matcher 초기화
 whisper_handler = None
 skill_matcher = SkillMatcher()
+choose_action = ChooseActions()
 
 # 임시 파일 저장 디렉토리
 TEMP_DIR = Path("temp")
@@ -115,29 +117,54 @@ async def recognize_voice(
         print(f"[Server] Starting transcription...")
         result = whisper_handler.transcribe(audio_path, skill_names=skill_list)
         print(f"[Server] Transcription result: {result['text']}")
-
-        # 스킬 매칭
-        match_result = skill_matcher.match(result["text"]) if skill_list else {
-            "matched": None,
-            "confidence": 0.0,
+        
+        found_action = choose_action.FindActions(result["text"], skill_list)
+        
+        match_result = {
+            "action": "none",
+            "matched": "none",
+            "confidence": 0,
             "candidates": []
-        }
+            }
+        
+        if((found_action["action"] == "attack") 
+           or (found_action["action"] == "none" and 
+            found_action["order"] == "none")):
+            # 스킬 매칭
+            match_result = skill_matcher.match(result["text"]) if skill_list else {
+                "matched": None,
+                "confidence": 0.0,
+                "candidates": []
+            }       
+            found_action["action"] = match_result["action"]
 
+        analyze_result = {
+            "direction": "none",
+            "location": 0,
+        }
+        if(found_action["action"] == "attack" or 
+            found_action["action"] == "move"):
+            analyze_result = choose_action.AnalyzeNLU(result["text"])
+
+        print("Skill" + match_result["matched"])
         # 임시 파일 삭제
         if audio_path.exists():
             audio_path.unlink()
             print(f"[Server] Cleaned up temporary file")
-
+        
         processing_time = round(time.time() - start_time, 2)
-
         return {
+            "action": found_action["action"],
+            "order": found_action["order"],
             "success": True,
-            "text": result["text"],
+            "text": result["text"], 
             "matched_skill": match_result["matched"],
             "confidence": match_result["confidence"],
             "candidates": match_result["candidates"],
-            "processing_time": processing_time
-        }
+            "processing_time": processing_time,
+            "direction": analyze_result["direction"],
+            "location": analyze_result["location"]
+            }
 
     except Exception as e:
         import traceback

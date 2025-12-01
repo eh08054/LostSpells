@@ -6,11 +6,11 @@ echo ============================================================
 echo.
 
 REM FFmpeg 경로를 PATH에 추가
-set PATH=%PATH%;C:\Users\eh080\Downloads\ffmpeg-8.0-full_build\ffmpeg-8.0-full_build\bin
+set PATH=%PATH%;C:\Users\qqpmzz\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.0.1-full_build\bin
 
 echo Starting server...
 echo.
 
-"C:\Users\eh080\AppData\Local\Programs\Python\Python312\python.exe" main.py
+"C:\Users\qqpmzz\AppData\Local\Programs\Python\Python313\python.exe" main.py
 
 pause

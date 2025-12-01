@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using System.Collections;
 using TMPro;
 
 namespace LostSpells.Components
@@ -48,6 +49,13 @@ namespace LostSpells.Components
         private float manaRegenAccumulator = 0f; // 마나 회복 누적값
         private float healthRegenAccumulator = 0f; // 체력 회복 누적값
 
+        [Header("Sound Move Settings")]
+        public float gridSize = 1.0f; // 한 칸의 크기
+        public float autoMoveSpeed = 5.0f; // 음성 명령 시 이동 속도
+
+        private bool isAutoMoving = false; // 현재 음성 이동 중인지 체크
+        private Coroutine currentMoveCoroutine;
+        private const float PIXEL_TO_UNIT_FACTOR = 1.0f;
         private void Awake()
         {
             // SpriteRenderer가 없으면 추가
@@ -125,6 +133,12 @@ namespace LostSpells.Components
             // 넉백 중에는 이동 불가
             if (isKnockedBack) return;
 
+            if (isAutoMoving)
+            {
+                UpdateAnimationState(); 
+                return;
+            }
+
             // 키바인딩에서 이동 키 가져오기
             Key moveLeftKey = GetMoveLeftKey();
             Key moveRightKey = GetMoveRightKey();
@@ -159,19 +173,72 @@ namespace LostSpells.Components
             rb.linearVelocity = velocity2;
 
             // 이동 방향에 따라 스프라이트 뒤집기
-            if (horizontal < 0f) // 왼쪽으로 이동
+            HandleSpriteFlip(horizontal);
+            UpdateAnimationState();
+        }
+
+        // 음성으로 움직임 명령 시 호출되는 함수
+        public void ExecuteMoveCommand(string direction, int amount)
+        {
+            if (currentMoveCoroutine != null) StopCoroutine(currentMoveCoroutine);
+
+            float dirMultiplier = (direction == "left") ? -1f : 1f;
+
+            float targetDistance = amount * gridSize;
+
+            currentMoveCoroutine = StartCoroutine(MoveToTargetRoutine(dirMultiplier, targetDistance));
+        }
+
+        private IEnumerator MoveToTargetRoutine(float directionSign, float distance)
+        {
+            isAutoMoving = true; // 키보드 제어 차단
+
+            float startX = transform.position.x;
+            float targetX = startX + (directionSign * distance);
+
+            float timeOut = 3.0f;
+            float timer = 0f;
+
+            while (timer < timeOut)
             {
-                spriteRenderer.flipX = true;
-            }
-            else if (horizontal > 0f) // 오른쪽으로 이동
-            {
-                spriteRenderer.flipX = false;
+                timer += Time.deltaTime;
+
+                // 현재 위치와 목표 위치의 차이 계산
+                float distanceRemaining = Mathf.Abs(transform.position.x - targetX);
+
+                // 목표 근처(0.1f)에 도달했으면 종료
+                if (distanceRemaining < 0.1f) break;
+
+                // 물리 속도 적용
+                Vector2 velocity = rb.linearVelocity;
+                velocity.x = directionSign * autoMoveSpeed;
+                rb.linearVelocity = velocity;
+
+                // 방향 전환
+                HandleSpriteFlip(directionSign);
+                UpdateAnimationState(); // 걷는 애니메이션 갱신
+
+                yield return null; // 다음 프레임까지 대기
             }
 
-            // 애니메이터 Speed 파라미터 업데이트
-            if (animator != null && animator.runtimeAnimatorController != null)
+            // 이동 종료 처리
+            Vector2 stopVelocity = rb.linearVelocity;
+            stopVelocity.x = 0f;
+            rb.linearVelocity = stopVelocity;
+
+            isAutoMoving = false; // 키보드 제어 복구
+            UpdateAnimationState(); 
+        }
+        private void HandleSpriteFlip(float horizontal)
+        {
+            if (horizontal < 0f) spriteRenderer.flipX = true;
+            else if (horizontal > 0f) spriteRenderer.flipX = false;
+        }
+        private void UpdateAnimationState()
+        {
+            if (animator != null)
             {
-                float speed = Mathf.Abs(velocity2.x);
+                float speed = Mathf.Abs(rb.linearVelocity.x);
                 animator.SetFloat("Speed", speed);
             }
         }
@@ -505,7 +572,7 @@ namespace LostSpells.Components
         /// <summary>
         /// 스킬 사용
         /// </summary>
-        public bool CastSkill(LostSpells.Data.SkillData skillData)
+        public bool CastSkill(LostSpells.Data.SkillData skillData, string direction, int location)
         {
             // 마나 체크
             if (currentMana < skillData.manaCost)
@@ -525,6 +592,27 @@ namespace LostSpells.Components
             // 발사 위치 결정
             Vector3 castPosition = GetSkillCastPosition();
             Quaternion castRotation = GetSkillCastRotation();
+
+            if ((direction == "right" || direction == "left") && location != 0)
+            {
+                Vector3 castOrigin = GetSkillCastPosition();
+
+                // 3. 최종 발사 위치 (Position) 계산
+                float xOffset = location * PIXEL_TO_UNIT_FACTOR;
+                float directionSign = 0f;
+
+                if (direction.ToLower() == "left")
+                {
+                    directionSign = -1f;
+                }
+                else if (direction.ToLower() == "right")
+                {
+                    directionSign = 1f;
+                }
+
+                // 최종 스킬 생성 위치 (Position)
+                castPosition = castOrigin + new Vector3(xOffset * directionSign, 0, 0);
+            }
 
             // 스킬 생성
             GameObject skillInstance = Instantiate(skillPrefab, castPosition, castRotation);
@@ -791,7 +879,7 @@ namespace LostSpells.Components
                 Key skillKey = Key.Digit1 + i; // Digit1, Digit2, ..., Digit6
                 if (Keyboard.current[skillKey].wasPressedThisFrame)
                 {
-                    CastSkill(i);
+                    CastSkill(i, "none", 0);
                 }
             }
         }
@@ -799,7 +887,7 @@ namespace LostSpells.Components
         /// <summary>
         /// 스킬 시전
         /// </summary>
-        private void CastSkill(int skillIndex)
+        private void CastSkill(int skillIndex, string direction, int location)
         {
             // 유효성 검사
             if (skillIndex < 0 || skillIndex >= availableSkills.Length)

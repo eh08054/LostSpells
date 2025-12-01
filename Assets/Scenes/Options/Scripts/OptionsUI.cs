@@ -906,6 +906,11 @@ namespace LostSpells.UI
             }
         }
 
+        public void backOrdered()
+        {
+            OnBackButtonClicked();
+        }
+
         #endregion
     }
 }

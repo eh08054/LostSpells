@@ -4,6 +4,8 @@ using System;
 using System.Collections;
 using System.IO;
 using UnityEngine;
+using UnityEngine.UIElements;
+using UnityEngine.SceneManagement;
 using UnityEngine.InputSystem; 
 using UnityEngine.UI; 
 
@@ -49,6 +51,9 @@ namespace LostSpells.Systems
         private string originalPlayerName = "Wizard";
         private System.Collections.Generic.List<SkillData> activeSkills = new System.Collections.Generic.List<SkillData>();
         private UI.InGameUI inGameUI;
+        private UI.OptionsUI optionUI;
+        private UIDocument inGame_uiDocument;
+        private UIDocument option_uiDocument;
 
 
         private void Awake()
@@ -93,6 +98,7 @@ namespace LostSpells.Systems
 
             // InGameUI 찾기 
             inGameUI = FindFirstObjectByType<LostSpells.UI.InGameUI>();
+            inGame_uiDocument = inGameUI.GetComponent<UIDocument>();
 
             // 언어 설정 로드 및 이벤트 구독 
             LoadLanguageSettings();
@@ -212,12 +218,12 @@ namespace LostSpells.Systems
             }
             else
             {
-                recordingTimer += Time.deltaTime;
+                recordingTimer += Time.unscaledDeltaTime;
 
                 // rms가 threshold / 2보다 낮을 경우 "silence" 판정 
                 if (rms < threshold / 2)
                 {
-                    silenceTimer += Time.deltaTime;
+                    silenceTimer += Time.unscaledDeltaTime;
                     if (silenceTimer > silenceTimeout)
                     {
                         Debug.Log("Silence detected, stopping recording.");
@@ -383,47 +389,136 @@ namespace LostSpells.Systems
             }
 
             string recognizedText = result.recognized_text;
+            var inGame_root = inGame_uiDocument.rootVisualElement;
 
-            // 스킬이 1개뿐이면 무조건 그 스킬 선택
-            if (activeSkills != null && activeSkills.Count == 1)
+            Debug.Log("선택된 액션: " + result.action);
+            Debug.Log("선택된 명령: " + result.order);
+
+            if (result.action.Equals("attack"))
             {
-                string onlySkill = activeSkills[0].voiceKeyword;
-                string skillDisplayName = GetSkillDisplayName(onlySkill);
-
-                UpdateVoiceRecognitionDisplay($"인식: {skillDisplayName} (100%)");
-                ExecuteSkill(onlySkill);
-
-                if (inGameUI != null)
+                Debug.Log("선택된 스킬: " + result.best_match.skill);
+                // 스킬이 1개뿐이면 무조건 그 스킬 선택
+                if (activeSkills != null && activeSkills.Count == 1)
                 {
-                    var accuracyScores = new System.Collections.Generic.Dictionary<string, float>();
-                    accuracyScores[onlySkill] = 1.0f;
-                    inGameUI.UpdateSkillAccuracy(accuracyScores);
-                }
+                    string onlySkill = activeSkills[0].voiceKeyword;
+                    string skillDisplayName = GetSkillDisplayName(onlySkill);
 
-                StartCoroutine(ClearVoiceRecognitionDisplayAfterDelay(3f));
-                return;
-            }
+                    UpdateVoiceRecognitionDisplay($"인식: {skillDisplayName} (100%)");
+                    ExecuteSkill(onlySkill, result.direction, result.location);
 
-            // 스킬 매칭 결과 처리
-            if (result.best_match != null && !string.IsNullOrEmpty(result.best_match.skill))
-            {
-                string skillDisplayName = GetSkillDisplayName(result.best_match.skill);
-                int scorePercent = Mathf.RoundToInt(result.best_match.score * 100);
-
-                UpdateVoiceRecognitionDisplay($"인식: {skillDisplayName} ({scorePercent}%)");
-
-                ExecuteSkill(result.best_match.skill);
-
-                if (inGameUI != null)
-                {
-                    var accuracyScores = result.skill_scores;
-                    if (accuracyScores == null || accuracyScores.Count == 0)
+                    if (inGameUI != null)
                     {
-                        accuracyScores = new System.Collections.Generic.Dictionary<string, float>();
-                        accuracyScores[result.best_match.skill] = result.best_match.score;
+                        var accuracyScores = new System.Collections.Generic.Dictionary<string, float>();
+                        accuracyScores[onlySkill] = 1.0f;
+                        inGameUI.UpdateSkillAccuracy(accuracyScores);
                     }
-                    inGameUI.UpdateSkillAccuracy(accuracyScores);
+
+                    StartCoroutine(ClearVoiceRecognitionDisplayAfterDelay(3f));
+                    return;
                 }
+
+                // 스킬 매칭 결과 처리
+                if (result.best_match != null && !string.IsNullOrEmpty(result.best_match.skill))
+                {
+                    string skillDisplayName = GetSkillDisplayName(result.best_match.skill);
+                    int scorePercent = Mathf.RoundToInt(result.best_match.score * 100);
+
+                    UpdateVoiceRecognitionDisplay($"인식: {skillDisplayName} ({scorePercent}%)");
+
+                    ExecuteSkill(result.best_match.skill, result.direction, result.location);
+
+                    if (inGameUI != null)
+                    {
+                        var accuracyScores = result.skill_scores;
+                        if (accuracyScores == null || accuracyScores.Count == 0)
+                        {
+                            accuracyScores = new System.Collections.Generic.Dictionary<string, float>();
+                            accuracyScores[result.best_match.skill] = result.best_match.score;
+                        }
+                        inGameUI.UpdateSkillAccuracy(accuracyScores);
+                    }
+                }
+            }
+            else if(result.action.Equals("move"))
+            {
+                if (result.direction != "none" && result.location != 0)
+                {
+                    playerComponent.ExecuteMoveCommand(result.direction, result.location);
+                }
+            }
+            else if(result.action.Equals("go_back"))
+            {
+                for (int i = 0; i < SceneManager.sceneCount; i++)
+                {
+                    Scene scene = SceneManager.GetSceneAt(i);
+                    if (scene.name == "Options")
+                    {
+                        optionUI = FindFirstObjectByType<LostSpells.UI.OptionsUI>();
+                        optionUI.backOrdered();
+                        break;
+                    }
+                    if (scene.name == "Store")
+                    {
+                        inGameUI.ShopCloseOrdered();
+                    }
+                }
+
+            }
+            else if(result.action.Equals("pause"))
+            {
+                Debug.Log("pause");
+                inGameUI.MenuOrdered();
+            }
+            else if (result.action.Equals("resume") && (inGame_root.Q<VisualElement>("MenuPopup").style.display == DisplayStyle.Flex))
+            {
+                inGameUI.ResumeOrdered();
+            }
+            else if (result.action .Equals("settings"))
+            {
+                if (result.order.Equals("open_ui") && (inGame_root.Q<VisualElement>("MenuPopup").style.display == DisplayStyle.Flex))
+                {
+                    inGameUI.SettingsOrdered();
+                }
+                if (result.order.Equals("close_ui"))
+                {
+                    for (int i = 0; i < SceneManager.sceneCount; i++)
+                    {
+                        Scene scene = SceneManager.GetSceneAt(i);
+                        if (scene.name == "Options")
+                        {
+                            optionUI = FindFirstObjectByType<LostSpells.UI.OptionsUI>();
+                            optionUI.backOrdered();
+                            break;
+                        }
+                    }
+                }
+            }
+            else if (result.action.Equals("shop"))
+            {
+                if ((inGame_root.Q<VisualElement>("MenuPopup").style.display == DisplayStyle.Flex))
+                {
+                    inGameUI.ShopOredered();
+                }
+                if (result.order.Equals("close_ui"))
+                {
+                    for (int i = 0; i < SceneManager.sceneCount; i++)
+                    {
+                        Scene scene = SceneManager.GetSceneAt(i);
+                        Debug.Log(scene.name + " ");
+                        if (scene.name == "Store")
+                        {
+                            inGameUI.ShopCloseOrdered();
+                        }
+                    }
+                }
+            }
+            else if (result.action.Equals("title") && (inGame_root.Q<VisualElement>("MenuPopup").style.display == DisplayStyle.Flex))
+            {
+                inGameUI.MainMenuOrdered();
+            }
+            else if (result.action.Equals("revival"))
+            {
+                inGameUI.RevivalOrdered();
             }
             else
             {
@@ -437,7 +532,6 @@ namespace LostSpells.Systems
                     UpdateVoiceRecognitionDisplay($"인식 실패: {recognizedText}");
                 }
             }
-
             StartCoroutine(ClearVoiceRecognitionDisplayAfterDelay(3f));
         }
 
@@ -492,7 +586,7 @@ namespace LostSpells.Systems
         /// <summary>
         /// 인식된 스킬 실행 
         /// </summary>
-        private void ExecuteSkill(string skillName)
+        private void ExecuteSkill(string skillName, string direction, int location)
         {
             if (playerComponent == null)
             {
@@ -510,7 +604,7 @@ namespace LostSpells.Systems
             {
                 if (skill.voiceKeyword == skillName)
                 {
-                    playerComponent.CastSkill(skill);
+                    playerComponent.CastSkill(skill, direction, location);
                     return;
                 }
             }
