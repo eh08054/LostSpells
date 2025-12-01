@@ -4,7 +4,15 @@ using TMPro;
 
 namespace LostSpells.Components
 {
+<<<<<<< Updated upstream
 
+=======
+    /// <summary>
+    /// 플레이어 캐릭터 컴포넌트 (수정됨)
+    /// - 물리 이동 로직을 FixedUpdate로 이동하여 떨림 해결
+    /// - Rigidbody Interpolate 자동 설정 추가
+    /// </summary>
+>>>>>>> Stashed changes
     public class PlayerComponent : MonoBehaviour
     {
         [Header("Player Stats")]
@@ -43,16 +51,25 @@ namespace LostSpells.Components
         private float manaRegenAccumulator = 0f;
         private float healthRegenAccumulator = 0f;
 
+<<<<<<< Updated upstream
+=======
+        // 떨림 방지를 위한 입력 값 저장 변수
+>>>>>>> Stashed changes
         private float currentHorizontalInput = 0f;
 
         private void Awake()
         {
+<<<<<<< Updated upstream
+=======
+            // SpriteRenderer 설정
+>>>>>>> Stashed changes
             if (spriteRenderer == null)
             {
                 spriteRenderer = GetComponent<SpriteRenderer>();
                 if (spriteRenderer == null) spriteRenderer = gameObject.AddComponent<SpriteRenderer>();
             }
 
+<<<<<<< Updated upstream
             rb = GetComponent<Rigidbody2D>();
             if (rb == null) rb = gameObject.AddComponent<Rigidbody2D>();
 
@@ -61,6 +78,20 @@ namespace LostSpells.Components
 
             rb.interpolation = RigidbodyInterpolation2D.Interpolate;
 
+=======
+            // Rigidbody2D 설정
+            rb = GetComponent<Rigidbody2D>();
+            if (rb == null) rb = gameObject.AddComponent<Rigidbody2D>();
+
+            rb.gravityScale = 3;
+            rb.constraints = RigidbodyConstraints2D.FreezeRotation;
+
+            // [중요] 떨림 방지의 핵심: 보간(Interpolate) 설정 켜기
+            // 물리 연산(FixedUpdate)과 화면 렌더링(Update) 사이의 위치를 부드럽게 연결해줍니다.
+            rb.interpolation = RigidbodyInterpolation2D.Interpolate;
+
+            // Collider 설정
+>>>>>>> Stashed changes
             playerCollider = GetComponent<CircleCollider2D>();
             if (playerCollider == null)
             {
@@ -92,10 +123,18 @@ namespace LostSpells.Components
 
             if (isKnockedBack) return;
 
+<<<<<<< Updated upstream
+=======
+            // 키바인딩 가져오기
+>>>>>>> Stashed changes
             Key moveLeftKey = GetMoveLeftKey();
             Key moveRightKey = GetMoveRightKey();
             Key jumpKey = GetJumpKey();
 
+<<<<<<< Updated upstream
+=======
+            // [변경 1] Update에서는 '입력'만 받습니다. (이동 처리는 하지 않음)
+>>>>>>> Stashed changes
             currentHorizontalInput = 0f;
 
             if (Keyboard.current != null)
@@ -109,6 +148,11 @@ namespace LostSpells.Components
                     currentHorizontalInput = 1f;
                 }
 
+<<<<<<< Updated upstream
+=======
+                // 점프는 즉각적인 반응이 필요하므로 Update에서 힘을 가해도 괜찮습니다.
+                // (단, isGrounded 체크 필수)
+>>>>>>> Stashed changes
                 if (Keyboard.current[jumpKey].wasPressedThisFrame && isGrounded)
                 {
                     Vector2 velocity = rb.linearVelocity;
@@ -117,6 +161,10 @@ namespace LostSpells.Components
                 }
             }
 
+<<<<<<< Updated upstream
+=======
+            // [변경 2] 스프라이트 방향 전환 및 애니메이션 처리
+>>>>>>> Stashed changes
             if (currentHorizontalInput < 0f) spriteRenderer.flipX = true;
             else if (currentHorizontalInput > 0f) spriteRenderer.flipX = false;
 
@@ -126,15 +174,28 @@ namespace LostSpells.Components
             }
         }
 
+<<<<<<< Updated upstream
+=======
+        // [변경 3] 물리 이동 로직을 FixedUpdate로 분리
+        // 유니티 물리 엔진 주기(0.02초)에 맞춰 실행되어 부드러운 움직임을 보장합니다.
+>>>>>>> Stashed changes
         private void FixedUpdate()
         {
             if (isKnockedBack || rb == null) return;
 
+<<<<<<< Updated upstream
+=======
+            // 입력받은 값을 이용해 물리 속도 적용
+>>>>>>> Stashed changes
             Vector2 velocity = rb.linearVelocity;
             velocity.x = currentHorizontalInput * moveSpeed;
             rb.linearVelocity = velocity;
         }
 
+<<<<<<< Updated upstream
+=======
+        // --- 이하 기존 메서드 유지 ---
+>>>>>>> Stashed changes
 
         public void TakeDamage(int damage)
         {
@@ -316,6 +377,10 @@ namespace LostSpells.Components
 
         public string GetPlayerName() => playerName;
 
+<<<<<<< Updated upstream
+=======
+        // ========== 스킬 시스템 ==========
+>>>>>>> Stashed changes
         public bool CastSkill(LostSpells.Data.SkillData skillData)
         {
             if (currentMana < skillData.manaCost) return false;
@@ -353,6 +418,10 @@ namespace LostSpells.Components
 
         public Transform GetSkillCastPoint() => skillCastPoint;
 
+<<<<<<< Updated upstream
+=======
+        // ========== 키 바인딩 ==========
+>>>>>>> Stashed changes
         private Key GetMoveLeftKey()
         {
             var saveData = LostSpells.Data.SaveManager.Instance?.GetCurrentSaveData();
@@ -397,6 +466,10 @@ namespace LostSpells.Components
             }
         }
 
+<<<<<<< Updated upstream
+=======
+        // ========== 스킬 초기화 및 기타 ==========
+>>>>>>> Stashed changes
         private void InitializeDefaultSkills()
         {
             bool hasSkills = false;
