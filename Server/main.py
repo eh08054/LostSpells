@@ -132,6 +132,7 @@ async def recognize_voice(
             found_action["order"] == "none")):
             # 스킬 매칭
             match_result = skill_matcher.match(result["text"]) if skill_list else {
+                "action": "none",
                 "matched": None,
                 "confidence": 0.0,
                 "candidates": []
@@ -146,7 +147,6 @@ async def recognize_voice(
             found_action["action"] == "move"):
             analyze_result = choose_action.AnalyzeNLU(result["text"])
 
-        print("Skill" + match_result["matched"])
         # 임시 파일 삭제
         if audio_path.exists():
             audio_path.unlink()

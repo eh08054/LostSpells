@@ -218,7 +218,7 @@ namespace LostSpells.Components
                 HandleSpriteFlip(directionSign);
                 UpdateAnimationState(); // 걷는 애니메이션 갱신
 
-                yield return null; // 다음 프레임까지 대기
+                yield return null; 
             }
 
             // 이동 종료 처리
@@ -593,12 +593,16 @@ namespace LostSpells.Components
             Vector3 castPosition = GetSkillCastPosition();
             Quaternion castRotation = GetSkillCastRotation();
 
-            if ((direction == "right" || direction == "left") && location != 0)
+            if ((direction == "right" || direction == "left"))
             {
                 Vector3 castOrigin = GetSkillCastPosition();
 
                 // 3. 최종 발사 위치 (Position) 계산
-                float xOffset = location * PIXEL_TO_UNIT_FACTOR;
+                float xOffset =  castPosition.x;
+                if (location != 0)
+                {
+                    xOffset = location * PIXEL_TO_UNIT_FACTOR;
+                }
                 float directionSign = 0f;
 
                 if (direction.ToLower() == "left")

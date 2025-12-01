@@ -5,6 +5,7 @@ class ChooseActions:
         
         normalize_text = text.strip().lower() 
         clean_text = re.sub(r"[.,!?]", "", normalize_text)
+        clean_text_nospace = clean_text.replace(" ", "")
         
         action_patterns = {
             "attack": ["공격", "발사"],
@@ -32,11 +33,10 @@ class ChooseActions:
         
         # 1. 스킬 체크
         for i in skill_list:
-             if i in clean_text:
-                 print("EXIST SKILL:", i)
-                 result_dict["action"] = "attack"
-                 result_dict["skill"] = True
-                 break
+            if i.replace(" ", "").lower() in clean_text_nospace:
+                result_dict["action"] = "attack"
+                result_dict["skill"] = True
+                break
 
         # 2. 액션 패턴 체크 
         if not result_dict["skill"]:
@@ -72,7 +72,7 @@ class ChooseActions:
 
         if match:
             found_word = match.group(0)
-            result["location"] = loc_map[found_word]
+            result["direction"] = loc_map[found_word]
 
         # 숫자 파싱
         num_match = re.search(r"(\d+)(?:번|번째)?", attached_text)
@@ -82,8 +82,8 @@ class ChooseActions:
         kor_match = re.search(kor_num_pattern, attached_text)
         
         if num_match:
-            result["index"] = int(num_match.group(1))
+            result["location"] = int(num_match.group(1))
         elif kor_match:
-            result["index"] = kor_num_map[kor_match.group(0)]
+            result["location"] = kor_num_map[kor_match.group(0)]
         
         return result

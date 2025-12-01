@@ -19,7 +19,14 @@ class SkillMatcher:
         Args:
             skill_names: 스킬명 리스트 (한글 또는 영어)
         """
-        self.skills = [name.strip().lower() for name in skill_names]
+        self.skills = []
+        self.original_skills = {}
+        
+        for name in skill_names:
+            clean_name = self._normalize(name)
+            self.skills.append(clean_name)
+            self.original_skills[clean_name] = name.strip()
+            
         print(f"[SkillMatcher] Updated skill list: {len(self.skills)} skills")
 
     def match(self, recognized_text, threshold=0.6):
@@ -75,16 +82,20 @@ class SkillMatcher:
 
         # 최고 유사도 스킬
         best_skill, best_score = similarities[0] if similarities else (None, 0.0)
+        
+        matched_original = self.original_skills.get(best_skill) if best_skill and best_score >= threshold else None
 
         # 상위 3개 후보
-        candidates = [
-            {"name": skill, "confidence": round(score, 2)}
-            for skill, score in similarities[:3]
-        ]
+        candidates = []
+        for sk, sc in similarities[:3]:
+            candidates.append({
+                "name": self.original_skills.get(sk, sk),
+                "confidence": round(sc, 2)
+            })
 
         return {
             "action": "attack",
-            "matched": best_skill if best_score >= threshold else None,
+            "matched": matched_original,
             "confidence": round(best_score, 2),
             "candidates": candidates
         }
