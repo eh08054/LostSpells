@@ -1,40 +1,45 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using TMPro;
+using System.Collections;
 
 namespace LostSpells.Components
 {
-    /// <summary>
-    /// 플레이어 캐릭터 컴포넌트
-    /// - A, D 키로 좌우 이동
-    /// - 이름 표시
-    /// - 체력바 표시
-    /// </summary>
     public class PlayerComponent : MonoBehaviour
     {
         [Header("Player Stats")]
-        [SerializeField] private string playerName = "Wizard"; // 한글 폰트 경고 방지를 위해 영어로 설정
+        [SerializeField] private string playerName = "Wizard";
         [SerializeField] private int maxHealth = 100;
         [SerializeField] private int currentHealth;
         [SerializeField] private int maxMana = 80;
         [SerializeField] private int currentMana;
-        [SerializeField] private float manaRegenRate = 5f; // 초당 마나 회복량
-        [SerializeField] private float healthRegenRate = 5f; // 초당 체력 회복량
         [SerializeField] private float moveSpeed = 5f;
-        [SerializeField] private float jumpForce = 10f; // 점프 힘
-        [SerializeField] private float knockbackForce = 3f; // 넉백 힘
+        [SerializeField] private float jumpForce = 10f;
+        [SerializeField] private float knockbackForce = 3f;
+
+        [Header("Regeneration Settings")]
+        [SerializeField] private float manaRegenRate = 5f;
+        [SerializeField] private float healthRegenRate = 5f;
+        [Tooltip("데미지를 입은 후 체력 회복이 시작되기까지 대기 시간(초)")]
+        [SerializeField] private float healthRegenDelay = 3.0f; // [추가됨] 회복 대기 시간
+        private float lastDamageTime; // [추가됨] 마지막으로 데미지 입은 시간 저장
+
+        [Header("Invincibility Settings")]
+        [SerializeField] private float invincibilityDuration = 1.5f;
+        [SerializeField] private float flashDelay = 0.1f;
+        private bool isInvincible = false;
 
         [Header("Skill System")]
-        [SerializeField] private Transform skillCastPoint; // 스킬 발사 위치 (없으면 플레이어 중심 사용)
-        [SerializeField] private LostSpells.Data.SkillData[] availableSkills = new LostSpells.Data.SkillData[6]; // 사용 가능한 스킬 (최대 6개: 1~6 키)
-        [SerializeField] private GameObject skillProjectilePrefab; // 투사체 프리팹
+        [SerializeField] private Transform skillCastPoint;
+        [SerializeField] private LostSpells.Data.SkillData[] availableSkills = new LostSpells.Data.SkillData[6];
+        [SerializeField] private GameObject skillProjectilePrefab;
 
-        private float[] skillCooldowns = new float[6]; // 각 스킬의 쿨다운
+        private float[] skillCooldowns = new float[6];
 
         [Header("Visual")]
         [SerializeField] private SpriteRenderer spriteRenderer;
         [SerializeField] private Color playerColor = Color.blue;
-        [SerializeField] private Animator animator; // 애니메이터
+        [SerializeField] private Animator animator;
 
         [Header("UI Elements")]
         [SerializeField] private TextMeshPro nameText;
@@ -43,108 +48,72 @@ namespace LostSpells.Components
 
         private Rigidbody2D rb;
         private Collider2D playerCollider;
-        private bool isKnockedBack = false; // 넉백 중인지 여부
-        private bool isGrounded = false; // 땅에 닿아있는지 여부
-        private float manaRegenAccumulator = 0f; // 마나 회복 누적값
-        private float healthRegenAccumulator = 0f; // 체력 회복 누적값
+        private bool isKnockedBack = false;
+        private bool isGrounded = false;
+        private float manaRegenAccumulator = 0f;
+        private float healthRegenAccumulator = 0f;
+        private float currentHorizontalInput = 0f;
 
         private void Awake()
         {
-            // SpriteRenderer가 없으면 추가
             if (spriteRenderer == null)
             {
                 spriteRenderer = GetComponent<SpriteRenderer>();
-                if (spriteRenderer == null)
-                {
-                    spriteRenderer = gameObject.AddComponent<SpriteRenderer>();
-                }
+                if (spriteRenderer == null) spriteRenderer = gameObject.AddComponent<SpriteRenderer>();
             }
 
-            // Rigidbody2D 설정 (물리 충돌용)
             rb = GetComponent<Rigidbody2D>();
-            if (rb == null)
-            {
-                rb = gameObject.AddComponent<Rigidbody2D>();
-            }
-            rb.gravityScale = 3; // 중력 강하게 적용 (빠른 낙하)
-            rb.constraints = RigidbodyConstraints2D.FreezeRotation; // 회전 방지
+            if (rb == null) rb = gameObject.AddComponent<Rigidbody2D>();
 
-            // Collider 설정 (충돌 감지용)
+            rb.gravityScale = 3;
+            rb.constraints = RigidbodyConstraints2D.FreezeRotation;
+            rb.interpolation = RigidbodyInterpolation2D.Interpolate;
+
             playerCollider = GetComponent<CircleCollider2D>();
             if (playerCollider == null)
             {
                 CircleCollider2D circleCollider = gameObject.AddComponent<CircleCollider2D>();
-                circleCollider.radius = 0.4f; // 플레이어 크기에 맞게 조정
+                circleCollider.radius = 0.4f;
                 playerCollider = circleCollider;
             }
 
-            // 체력 초기화
             currentHealth = maxHealth;
-
-            // 마나 초기화
             currentMana = maxMana;
+
+            // 시작 시 바로 회복되지 않도록 초기화
+            lastDamageTime = -healthRegenDelay;
         }
 
         private void Start()
         {
-            // 이름 설정
-            if (nameText != null)
-            {
-                nameText.text = playerName;
-            }
-
-            // 체력바 초기화
+            if (nameText != null) nameText.text = playerName;
             UpdateHealthBar();
-
-            // 스킬 데이터 초기화
             InitializeDefaultSkills();
-
-            // 투사체 프리팹 자동 생성
-            if (skillProjectilePrefab == null)
-            {
-                CreateProjectilePrefab();
-            }
+            if (skillProjectilePrefab == null) CreateProjectilePrefab();
         }
 
         private void Update()
         {
             if (rb == null) return;
 
-            // 마나 자동 회복
             RegenerateMana();
-
-            // 체력 자동 회복
-            RegenerateHealth();
-
-            // 스킬 쿨다운 감소
+            RegenerateHealth(); // 여기서 대기 시간 체크함
             UpdateSkillCooldowns();
-
-            // 스킬 입력 처리
             HandleSkillInput();
 
-            // 넉백 중에는 이동 불가
             if (isKnockedBack) return;
 
-            // 키바인딩에서 이동 키 가져오기
             Key moveLeftKey = GetMoveLeftKey();
             Key moveRightKey = GetMoveRightKey();
             Key jumpKey = GetJumpKey();
 
-            // 좌우 이동 (새 Input System 사용)
-            float horizontal = 0f;
+            currentHorizontalInput = 0f;
 
             if (Keyboard.current != null)
             {
-                if (Keyboard.current[moveLeftKey].isPressed)
-                {
-                    horizontal = -1f;
-                }
-                else if (Keyboard.current[moveRightKey].isPressed)
-                {
-                    horizontal = 1f;
-                }
+                if (Keyboard.current[moveLeftKey].isPressed) currentHorizontalInput = -1f;
+                else if (Keyboard.current[moveRightKey].isPressed) currentHorizontalInput = 1f;
 
-                // 점프 (땅에 있을 때만)
                 if (Keyboard.current[jumpKey].wasPressedThisFrame && isGrounded)
                 {
                     Vector2 velocity = rb.linearVelocity;
@@ -153,56 +122,49 @@ namespace LostSpells.Components
                 }
             }
 
-            // Rigidbody2D로 좌우 이동 (Y축 속도는 유지하여 중력 영향 받도록)
-            Vector2 velocity2 = rb.linearVelocity;
-            velocity2.x = horizontal * moveSpeed;
-            rb.linearVelocity = velocity2;
+            if (currentHorizontalInput < 0f) spriteRenderer.flipX = true;
+            else if (currentHorizontalInput > 0f) spriteRenderer.flipX = false;
 
-            // 이동 방향에 따라 스프라이트 뒤집기
-            if (horizontal < 0f) // 왼쪽으로 이동
-            {
-                spriteRenderer.flipX = true;
-            }
-            else if (horizontal > 0f) // 오른쪽으로 이동
-            {
-                spriteRenderer.flipX = false;
-            }
-
-            // 애니메이터 Speed 파라미터 업데이트
-            if (animator != null && animator.runtimeAnimatorController != null)
-            {
-                float speed = Mathf.Abs(velocity2.x);
-                animator.SetFloat("Speed", speed);
-            }
+            if (animator != null) animator.SetFloat("Speed", Mathf.Abs(currentHorizontalInput));
         }
 
-        /// <summary>
-        /// 데미지 받기
-        /// </summary>
+        private void FixedUpdate()
+        {
+            if (isKnockedBack || rb == null) return;
+
+            Vector2 velocity = rb.linearVelocity;
+            velocity.x = currentHorizontalInput * moveSpeed;
+            rb.linearVelocity = velocity;
+        }
+
         public void TakeDamage(int damage)
         {
+            if (isInvincible) return;
+
             currentHealth -= damage;
             currentHealth = Mathf.Max(0, currentHealth);
 
+            // [중요] 데미지를 입은 시간 기록 -> 회복 딜레이 시작
+            lastDamageTime = Time.time;
+
             UpdateHealthBar();
 
-            if (currentHealth <= 0)
-            {
-                Die();
-            }
+            if (currentHealth > 0) StartCoroutine(InvincibilityRoutine());
+            else Die();
         }
 
-        /// <summary>
-        /// 데미지 받기 (넉백 포함)
-        /// </summary>
         public void TakeDamage(int damage, Vector2 knockbackDirection)
         {
+            if (isInvincible) return;
+
             currentHealth -= damage;
             currentHealth = Mathf.Max(0, currentHealth);
 
+            // [중요] 데미지를 입은 시간 기록
+            lastDamageTime = Time.time;
+
             UpdateHealthBar();
 
-            // 넉백 적용
             if (rb != null && !isKnockedBack)
             {
                 rb.linearVelocity = knockbackDirection.normalized * knockbackForce;
@@ -210,112 +172,84 @@ namespace LostSpells.Components
                 IgnoreAllEnemyCollisions(true);
             }
 
-            if (currentHealth <= 0)
-            {
-                Die();
-            }
+            if (currentHealth > 0) StartCoroutine(InvincibilityRoutine());
+            else Die();
         }
 
-        /// <summary>
-        /// 플레이어 사망
-        /// </summary>
+        private IEnumerator InvincibilityRoutine()
+        {
+            isInvincible = true;
+            Color originalColor = spriteRenderer.color;
+            Color flashColor = originalColor;
+            flashColor.a = 0.3f;
+
+            float elapsed = 0f;
+            while (elapsed < invincibilityDuration)
+            {
+                spriteRenderer.color = flashColor;
+                yield return new WaitForSeconds(flashDelay);
+                spriteRenderer.color = originalColor;
+                yield return new WaitForSeconds(flashDelay);
+                elapsed += (flashDelay * 2);
+            }
+            spriteRenderer.color = originalColor;
+            isInvincible = false;
+        }
+
         private void Die()
         {
-            // Death 애니메이션 재생
-            if (animator != null && animator.runtimeAnimatorController != null)
-            {
-                animator.SetBool("IsDead", true);
-            }
-
-            // 이동 멈추기
+            StopAllCoroutines();
+            if (spriteRenderer != null) spriteRenderer.color = Color.white;
+            if (animator != null) animator.SetBool("IsDead", true);
             if (rb != null)
             {
                 rb.linearVelocity = Vector2.zero;
                 rb.gravityScale = 0;
             }
-
-            // 충돌 비활성화 (모든 Collider)
-            Collider2D[] colliders = GetComponents<Collider2D>();
-            foreach (var collider in colliders)
-            {
-                collider.enabled = false;
-            }
-
-            // 입력 비활성화 (플레이어가 더 이상 조작할 수 없도록)
+            foreach (var col in GetComponents<Collider2D>()) col.enabled = false;
             enabled = false;
 
-            // 게임 오버 UI 표시
-            LostSpells.UI.InGameUI inGameUI = FindFirstObjectByType<LostSpells.UI.InGameUI>();
-            if (inGameUI != null)
-            {
-                inGameUI.ShowGameOver();
-            }
+            var inGameUI = FindFirstObjectByType<LostSpells.UI.InGameUI>();
+            if (inGameUI != null) inGameUI.ShowGameOver();
         }
 
-        /// <summary>
-        /// 체력 회복
-        /// </summary>
         public void Heal(int amount)
         {
             currentHealth += amount;
             currentHealth = Mathf.Min(currentHealth, maxHealth);
-
             UpdateHealthBar();
         }
 
-        /// <summary>
-        /// 부활 - 체력 전체 회복 및 상태 초기화
-        /// </summary>
         public void Revive()
         {
-            // 체력 100% 회복
+            StopAllCoroutines();
             currentHealth = maxHealth;
             UpdateHealthBar();
 
-            // Death 애니메이션 해제 및 Idle 상태로 강제 전환
-            if (animator != null && animator.runtimeAnimatorController != null)
+            isInvincible = false;
+            if (spriteRenderer != null) spriteRenderer.color = Color.white;
+
+            if (animator != null)
             {
                 animator.SetBool("IsDead", false);
                 animator.SetFloat("Speed", 0f);
-
-                // 애니메이터를 강제로 Idle 상태로 전환
                 animator.Play("Idle", 0, 0f);
             }
-
-            // 물리 재활성화
             if (rb != null)
             {
                 rb.gravityScale = 3;
-                rb.linearVelocity = Vector2.zero; // 속도 초기화
+                rb.linearVelocity = Vector2.zero;
             }
-
-            // 충돌 재활성화 (모든 Collider)
-            Collider2D[] colliders = GetComponents<Collider2D>();
-            Debug.Log($"[Revive] 총 {colliders.Length}개의 Collider 재활성화 중");
-            foreach (var collider in colliders)
-            {
-                collider.enabled = true;
-                Debug.Log($"[Revive] Collider 재활성화: {collider.GetType().Name}, isTrigger: {collider.isTrigger}");
-            }
-
-            // 넉백 상태 해제
+            foreach (var col in GetComponents<Collider2D>()) col.enabled = true;
             isKnockedBack = false;
-
-            // 입력 재활성화
             enabled = true;
         }
 
-        /// <summary>
-        /// 마나 자동 회복
-        /// </summary>
         private void RegenerateMana()
         {
             if (currentMana < maxMana)
             {
-                // 누적 방식으로 마나 회복 (소수점 단위로 누적)
                 manaRegenAccumulator += manaRegenRate * Time.deltaTime;
-
-                // 누적값이 1 이상이면 정수로 변환하여 마나 회복
                 if (manaRegenAccumulator >= 1f)
                 {
                     int manaToAdd = Mathf.FloorToInt(manaRegenAccumulator);
@@ -326,120 +260,77 @@ namespace LostSpells.Components
             }
         }
 
-        /// <summary>
-        /// 체력 자동 회복
-        /// </summary>
+        // [수정됨] 체력 자동 회복 (딜레이 적용)
         private void RegenerateHealth()
         {
-            if (currentHealth < maxHealth)
+            // 체력이 가득 찼거나, 죽었으면 회복 안 함
+            if (currentHealth >= maxHealth || currentHealth <= 0) return;
+
+            // [핵심] 마지막으로 맞은 시간으로부터 일정 시간(healthRegenDelay)이 지났는지 확인
+            if (Time.time < lastDamageTime + healthRegenDelay)
             {
-                // 누적 방식으로 체력 회복 (소수점 단위로 누적)
-                healthRegenAccumulator += healthRegenRate * Time.deltaTime;
+                // 아직 대기 시간임 (전투 중 판정) -> 회복 누적치 초기화하고 리턴
+                healthRegenAccumulator = 0f;
+                return;
+            }
 
-                // 누적값이 1 이상이면 정수로 변환하여 체력 회복
-                if (healthRegenAccumulator >= 1f)
-                {
-                    int healthToAdd = Mathf.FloorToInt(healthRegenAccumulator);
-                    currentHealth += healthToAdd;
-                    currentHealth = Mathf.Min(currentHealth, maxHealth);
-                    healthRegenAccumulator -= healthToAdd;
-
-                    // 체력바 업데이트
-                    UpdateHealthBar();
-                }
+            // 대기 시간이 지났으면 회복 시작
+            healthRegenAccumulator += healthRegenRate * Time.deltaTime;
+            if (healthRegenAccumulator >= 1f)
+            {
+                int healthToAdd = Mathf.FloorToInt(healthRegenAccumulator);
+                currentHealth += healthToAdd;
+                currentHealth = Mathf.Min(currentHealth, maxHealth);
+                healthRegenAccumulator -= healthToAdd;
+                UpdateHealthBar();
             }
         }
 
-        /// <summary>
-        /// 체력바 업데이트
-        /// </summary>
         private void UpdateHealthBar()
         {
             if (healthBarFill != null)
             {
                 float healthPercent = (float)currentHealth / maxHealth;
-
-                // Scale 조정 (왼쪽에서 오른쪽으로 차도록)
                 Vector3 scale = healthBarFill.localScale;
                 scale.x = healthPercent;
                 healthBarFill.localScale = scale;
-
-                // Position 조정 (왼쪽 기준으로)
                 Vector3 pos = healthBarFill.localPosition;
                 pos.x = (healthPercent - 1f) / 2f;
                 healthBarFill.localPosition = pos;
             }
         }
 
-        /// <summary>
-        /// Inspector에서 값이 변경될 때 호출
-        /// </summary>
         private void OnValidate()
         {
-            #if UNITY_EDITOR
-            // 이름 업데이트
-            if (nameText != null)
-            {
-                nameText.text = playerName;
-            }
-
-            // 체력 범위 제한
+#if UNITY_EDITOR
+            if (nameText != null) nameText.text = playerName;
             currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
-
-            // 체력바 업데이트
             UpdateHealthBar();
-            #endif
+#endif
         }
 
-        /// <summary>
-        /// 적과 충돌 시 넉백 및 데미지
-        /// </summary>
         private void OnCollisionEnter2D(Collision2D collision)
         {
-            // 적과 충돌했는지 확인
             EnemyComponent enemy = collision.gameObject.GetComponent<EnemyComponent>();
             if (enemy != null && rb != null)
             {
-                    // 넉백 중에는 무적 판정 (추가 데미지/넉백 없음)
-                if (isKnockedBack)
-                {
-                    return;
-                }
+                if (isKnockedBack || isInvincible) return;
 
-                // 적으로부터 떨어지는 좌우 방향의 부호만 계산
                 float dirX = Mathf.Sign(transform.position.x - collision.transform.position.x);
-
-                // 넉백 적용 (X축은 방향에 따라, Y축은 항상 위쪽으로)
-                rb.linearVelocity = new Vector2(dirX * knockbackForce, knockbackForce);
-
-                // 넉백 상태로 변경 & 플레이어 콜라이더가 모든 적과 충돌 무시 (땅에 닿을 때까지 무적)
-                isKnockedBack = true;
-                IgnoreAllEnemyCollisions(true);
-
-                // 데미지 받기
-                TakeDamage(10); // 적과 충돌 시 10 데미지
+                TakeDamage(10, new Vector2(dirX * knockbackForce, knockbackForce));
             }
         }
 
-        /// <summary>
-        /// 바닥에 닿으면 넉백 상태 해제 및 착지 체크
-        /// </summary>
         private void OnCollisionStay2D(Collision2D collision)
         {
-            // 바닥 충돌 체크 (플레이어 아래쪽에 충돌이 있는지)
             foreach (ContactPoint2D contact in collision.contacts)
             {
-                // 충돌 지점이 플레이어보다 아래에 있거나, 법선이 위를 향하면 땅에 있는 것
-                // contact.normal.y > 0.5f는 충돌면이 위쪽을 향한다는 의미 (땅 위에 서있음)
                 if (contact.normal.y > 0.5f)
                 {
                     isGrounded = true;
-
-                    // 넉백 중이고 Y 속도가 거의 0이면 착지한 것
                     if (isKnockedBack && Mathf.Abs(rb.linearVelocity.y) < 0.5f)
                     {
                         isKnockedBack = false;
-                        // 플레이어 콜라이더가 모든 적과 충돌 다시 활성화
                         IgnoreAllEnemyCollisions(false);
                     }
                     break;
@@ -447,31 +338,19 @@ namespace LostSpells.Components
             }
         }
 
-        /// <summary>
-        /// 바닥에서 떨어지면 착지 해제
-        /// </summary>
         private void OnCollisionExit2D(Collision2D collision)
         {
             isGrounded = false;
         }
 
-        /// <summary>
-        /// 플레이어 콜라이더가 모든 적 콜라이더와의 충돌을 무시/복구
-        /// </summary>
         private void IgnoreAllEnemyCollisions(bool ignore)
         {
             if (playerCollider == null) return;
-
-            // 씬에 있는 모든 적 찾기
             EnemyComponent[] enemies = FindObjectsByType<EnemyComponent>(FindObjectsSortMode.None);
-
             foreach (var enemy in enemies)
             {
                 Collider2D enemyCollider = enemy.GetComponent<Collider2D>();
-                if (enemyCollider != null)
-                {
-                    Physics2D.IgnoreCollision(playerCollider, enemyCollider, ignore);
-                }
+                if (enemyCollider != null) Physics2D.IgnoreCollision(playerCollider, enemyCollider, ignore);
             }
         }
 
@@ -480,182 +359,79 @@ namespace LostSpells.Components
         public int GetCurrentMana() => currentMana;
         public int GetMaxMana() => maxMana;
 
-        /// <summary>
-        /// 플레이어 이름 설정 (음성인식 상태 표시용)
-        /// </summary>
         public void SetPlayerName(string name)
         {
             playerName = name;
-            if (nameText != null)
-            {
-                nameText.text = name;
-            }
+            if (nameText != null) nameText.text = name;
         }
 
-        /// <summary>
-        /// 플레이어 이름 가져오기
-        /// </summary>
-        public string GetPlayerName()
-        {
-            return playerName;
-        }
+        public string GetPlayerName() => playerName;
 
         // ========== 스킬 시스템 ==========
-
-        /// <summary>
-        /// 스킬 사용
-        /// </summary>
         public bool CastSkill(LostSpells.Data.SkillData skillData)
         {
-            // 마나 체크
-            if (currentMana < skillData.manaCost)
-            {
-                Debug.LogWarning($"[Player] 마나 부족! 현재: {currentMana}, 필요: {skillData.manaCost}");
-                return false;
-            }
-
-            // 스킬 프리팹 로드
+            if (currentMana < skillData.manaCost) return false;
             GameObject skillPrefab = LoadSkillPrefab(skillData.effectPrefabPath);
-            if (skillPrefab == null)
-            {
-                Debug.LogError($"[Player] 스킬 프리팹을 찾을 수 없음: {skillData.effectPrefabPath}");
-                return false;
-            }
+            if (skillPrefab == null) return false;
 
-            // 발사 위치 결정
             Vector3 castPosition = GetSkillCastPosition();
             Quaternion castRotation = GetSkillCastRotation();
-
-            // 스킬 생성
             GameObject skillInstance = Instantiate(skillPrefab, castPosition, castRotation);
 
-            // 스킬에 데이터 전달 (스킬 스크립트가 있다면)
             var skillScript = skillInstance.GetComponent<SkillBehavior>();
-            if (skillScript != null)
-            {
-                skillScript.Initialize(skillData, this);
-            }
-            else
-            {
-                Debug.LogWarning($"[Player] SkillBehavior 컴포넌트를 찾을 수 없음!");
-            }
+            if (skillScript != null) skillScript.Initialize(skillData, this);
 
-            // 마나 소모
             currentMana -= (int)skillData.manaCost;
             UpdateHealthBar();
-
             return true;
         }
 
-        /// <summary>
-        /// 스킬 발사 위치 가져오기
-        /// </summary>
         private Vector3 GetSkillCastPosition()
         {
-            if (skillCastPoint != null)
-            {
-                return skillCastPoint.position;
-            }
-            else
-            {
-                // 발사 지점이 없으면 플레이어 위치 + 오프셋 사용
-                Vector3 offset = spriteRenderer.flipX ? Vector3.left * 0.5f : Vector3.right * 0.5f;
-                return transform.position + offset + Vector3.up * 0.3f;
-            }
+            if (skillCastPoint != null) return skillCastPoint.position;
+            Vector3 offset = spriteRenderer.flipX ? Vector3.left * 0.5f : Vector3.right * 0.5f;
+            return transform.position + offset + Vector3.up * 0.3f;
         }
 
-        /// <summary>
-        /// 스킬 발사 방향 가져오기
-        /// </summary>
         private Quaternion GetSkillCastRotation()
         {
-            // 플레이어가 보는 방향으로 스킬 발사
-            if (spriteRenderer != null && spriteRenderer.flipX)
-            {
-                return Quaternion.Euler(0, 180, 0); // 왼쪽
-            }
-            else
-            {
-                return Quaternion.identity; // 오른쪽
-            }
+            return spriteRenderer.flipX ? Quaternion.Euler(0, 180, 0) : Quaternion.identity;
         }
 
-        /// <summary>
-        /// 스킬 프리팹 로드 (Resources 폴더에서)
-        /// </summary>
         private GameObject LoadSkillPrefab(string prefabPath)
         {
-            if (string.IsNullOrEmpty(prefabPath))
-                return null;
-
-            // Resources 폴더에서 로드 (예: "Prefabs/Skills/Fireball")
-            return Resources.Load<GameObject>(prefabPath);
+            return string.IsNullOrEmpty(prefabPath) ? null : Resources.Load<GameObject>(prefabPath);
         }
 
-        /// <summary>
-        /// 스킬 발사 위치 Transform 가져오기 (외부에서 참조용)
-        /// </summary>
-        public Transform GetSkillCastPoint()
-        {
-            return skillCastPoint;
-        }
+        public Transform GetSkillCastPoint() => skillCastPoint;
 
         // ========== 키 바인딩 ==========
-
-        /// <summary>
-        /// SaveData에서 왼쪽 이동 키 가져오기
-        /// </summary>
         private Key GetMoveLeftKey()
         {
             var saveData = LostSpells.Data.SaveManager.Instance?.GetCurrentSaveData();
             if (saveData != null && saveData.keyBindings != null && saveData.keyBindings.ContainsKey("MoveLeft"))
-            {
-                string keyString = saveData.keyBindings["MoveLeft"];
-                return ParseKey(keyString, Key.A);
-            }
-
-            // 기본값: A
+                return ParseKey(saveData.keyBindings["MoveLeft"], Key.A);
             return Key.A;
         }
 
-        /// <summary>
-        /// SaveData에서 오른쪽 이동 키 가져오기
-        /// </summary>
         private Key GetMoveRightKey()
         {
             var saveData = LostSpells.Data.SaveManager.Instance?.GetCurrentSaveData();
             if (saveData != null && saveData.keyBindings != null && saveData.keyBindings.ContainsKey("MoveRight"))
-            {
-                string keyString = saveData.keyBindings["MoveRight"];
-                return ParseKey(keyString, Key.D);
-            }
-
-            // 기본값: D
+                return ParseKey(saveData.keyBindings["MoveRight"], Key.D);
             return Key.D;
         }
 
-        /// <summary>
-        /// SaveData에서 점프 키 가져오기
-        /// </summary>
         private Key GetJumpKey()
         {
             var saveData = LostSpells.Data.SaveManager.Instance?.GetCurrentSaveData();
             if (saveData != null && saveData.keyBindings != null && saveData.keyBindings.ContainsKey("Jump"))
-            {
-                string keyString = saveData.keyBindings["Jump"];
-                return ParseKey(keyString, Key.W);
-            }
-
-            // 기본값: W
+                return ParseKey(saveData.keyBindings["Jump"], Key.W);
             return Key.W;
         }
 
-        /// <summary>
-        /// 키 문자열을 Key enum으로 변환 (Options의 GetKeyDisplayName 역함수)
-        /// </summary>
         private Key ParseKey(string keyString, Key defaultKey)
         {
-            // 특수 키 매핑 (Options의 GetKeyDisplayName과 반대)
             switch (keyString)
             {
                 case "Space": return Key.Space;
@@ -669,60 +445,27 @@ namespace LostSpells.Components
                 case "Enter": return Key.Enter;
                 case "Backspace": return Key.Backspace;
                 default:
-                    // 일반 키는 Enum.TryParse 시도
-                    if (System.Enum.TryParse<Key>(keyString, true, out Key key))
-                    {
-                        return key;
-                    }
+                    if (System.Enum.TryParse<Key>(keyString, true, out Key key)) return key;
                     return defaultKey;
             }
         }
 
-        // ========== 스킬 시스템 ==========
-
-        /// <summary>
-        /// 기본 스킬 데이터 초기화 (스킬 데이터가 설정되지 않은 경우)
-        /// </summary>
+        // ========== 스킬 초기화 및 기타 ==========
         private void InitializeDefaultSkills()
         {
-            // 이미 스킬이 설정되어 있으면 초기화하지 않음
             bool hasSkills = false;
-            for (int i = 0; i < availableSkills.Length; i++)
-            {
-                if (availableSkills[i] != null)
-                {
-                    hasSkills = true;
-                    break;
-                }
-            }
-
+            for (int i = 0; i < availableSkills.Length; i++) { if (availableSkills[i] != null) { hasSkills = true; break; } }
             if (hasSkills) return;
 
-            // 기본 스킬 6개 생성
-            availableSkills[0] = CreateSkill("fireball", "Fireball", "화염구", LostSpells.Data.SkillType.Fireball,
-                "Fire/FireBall", 15, 2f, 20, 12f);
-
-            availableSkills[1] = CreateSkill("icespike", "Ice Spike", "얼음 가시", LostSpells.Data.SkillType.IceSpike,
-                "Ice/IceSpike", 12, 1.8f, 15, 10f);
-
-            availableSkills[2] = CreateSkill("lightning", "Thunder Strike", "번개", LostSpells.Data.SkillType.Lightning,
-                "Electricity/ElectricLightning01", 18, 2.5f, 25, 15f);
-
-            availableSkills[3] = CreateSkill("earthrock", "Stone Bullet", "돌 탄환", LostSpells.Data.SkillType.EarthRock,
-                "Earth/EarthRock", 10, 1.5f, 12, 8f);
-
-            availableSkills[4] = CreateSkill("holylight", "Divine Ray", "신성한 광선", LostSpells.Data.SkillType.HolyLight,
-                "Holy/HolyProjectile", 20, 3f, 30, 14f);
-
-            availableSkills[5] = CreateSkill("voidblast", "Void Orb", "암흑 구체", LostSpells.Data.SkillType.VoidBlast,
-                "Void/VoidBall", 25, 3.5f, 35, 10f);
+            availableSkills[0] = CreateSkill("fireball", "Fireball", "화염구", LostSpells.Data.SkillType.Fireball, "Fire/FireBall", 15, 2f, 20, 12f);
+            availableSkills[1] = CreateSkill("icespike", "Ice Spike", "얼음 가시", LostSpells.Data.SkillType.IceSpike, "Ice/IceSpike", 12, 1.8f, 15, 10f);
+            availableSkills[2] = CreateSkill("lightning", "Thunder Strike", "번개", LostSpells.Data.SkillType.Lightning, "Electricity/ElectricLightning01", 18, 2.5f, 25, 15f);
+            availableSkills[3] = CreateSkill("earthrock", "Stone Bullet", "돌 탄환", LostSpells.Data.SkillType.EarthRock, "Earth/EarthRock", 10, 1.5f, 12, 8f);
+            availableSkills[4] = CreateSkill("holylight", "Divine Ray", "신성한 광선", LostSpells.Data.SkillType.HolyLight, "Holy/HolyProjectile", 20, 3f, 30, 14f);
+            availableSkills[5] = CreateSkill("voidblast", "Void Orb", "암흑 구체", LostSpells.Data.SkillType.VoidBlast, "Void/VoidBall", 25, 3.5f, 35, 10f);
         }
 
-        /// <summary>
-        /// 스킬 데이터 생성
-        /// </summary>
-        private LostSpells.Data.SkillData CreateSkill(string id, string nameEn, string nameKo,
-            LostSpells.Data.SkillType type, string vfxPath, int manaCost, float cooldown, int damage, float speed)
+        private LostSpells.Data.SkillData CreateSkill(string id, string nameEn, string nameKo, LostSpells.Data.SkillType type, string vfxPath, int manaCost, float cooldown, int damage, float speed)
         {
             return new LostSpells.Data.SkillData
             {
@@ -739,32 +482,17 @@ namespace LostSpells.Components
             };
         }
 
-        /// <summary>
-        /// 투사체 프리팹 자동 생성
-        /// </summary>
         private void CreateProjectilePrefab()
         {
             GameObject projectile = new GameObject("SkillProjectile");
-
-            // CircleCollider2D 추가 (트리거)
             CircleCollider2D collider = projectile.AddComponent<CircleCollider2D>();
-            collider.radius = 0.3f;
-            collider.isTrigger = true;
-
-            // Rigidbody2D 추가 (Kinematic)
+            collider.radius = 0.3f; collider.isTrigger = true;
             Rigidbody2D rb2d = projectile.AddComponent<Rigidbody2D>();
-            rb2d.bodyType = RigidbodyType2D.Kinematic;
-            rb2d.gravityScale = 0f;
-
-            // SkillProjectile 컴포넌트 추가
+            rb2d.bodyType = RigidbodyType2D.Kinematic; rb2d.gravityScale = 0f;
             projectile.AddComponent<SkillProjectile>();
-
             skillProjectilePrefab = projectile;
         }
 
-        /// <summary>
-        /// 스킬 쿨다운 업데이트
-        /// </summary>
         private void UpdateSkillCooldowns()
         {
             for (int i = 0; i < skillCooldowns.Length; i++)
@@ -772,100 +500,46 @@ namespace LostSpells.Components
                 if (skillCooldowns[i] > 0)
                 {
                     skillCooldowns[i] -= Time.deltaTime;
-                    if (skillCooldowns[i] < 0)
-                        skillCooldowns[i] = 0;
+                    if (skillCooldowns[i] < 0) skillCooldowns[i] = 0;
                 }
             }
         }
 
-        /// <summary>
-        /// 스킬 입력 처리 (1~6 키)
-        /// </summary>
         private void HandleSkillInput()
         {
             if (Keyboard.current == null) return;
-
-            // 1~6 키 체크
             for (int i = 0; i < 6; i++)
             {
-                Key skillKey = Key.Digit1 + i; // Digit1, Digit2, ..., Digit6
-                if (Keyboard.current[skillKey].wasPressedThisFrame)
-                {
-                    CastSkill(i);
-                }
+                Key skillKey = Key.Digit1 + i;
+                if (Keyboard.current[skillKey].wasPressedThisFrame) CastSkill(i);
             }
         }
 
-        /// <summary>
-        /// 스킬 시전
-        /// </summary>
         private void CastSkill(int skillIndex)
         {
-            // 유효성 검사
-            if (skillIndex < 0 || skillIndex >= availableSkills.Length)
-                return;
-
+            if (skillIndex < 0 || skillIndex >= availableSkills.Length) return;
             LostSpells.Data.SkillData skill = availableSkills[skillIndex];
-            if (skill == null)
-                return;
+            if (skill == null || skillCooldowns[skillIndex] > 0 || currentMana < skill.manaCost) return;
 
-            // 쿨다운 체크
-            if (skillCooldowns[skillIndex] > 0)
-                return;
-
-            // 마나 체크
-            if (currentMana < skill.manaCost)
-                return;
-
-            // 마나 소모
             currentMana -= (int)skill.manaCost;
-
-            // 쿨다운 시작
             skillCooldowns[skillIndex] = skill.cooldown;
-
-            // 투사체 발사
             FireProjectile(skill);
         }
 
-        /// <summary>
-        /// 투사체 발사
-        /// </summary>
         private void FireProjectile(LostSpells.Data.SkillData skill)
         {
-            // 발사 위치 결정
             Vector3 spawnPosition = skillCastPoint != null ? skillCastPoint.position : transform.position;
-
-            // 발사 방향 결정 (플레이어가 보는 방향)
             Vector3 direction = spriteRenderer.flipX ? Vector3.left : Vector3.right;
-
-            // VFX 프리팹 로드
             GameObject vfxPrefab = null;
-            if (!string.IsNullOrEmpty(skill.effectPrefabPath))
-            {
-                vfxPrefab = UnityEngine.Resources.Load<GameObject>(skill.effectPrefabPath);
-            }
+            if (!string.IsNullOrEmpty(skill.effectPrefabPath)) vfxPrefab = Resources.Load<GameObject>(skill.effectPrefabPath);
 
-            // 투사체 생성
             if (skillProjectilePrefab != null)
             {
                 GameObject projectile = Instantiate(skillProjectilePrefab, spawnPosition, Quaternion.identity);
-
-                // SkillProjectile 컴포넌트 초기화
                 SkillProjectile projectileScript = projectile.GetComponent<SkillProjectile>();
-                if (projectileScript == null)
-                {
-                    projectileScript = projectile.AddComponent<SkillProjectile>();
-                }
+                if (projectileScript == null) projectileScript = projectile.AddComponent<SkillProjectile>();
 
-                projectileScript.Initialize(
-                    (int)skill.damage,
-                    skill.projectileSpeed,
-                    skill.projectileLifetime,
-                    direction,
-                    vfxPrefab
-                );
-
-                // 투사체에 VFX 이펙트를 자식으로 추가 (발사 중 이펙트)
+                projectileScript.Initialize((int)skill.damage, skill.projectileSpeed, skill.projectileLifetime, direction, vfxPrefab);
                 if (vfxPrefab != null)
                 {
                     GameObject vfx = Instantiate(vfxPrefab, projectile.transform);
@@ -874,24 +548,7 @@ namespace LostSpells.Components
             }
         }
 
-        /// <summary>
-        /// 특정 스킬의 쿨다운 확인
-        /// </summary>
-        public float GetSkillCooldown(int skillIndex)
-        {
-            if (skillIndex < 0 || skillIndex >= skillCooldowns.Length)
-                return 0f;
-            return skillCooldowns[skillIndex];
-        }
-
-        /// <summary>
-        /// 특정 스킬 정보 가져오기
-        /// </summary>
-        public LostSpells.Data.SkillData GetSkill(int skillIndex)
-        {
-            if (skillIndex < 0 || skillIndex >= availableSkills.Length)
-                return null;
-            return availableSkills[skillIndex];
-        }
+        public float GetSkillCooldown(int skillIndex) => (skillIndex < 0 || skillIndex >= skillCooldowns.Length) ? 0f : skillCooldowns[skillIndex];
+        public LostSpells.Data.SkillData GetSkill(int skillIndex) => (skillIndex < 0 || skillIndex >= availableSkills.Length) ? null : availableSkills[skillIndex];
     }
 }

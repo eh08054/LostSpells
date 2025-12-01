@@ -26,7 +26,7 @@ namespace LostSpells.Systems
         [Header("Manual Monster Settings (useChapterMonster가 false일 때)")]
         [SerializeField] private Sprite manualMonsterSprite;
         [SerializeField] private int baseHealth = 50;
-        [SerializeField] private float baseSpeed = 2f;
+        [SerializeField] private float baseSpeed = 0.5f;
 
         [Header("Dynamic Spawn")]
         [SerializeField] private bool followCamera = true; // 카메라를 따라 스폰 위치 이동
