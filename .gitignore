@@ -115,3 +115,4 @@ nul
 Server/temp/
 Server/last_recording.wav
 Server/__pycache__/
+Server/VoiceCommand_Online/.env

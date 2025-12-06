@@ -203,7 +203,7 @@ namespace LostSpells.UI
                 if (number > 0) groundTextureCache[number] = tex;
             }
 
-            Debug.Log($"[MenuParallax] Loaded {skyTextureCache.Count} sky, {mountainTextureCache.Count} mountain, {groundTextureCache.Count} ground textures");
+            // Debug.Log($"[MenuParallax] Loaded {skyTextureCache.Count} sky, {mountainTextureCache.Count} mountain, {groundTextureCache.Count} ground textures");
         }
 
         private int ExtractNumberFromName(string name)
@@ -359,7 +359,7 @@ namespace LostSpells.UI
             mountainOffset = 0f;
             groundOffset = 0f;
 
-            Debug.Log($"[MenuParallax] Applied Map {mapIndex + 1}: Sky-{map.skyNumber}, Mountain-{map.mountainNumber}, Ground-{map.groundNumber}");
+            // Debug.Log($"[MenuParallax] Applied Map {mapIndex + 1}: Sky-{map.skyNumber}, Mountain-{map.mountainNumber}, Ground-{map.groundNumber}");
         }
     }
 }

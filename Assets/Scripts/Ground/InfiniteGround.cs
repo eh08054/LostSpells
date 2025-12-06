@@ -142,7 +142,7 @@ namespace LostSpells.Ground
             // 콜라이더를 스프라이트 상단에 배치 (콜라이더 높이의 절반만큼 위로)
             groundY = spriteTop - (groundHeight / 2f);
 
-            Debug.Log($"Ground aligned: Sprite top={spriteTop}, Collider Y={groundY}");
+            // Debug.Log($"Ground aligned: Sprite top={spriteTop}, Collider Y={groundY}");
         }
 
         /// <summary>

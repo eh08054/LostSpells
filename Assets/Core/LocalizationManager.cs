@@ -91,6 +91,7 @@ namespace LostSpells.Systems
             localizedTexts = new Dictionary<string, Dictionary<Language, string>>();
 
             // Main Menu
+            AddText("game_title", "Lost Spells", "Lost Spells");
             AddText("main_menu_title", "메인 메뉴", "Main Menu");
             AddText("main_menu_play", "플레이", "Play");
             AddText("main_menu_options", "설정", "Options");
@@ -100,8 +101,14 @@ namespace LostSpells.Systems
             AddText("quit_popup_message", "정말 종료하시겠습니까?", "Are you sure you want to quit?");
             AddText("quit_popup_quit", "종료", "Quit");
             AddText("quit_popup_cancel", "취소", "Cancel");
+            // Quit Confirmation (Menu 씬용)
+            AddText("quit_title", "게임 종료", "Quit Game");
+            AddText("quit_message", "정말 종료하시겠습니까?", "Are you sure you want to quit?");
+            AddText("quit_confirm", "종료", "Quit");
+            AddText("quit_cancel", "취소", "Cancel");
 
             // Game Mode Selection
+            AddText("game_mode_title", "게임 모드 선택", "Select Game Mode");
             AddText("game_mode_selection_title", "게임 모드 선택", "Game Mode Selection");
             AddText("game_mode_story", "스토리 모드", "Story Mode");
             AddText("game_mode_chapter", "챕터 선택", "Chapter Select");
@@ -182,6 +189,9 @@ namespace LostSpells.Systems
             AddText("options_keybinding_store", "상점 조작", "Store Controls");
 
             // Options - Voice Recognition
+            AddText("options_voice_server_mode", "서버 모드", "Server Mode");
+            AddText("options_voice_server_mode_online", "온라인 (OpenAI API)", "Online (OpenAI API)");
+            AddText("options_voice_server_mode_offline", "오프라인 (로컬)", "Offline (Local)");
             AddText("options_voice_server_status", "서버 상태:", "Server Status:");
             AddText("options_voice_server_not_checked", "확인 안됨", "Not checked");
             AddText("options_voice_server_check", "확인", "Check");

@@ -24,6 +24,7 @@ namespace LostSpells.UI
 
         private Label chapterInfoLabel;
         private Label waveInfoLabel;
+        private Label scoreDisplayLabel;
         private VisualElement menuPopup;
         private Label menuTitle;
 
@@ -52,6 +53,13 @@ namespace LostSpells.UI
         private Label insufficientMessage;
         private Button confirmInsufficientButton;
 
+        // 스테이지 클리어 팝업
+        private VisualElement stageClearPopup;
+        private Label stageClearTitle;
+        private Label clearScoreValue;
+        private Button nextChapterButton;
+        private Button clearMainMenuButton;
+
         // 상점 팝업
         private VisualElement storePopup;
         private Button storeCloseButton;
@@ -59,10 +67,18 @@ namespace LostSpells.UI
         private Label storeReviveStoneCount;
         private Button storeDiamondButton;
         private Button storeReviveStoneButton;
-        private ScrollView storeDiamondPanel;
-        private ScrollView storeReviveStonePanel;
+        private VisualElement storeDiamondPanel;
+        private VisualElement storeReviveStonePanel;
         private VisualElement storeDiamondGrid;
         private VisualElement storeReviveStoneGrid;
+
+        // 옵션 팝업
+        private VisualElement optionsPopup;
+        private Button optionsCloseButton;
+        private InGameOptionsPanelController optionsPanelController;
+
+        // 상점이 게임오버에서 열렸는지 추적
+        private bool storeOpenedFromGameOver = false;
 
         // 화폐 표시 Label
         private Label diamondCountLabel;
@@ -139,6 +155,9 @@ namespace LostSpells.UI
 
             // 로컬라이제이션 적용 (Start 이후에 호출하여 모든 UI가 준비된 후 적용)
             UpdateLocalization();
+
+            // 초기 점수 표시
+            UpdateScore();
         }
 
         private void Update()
@@ -208,6 +227,7 @@ namespace LostSpells.UI
             menuButton = root.Q<Button>("MenuButton");
             chapterInfoLabel = root.Q<Label>("ChapterInfo");
             waveInfoLabel = root.Q<Label>("WaveInfo");
+            scoreDisplayLabel = root.Q<Label>("ScoreDisplay");
             menuPopup = root.Q<VisualElement>("MenuPopup");
             menuTitle = menuPopup?.Q<Label>(className: "menu-title");
 
@@ -246,6 +266,9 @@ namespace LostSpells.UI
             attackSkillList = root.Q<VisualElement>("AttackSkillList");
             defenseSkillList = root.Q<VisualElement>("DefenseSkillList");
 
+            // 스킬창 UI 요소들의 키보드 네비게이션 비활성화 (A/D 키가 캐릭터 이동만 담당하도록)
+            DisableKeyboardNavigation();
+
             // 메뉴 팝업 버튼들
             resumeButton = root.Q<Button>("ResumeButton");
             settingsButton = root.Q<Button>("SettingsButton");
@@ -277,17 +300,34 @@ namespace LostSpells.UI
             insufficientMessage = root.Q<Label>("InsufficientMessage");
             confirmInsufficientButton = root.Q<Button>("ConfirmInsufficientButton");
 
-            // 상점 팝업 UI 요소
+            // 스테이지 클리어 팝업 UI 요소
+            stageClearPopup = root.Q<VisualElement>("StageClearPopup");
+            stageClearTitle = root.Q<Label>("StageClearTitle");
+            clearScoreValue = root.Q<Label>("ClearScoreValue");
+            nextChapterButton = root.Q<Button>("NextChapterButton");
+            clearMainMenuButton = root.Q<Button>("ClearMainMenuButton");
+
+            // 상점 팝업 UI 요소 (공유 템플릿 사용)
             storePopup = root.Q<VisualElement>("StorePopup");
             storeCloseButton = root.Q<Button>("StoreCloseButton");
-            storeDiamondCount = root.Q<Label>("StoreDiamondCount");
-            storeReviveStoneCount = root.Q<Label>("StoreReviveStoneCount");
-            storeDiamondButton = root.Q<Button>("StoreDiamondButton");
-            storeReviveStoneButton = root.Q<Button>("StoreReviveStoneButton");
-            storeDiamondPanel = root.Q<ScrollView>("StoreDiamondPanel");
-            storeReviveStonePanel = root.Q<ScrollView>("StoreReviveStonePanel");
-            storeDiamondGrid = root.Q<VisualElement>("StoreDiamondGrid");
-            storeReviveStoneGrid = root.Q<VisualElement>("StoreReviveStoneGrid");
+            storeDiamondCount = root.Q<Label>("HeaderDiamonds");
+            storeReviveStoneCount = root.Q<Label>("HeaderReviveStones");
+            storeDiamondButton = root.Q<Button>("DiamondButton");
+            storeReviveStoneButton = root.Q<Button>("ReviveStoneButton");
+            storeDiamondPanel = root.Q<VisualElement>("DiamondPanel");
+            storeReviveStonePanel = root.Q<VisualElement>("ReviveStonePanel");
+            storeDiamondGrid = root.Q<VisualElement>("DiamondProductGrid");
+            storeReviveStoneGrid = root.Q<VisualElement>("ReviveStoneProductGrid");
+
+            // 옵션 팝업 UI 요소
+            optionsPopup = root.Q<VisualElement>("OptionsPopup");
+            optionsCloseButton = root.Q<Button>("OptionsCloseButton");
+
+            // 옵션 패널 컨트롤러 초기화
+            if (optionsPopup != null)
+            {
+                optionsPanelController = new InGameOptionsPanelController(root, optionsPopup);
+            }
 
             // 이벤트 등록
             if (menuButton != null)
@@ -326,6 +366,12 @@ namespace LostSpells.UI
             if (confirmInsufficientButton != null)
                 confirmInsufficientButton.clicked += OnConfirmInsufficientButtonClicked;
 
+            // 스테이지 클리어 팝업 버튼 이벤트
+            if (nextChapterButton != null)
+                nextChapterButton.clicked += OnNextChapterButtonClicked;
+            if (clearMainMenuButton != null)
+                clearMainMenuButton.clicked += OnClearMainMenuButtonClicked;
+
             // 상점 팝업 버튼 이벤트
             if (storeCloseButton != null)
                 storeCloseButton.clicked += OnStoreCloseButtonClicked;
@@ -335,6 +381,10 @@ namespace LostSpells.UI
 
             if (storeReviveStoneButton != null)
                 storeReviveStoneButton.clicked += OnStoreReviveStoneButtonClicked;
+
+            // 옵션 팝업 버튼 이벤트
+            if (optionsCloseButton != null)
+                optionsCloseButton.clicked += OnOptionsCloseButtonClicked;
 
             // 스킬 카테고리 버튼 이벤트
             if (allSkillButton != null)
@@ -357,9 +407,6 @@ namespace LostSpells.UI
 
             // Localization 이벤트 등록 (실제 적용은 Start에서)
             LocalizationManager.Instance.OnLanguageChanged += UpdateLocalization;
-
-            // Additive 씬 언로드 감지 (Options/Store에서 돌아올 때)
-            SceneManager.sceneUnloaded += OnSceneUnloaded;
         }
 
         private void OnDisable()
@@ -390,9 +437,6 @@ namespace LostSpells.UI
 
             // Localization 이벤트 해제
             UnregisterLocalizationEvents();
-
-            // Additive 씬 언로드 이벤트 해제
-            SceneManager.sceneUnloaded -= OnSceneUnloaded;
         }
 
         private void OnDestroy()
@@ -416,13 +460,39 @@ namespace LostSpells.UI
         }
 
         /// <summary>
-        /// 스킬 목록 로드
+        /// 스킬 목록 로드 (PlayerComponent의 스킬 사용)
         /// </summary>
         private void LoadSkills()
         {
-            var allSkills = DataManager.Instance.GetAllSkillData();
+            List<SkillData> allSkills = new List<SkillData>();
 
-            if (allSkills == null || allSkills.Count == 0)
+            // PlayerComponent에서 스킬 가져오기
+            if (playerComponent != null)
+            {
+                var playerSkills = playerComponent.GetAllSkills();
+                if (playerSkills != null)
+                {
+                    foreach (var skill in playerSkills)
+                    {
+                        if (skill != null)
+                        {
+                            allSkills.Add(skill);
+                        }
+                    }
+                }
+            }
+
+            // PlayerComponent에 스킬이 없으면 DataManager에서 가져오기
+            if (allSkills.Count == 0)
+            {
+                var dataManagerSkills = DataManager.Instance.GetAllSkillData();
+                if (dataManagerSkills != null)
+                {
+                    allSkills = dataManagerSkills;
+                }
+            }
+
+            if (allSkills.Count == 0)
             {
                 Debug.LogWarning("[InGameUI] 스킬 데이터가 없습니다!");
                 return;
@@ -470,6 +540,10 @@ namespace LostSpells.UI
                 skillItem.Add(skillName);
                 skillItem.Add(accuracy);
                 container.Add(skillItem);
+
+                // 클릭 이벤트 추가 - 스킬 발사
+                var capturedSkill = skill; // 클로저를 위한 지역 변수 캡처
+                skillItem.RegisterCallback<ClickEvent>(evt => OnSkillItemClicked(capturedSkill));
 
                 // 정확도 맵 초기화
                 if (!string.IsNullOrEmpty(skill.voiceKeyword))
@@ -534,9 +608,32 @@ namespace LostSpells.UI
             skillItem.Add(accuracy);
             container.Add(skillItem);
 
+            // 클릭 이벤트 추가 - 스킬 발사
+            var capturedSkill = skill; // 클로저를 위한 지역 변수 캡처
+            skillItem.RegisterCallback<ClickEvent>(evt => OnSkillItemClicked(capturedSkill));
+
             if (!string.IsNullOrEmpty(skill.voiceKeyword))
             {
                 skillAccuracyMap[skill.voiceKeyword] = 0f;
+            }
+        }
+
+        /// <summary>
+        /// 스킬 아이템 클릭 시 스킬 발사
+        /// </summary>
+        private void OnSkillItemClicked(SkillData skill)
+        {
+            if (playerComponent == null)
+            {
+                Debug.LogWarning("[InGameUI] PlayerComponent를 찾을 수 없습니다!");
+                return;
+            }
+
+            // 플레이어 스킬 시전
+            bool success = playerComponent.CastSkillByData(skill);
+            if (success)
+            {
+                Debug.Log($"[InGameUI] 스킬 발사: {skill.GetLocalizedName()}");
             }
         }
 
@@ -895,45 +992,115 @@ namespace LostSpells.UI
                 rightSidebar.style.display = DisplayStyle.Flex;
         }
 
-        /// <summary>
-        /// Additive 씬이 언로드될 때 호출 (Options/Store에서 돌아올 때)
-        /// </summary>
-        private void OnSceneUnloaded(Scene scene)
-        {
-            // Options나 Store 씬이 언로드되면 사이드바 다시 표시하고 게임 재개
-            if (scene.name == "Options" || scene.name == "Store")
-            {
-                ShowSidebars();
-                ResumeGame(); // 게임 재개
-
-                // Options에서 언어가 변경되었을 수 있으므로 UI 업데이트
-                if (scene.name == "Options")
-                {
-                    // LocalizationManager 이벤트 재구독
-                    LocalizationManager.Instance.OnLanguageChanged += UpdateLocalization;
-                    // 현재 언어로 UI 업데이트
-                    UpdateLocalization();
-                }
-
-                // Store에서 화폐가 변경되었을 수 있으므로 UI 업데이트
-                if (scene.name == "Store")
-                {
-                    saveData = SaveManager.Instance.GetCurrentSaveData();
-                    UpdateCurrencyDisplay();
-                }
-            }
-        }
-
         private void OnSettingsButtonClicked()
         {
             // 메뉴 팝업 닫기
             if (menuPopup != null)
                 menuPopup.style.display = DisplayStyle.None;
 
-            // 게임 상태 유지를 위해 Additive 모드로 씬 로드
-            // Time.timeScale은 일시정지 상태 유지 (설정 화면에서도 일시정지)
-            SceneNavigationManager.Instance.SetPreviousScene("InGame");
-            SceneManager.LoadScene("Options", LoadSceneMode.Additive);
+            // 옵션 팝업 표시
+            ShowOptionsPopup();
+        }
+
+        /// <summary>
+        /// 옵션 팝업 표시
+        /// </summary>
+        private void ShowOptionsPopup()
+        {
+            if (optionsPopup != null)
+            {
+                optionsPopup.style.display = DisplayStyle.Flex;
+                optionsPanelController?.OnPanelShown();
+                optionsPanelController?.UpdateLocalization(LocalizationManager.Instance);
+            }
+        }
+
+        /// <summary>
+        /// 옵션 팝업 숨기기
+        /// </summary>
+        private void HideOptionsPopup()
+        {
+            if (optionsPopup != null)
+            {
+                optionsPopup.style.display = DisplayStyle.None;
+            }
+        }
+
+        /// <summary>
+        /// 옵션 닫기 버튼 클릭
+        /// </summary>
+        private void OnOptionsCloseButtonClicked()
+        {
+            CloseOptionsPopup();
+        }
+
+        /// <summary>
+        /// 옵션 팝업 열기 (외부에서 호출용)
+        /// </summary>
+        public void OpenOptionsPopup()
+        {
+            // 메뉴 팝업이 열려있으면 닫기
+            if (menuPopup != null)
+                menuPopup.style.display = DisplayStyle.None;
+
+            HideSidebars();
+            ShowOptionsPopup();
+        }
+
+        /// <summary>
+        /// 옵션 팝업 닫기 (외부에서 호출용)
+        /// </summary>
+        public void CloseOptionsPopup()
+        {
+            HideOptionsPopup();
+            ShowSidebars();
+            ResumeGame();
+
+            // 언어가 변경되었을 수 있으므로 UI 업데이트
+            UpdateLocalization();
+        }
+
+        /// <summary>
+        /// 옵션 팝업이 열려있는지 확인
+        /// </summary>
+        public bool IsOptionsPopupVisible()
+        {
+            return optionsPopup != null && optionsPopup.style.display == DisplayStyle.Flex;
+        }
+
+        /// <summary>
+        /// 상점 팝업 열기 (외부에서 호출용)
+        /// </summary>
+        public void OpenStorePopup()
+        {
+            // 메뉴 팝업이 열려있으면 닫기
+            if (menuPopup != null)
+                menuPopup.style.display = DisplayStyle.None;
+
+            HideSidebars();
+            PauseGame();
+            ShowStorePopupFromMenu();
+        }
+
+        /// <summary>
+        /// 상점 팝업 닫기 (외부에서 호출용)
+        /// </summary>
+        public void CloseStorePopup()
+        {
+            if (storePopup != null)
+                storePopup.style.display = DisplayStyle.None;
+
+            ShowSidebars();
+            ResumeGame();
+            UpdateCurrencyDisplay();
+        }
+
+        /// <summary>
+        /// 상점 팝업이 열려있는지 확인
+        /// </summary>
+        public bool IsStorePopupVisible()
+        {
+            return storePopup != null && storePopup.style.display == DisplayStyle.Flex;
         }
 
         private void OnStoreButtonClicked()
@@ -942,10 +1109,31 @@ namespace LostSpells.UI
             if (menuPopup != null)
                 menuPopup.style.display = DisplayStyle.None;
 
-            // 게임 상태 유지를 위해 Additive 모드로 씬 로드
-            // Time.timeScale은 일시정지 상태 유지 (상점 화면에서도 일시정지)
-            SceneNavigationManager.Instance.SetPreviousScene("InGame");
-            SceneManager.LoadScene("Store", LoadSceneMode.Additive);
+            // 내장 상점 팝업 표시
+            ShowStorePopupFromMenu();
+        }
+
+        /// <summary>
+        /// 메뉴에서 상점 팝업 표시
+        /// </summary>
+        private void ShowStorePopupFromMenu()
+        {
+            if (storePopup != null)
+            {
+                storePopup.style.display = DisplayStyle.Flex;
+
+                // 화폐 표시 업데이트
+                UpdateStoreCurrencyDisplay();
+
+                // 상품 목록 생성 (처음 한번만)
+                if (storeDiamondGrid != null && storeDiamondGrid.childCount == 0)
+                {
+                    PopulateStoreProducts();
+                }
+
+                // 다이아몬드 탭 기본 표시
+                ShowStoreDiamondPanel();
+            }
         }
 
         private void OnMainMenuButtonClicked()
@@ -1100,9 +1288,98 @@ namespace LostSpells.UI
         {
             if (gameOverPopup != null)
             {
+                // 최종 점수 표시
+                if (scoreValue != null && GameStateManager.Instance != null)
+                {
+                    scoreValue.text = GameStateManager.Instance.GetScore().ToString();
+                }
+
                 gameOverPopup.style.display = DisplayStyle.Flex;
                 Time.timeScale = 0; // 게임 일시정지
             }
+        }
+
+        /// <summary>
+        /// 점수 업데이트
+        /// </summary>
+        public void UpdateScore()
+        {
+            if (GameStateManager.Instance != null)
+            {
+                int score = GameStateManager.Instance.GetScore();
+
+                // 게임오버 팝업 점수 업데이트
+                if (scoreValue != null)
+                {
+                    scoreValue.text = score.ToString();
+                }
+
+                // HUD 점수 표시 업데이트
+                if (scoreDisplayLabel != null)
+                {
+                    string scoreText = LocalizationManager.Instance?.GetText("ingame_score") ?? "점수";
+                    scoreDisplayLabel.text = $"{scoreText}: {score}";
+                }
+            }
+        }
+
+        /// <summary>
+        /// 스테이지 클리어 팝업 표시
+        /// </summary>
+        public void ShowStageClear()
+        {
+            if (stageClearPopup != null)
+            {
+                // 최종 점수 표시
+                if (clearScoreValue != null && GameStateManager.Instance != null)
+                {
+                    clearScoreValue.text = GameStateManager.Instance.GetScore().ToString();
+                }
+
+                stageClearPopup.style.display = DisplayStyle.Flex;
+                Time.timeScale = 0; // 게임 일시정지
+            }
+        }
+
+        /// <summary>
+        /// 다음 챕터 버튼 클릭
+        /// </summary>
+        private void OnNextChapterButtonClicked()
+        {
+            Time.timeScale = 1; // 게임 재개
+
+            // 다음 챕터로 이동
+            if (GameStateManager.Instance != null)
+            {
+                int currentChapter = GameStateManager.Instance.GetCurrentChapterId();
+                int nextChapter = currentChapter + 1;
+
+                // 최대 챕터 체크 (12챕터까지)
+                if (nextChapter > 12)
+                {
+                    // 모든 챕터 클리어 - 메인 메뉴로
+                    SceneManager.LoadScene("Menu");
+                }
+                else
+                {
+                    // 다음 챕터 시작
+                    GameStateManager.Instance.StartChapter(nextChapter);
+                    SceneManager.LoadScene("InGame");
+                }
+            }
+            else
+            {
+                SceneManager.LoadScene("Menu");
+            }
+        }
+
+        /// <summary>
+        /// 클리어 후 메인 메뉴 버튼 클릭
+        /// </summary>
+        private void OnClearMainMenuButtonClicked()
+        {
+            Time.timeScale = 1; // 게임 재개
+            SceneManager.LoadScene("Menu");
         }
 
         /// <summary>
@@ -1175,7 +1452,7 @@ namespace LostSpells.UI
                 // 화폐 UI 업데이트
                 UpdateCurrencyDisplay();
 
-                Debug.Log("부활 완료! 남은 부활석: " + SaveManager.Instance.GetCurrentSaveData().reviveStones);
+                // Debug.Log("부활 완료! 남은 부활석: " + SaveManager.Instance.GetCurrentSaveData().reviveStones);
             }
         }
 
@@ -1197,6 +1474,9 @@ namespace LostSpells.UI
         /// </summary>
         private void OnGoToStoreButtonClicked()
         {
+            // 게임오버에서 열렸음을 표시
+            storeOpenedFromGameOver = true;
+
             // 부족 팝업 숨기고 상점 팝업 표시
             if (insufficientReviveStonePopup != null)
                 insufficientReviveStonePopup.style.display = DisplayStyle.None;
@@ -1227,9 +1507,19 @@ namespace LostSpells.UI
             if (storePopup != null)
                 storePopup.style.display = DisplayStyle.None;
 
-            // 게임오버 팝업으로 복귀
-            if (gameOverPopup != null)
+            // 게임오버 상태인지 확인 (Time.timeScale이 0이고 게임오버 팝업이 있었던 경우)
+            // 게임오버 팝업에서 열린 경우 게임오버 팝업으로 복귀
+            // 메뉴에서 열린 경우 사이드바 표시하고 게임 재개
+            if (gameOverPopup != null && storeOpenedFromGameOver)
+            {
                 gameOverPopup.style.display = DisplayStyle.Flex;
+                storeOpenedFromGameOver = false;
+            }
+            else
+            {
+                ShowSidebars();
+                ResumeGame();
+            }
 
             // 화폐 UI 업데이트
             UpdateCurrencyDisplay();
@@ -1384,11 +1674,11 @@ namespace LostSpells.UI
                 {
                     SaveManager.Instance.AddReviveStones(quantity);
                     UpdateStoreCurrencyDisplay();
-                    Debug.Log($"부활석 {quantity}개 구매 완료!");
+                    // Debug.Log($"부활석 {quantity}개 구매 완료!");
                 }
                 else
                 {
-                    Debug.Log("다이아몬드가 부족합니다!");
+                    // Debug.Log("다이아몬드가 부족합니다!");
                 }
             }
         }
@@ -1414,6 +1704,36 @@ namespace LostSpells.UI
             Time.timeScale = 1; // 게임 재개
             GameStateManager.Instance.ResetGameState(); // 게임 상태 초기화
             SceneManager.LoadScene("Menu");
+        }
+
+        /// <summary>
+        /// 키보드 네비게이션 비활성화 (A/D 키가 캐릭터 이동만 담당하도록)
+        /// </summary>
+        private void DisableKeyboardNavigation()
+        {
+            // 스킬 카테고리 버튼들의 포커스 비활성화
+            if (allSkillButton != null) allSkillButton.focusable = false;
+            if (attackSkillButton != null) attackSkillButton.focusable = false;
+            if (defenseSkillButton != null) defenseSkillButton.focusable = false;
+
+            // ScrollView들의 포커스 비활성화
+            if (allSkillScrollView != null) allSkillScrollView.focusable = false;
+            if (attackSkillScrollView != null) attackSkillScrollView.focusable = false;
+            if (defenseSkillScrollView != null) defenseSkillScrollView.focusable = false;
+
+            // 스킬 카테고리 스크롤뷰 포커스 비활성화
+            var skillCategoryScrollView = uiDocument.rootVisualElement.Q<ScrollView>("SkillCategoryScrollView");
+            if (skillCategoryScrollView != null) skillCategoryScrollView.focusable = false;
+
+            // 스킬 패널 내 모든 버튼의 포커스 비활성화
+            if (skillPanel != null)
+            {
+                var allButtons = skillPanel.Query<Button>().ToList();
+                foreach (var button in allButtons)
+                {
+                    button.focusable = false;
+                }
+            }
         }
     }
 }

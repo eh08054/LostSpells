@@ -87,6 +87,9 @@ namespace LostSpells.Data
         // 음성인식 모델 설정
         public string voiceRecognitionModel = "base";
 
+        // 음성인식 서버 모드 (online/offline)
+        public string voiceServerMode = "online";
+
         // 키 바인딩 (액션 이름 -> 키 코드)
         public Dictionary<string, string> keyBindings = new Dictionary<string, string>();
 
@@ -133,6 +136,7 @@ namespace LostSpells.Data
                 uiLanguage = "Korean",
                 voiceRecognitionLanguage = "ko",
                 voiceRecognitionModel = "base",
+                voiceServerMode = "online",
                 keyBindings = new Dictionary<string, string>(),
                 totalPlayTime = 0,
                 totalMonstersKilled = 0,

@@ -132,7 +132,7 @@ namespace LostSpells.Background
             if (groundRenderer != null && groundSprite != null)
                 groundRenderer.sprite = groundSprite;
 
-            Debug.Log($"[InGameParallax] Applied Map: Sky-{skyNumber}, Mountain-{mountainNumber}, Ground-{groundNumber}");
+            // Debug.Log($"[InGameParallax] Applied Map: Sky-{skyNumber}, Mountain-{mountainNumber}, Ground-{groundNumber}");
         }
 
         void LateUpdate()

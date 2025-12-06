@@ -1,78 +1,223 @@
 using UnityEngine;
 using System.Collections;
+using LostSpells.Data;
 using LostSpells.Components;
 
 namespace LostSpells.Systems
 {
     /// <summary>
-    /// 웨이브별 적 생성 시스템
-    /// 화면 오른쪽에서 적을 생성합니다
+    /// 챕터/웨이브 기반 적 스폰 시스템
     /// </summary>
     public class EnemySpawner : MonoBehaviour
     {
-        [Header("Enemy Prefab")]
-        [SerializeField] private GameObject enemyPrefab;
+        [Header("Wave Data")]
+        [SerializeField] private ChapterWaveData chapterData;
 
         [Header("Spawn Settings")]
-        [SerializeField] private Transform spawnPoint;
-        [SerializeField] private float spawnHeight = 0f; // 스폰 높이 (Y 좌표)
-        [SerializeField] private float spawnInterval = 2f;
-        [SerializeField] private int enemiesPerWave = 5;
+        [SerializeField] private float spawnHeight = 0f;
+        [SerializeField] private bool followCamera = true;
+        [SerializeField] private float enemyScale = 0.5f; // 적 크기 (기본 0.5)
 
-        [Header("Chapter Monster Data")]
-        [SerializeField] private LostSpells.Data.ChapterMonsterData[] chapterMonsters; // 챕터별 몬스터 데이터 (1~8)
-        [SerializeField] private bool useChapterMonster = true; // 챕터별 몬스터 사용 여부
+        [Header("Wave Progression")]
+        [SerializeField] private bool autoProgressWaves = true;
+        [SerializeField] private float delayBetweenWaves = 3f;
+        [SerializeField] private int maxWaves = 3; // 챕터당 최대 웨이브 수
 
-        [Header("Manual Monster Settings (useChapterMonster가 false일 때)")]
-        [SerializeField] private Sprite manualMonsterSprite;
-        [SerializeField] private int baseHealth = 50;
-        [SerializeField] private float baseSpeed = 2f;
+        [Header("Debug")]
+        [SerializeField] private bool autoStartWave = false;
+        [SerializeField] private int debugStartWave = 1;
 
-        [Header("Dynamic Spawn")]
-        [SerializeField] private bool followCamera = true; // 카메라를 따라 스폰 위치 이동
-
-        private int currentWave = 1;
+        private int currentWave = 0;
         private bool isSpawning = false;
+        private bool isWaitingForEnemiesClear = false;
+        private int spawnedEnemiesThisWave = 0;
         private UnityEngine.Camera mainCamera;
+        private Vector3 leftSpawnPoint;
+        private Vector3 rightSpawnPoint;
+
+        public int CurrentWave => currentWave;
+        public bool IsSpawning => isSpawning;
 
         private void Awake()
         {
-            // 메인 카메라 찾기
             mainCamera = UnityEngine.Camera.main;
+            UpdateSpawnPoints();
 
-            // 스폰 포인트가 없으면 화면 오른쪽에 생성 - Awake에서 실행하여 다른 스크립트의 Start보다 먼저 초기화
-            if (spawnPoint == null)
+            // Resources에서 챕터 데이터 자동 로드 시도
+            if (chapterData == null)
             {
-                GameObject spawnObj = new GameObject("SpawnPoint");
-                spawnPoint = spawnObj.transform;
-                spawnPoint.parent = transform;
+                try
+                {
+                    chapterData = Resources.Load<ChapterWaveData>("WaveData/Chapter1WaveData");
+                    if (chapterData != null)
+                    {
+                        Debug.Log($"[EnemySpawner] Loaded chapter data: {chapterData.chapterName}");
+                    }
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogWarning($"[EnemySpawner] Failed to load chapter data: {e.Message}");
+                }
+            }
 
-                UpdateSpawnPointPosition();
+            // 로드 실패 시 기본 웨이브 데이터 생성
+            if (chapterData == null)
+            {
+                CreateDefaultChapterData();
+            }
+        }
+
+        /// <summary>
+        /// 기본 챕터 데이터 생성 (Resources 로드 실패 시)
+        /// </summary>
+        private void CreateDefaultChapterData()
+        {
+            chapterData = ScriptableObject.CreateInstance<ChapterWaveData>();
+            chapterData.chapterId = 1;
+            chapterData.chapterName = "Chapter 1";
+
+            // 기본 웨이브 생성
+            chapterData.waves = new WaveInfo[]
+            {
+                new WaveInfo
+                {
+                    waveNumber = 1,
+                    startDelay = 1f,
+                    enemies = new EnemySpawnInfo[]
+                    {
+                        new EnemySpawnInfo
+                        {
+                            enemyPrefabName = "BlueDragonEnemy",
+                            spawnSide = SpawnSide.Right,
+                            count = 2,
+                            spawnInterval = 1.5f
+                        },
+                        new EnemySpawnInfo
+                        {
+                            enemyPrefabName = "GreenDragonEnemy",
+                            spawnSide = SpawnSide.Left,
+                            count = 2,
+                            spawnInterval = 1.5f
+                        }
+                    }
+                },
+                new WaveInfo
+                {
+                    waveNumber = 2,
+                    startDelay = 1f,
+                    enemies = new EnemySpawnInfo[]
+                    {
+                        new EnemySpawnInfo
+                        {
+                            enemyPrefabName = "BlueRexEnemy",
+                            spawnSide = SpawnSide.Both,
+                            count = 3,
+                            spawnInterval = 1f
+                        },
+                        new EnemySpawnInfo
+                        {
+                            enemyPrefabName = "BlueDragonEnemy",
+                            spawnSide = SpawnSide.Right,
+                            count = 2,
+                            spawnInterval = 1f
+                        }
+                    }
+                },
+                new WaveInfo
+                {
+                    waveNumber = 3,
+                    startDelay = 1f,
+                    enemies = new EnemySpawnInfo[]
+                    {
+                        new EnemySpawnInfo
+                        {
+                            enemyPrefabName = "GreenDragonEnemy",
+                            spawnSide = SpawnSide.Right,
+                            count = 3,
+                            spawnInterval = 1f
+                        },
+                        new EnemySpawnInfo
+                        {
+                            enemyPrefabName = "BlueRexEnemy",
+                            spawnSide = SpawnSide.Left,
+                            count = 2,
+                            spawnInterval = 1.5f
+                        }
+                    }
+                }
+            };
+
+            Debug.Log("[EnemySpawner] Created default chapter data");
+        }
+
+        private void Start()
+        {
+            if (autoStartWave)
+            {
+                StartWave(debugStartWave);
             }
         }
 
         private void Update()
         {
-            // 카메라를 따라 스폰 위치 업데이트
             if (followCamera && mainCamera != null)
             {
-                UpdateSpawnPointPosition();
+                UpdateSpawnPoints();
+            }
+
+            // 자동 웨이브 진행: 모든 적이 처치되면 다음 웨이브 시작
+            if (autoProgressWaves && isWaitingForEnemiesClear && !isSpawning)
+            {
+                int aliveEnemies = FindObjectsByType<EnemyComponent>(FindObjectsSortMode.None).Length;
+                if (aliveEnemies == 0)
+                {
+                    isWaitingForEnemiesClear = false;
+                    StartCoroutine(StartNextWaveAfterDelay());
+                }
             }
         }
 
         /// <summary>
-        /// 스폰 포인트 위치 업데이트
+        /// 딜레이 후 다음 웨이브 시작 또는 스테이지 클리어
         /// </summary>
-        private void UpdateSpawnPointPosition()
+        private IEnumerator StartNextWaveAfterDelay()
         {
-            if (spawnPoint == null || mainCamera == null)
-                return;
+            // 마지막 웨이브 클리어 시 스테이지 클리어
+            if (currentWave >= maxWaves)
+            {
+                Debug.Log($"[EnemySpawner] Stage Clear! All {maxWaves} waves completed!");
+                yield return new WaitForSeconds(1f); // 잠시 대기
 
-            // 화면 오른쪽 끝으로 설정
-            Vector3 rightEdge = mainCamera.ViewportToWorldPoint(new Vector3(1.1f, 0.5f, 10f));
-            rightEdge.y = spawnHeight; // 사용자가 설정한 높이 사용
-            rightEdge.z = 0; // Z 위치를 0으로 고정
-            spawnPoint.position = rightEdge;
+                // 스테이지 클리어 UI 표시
+                LostSpells.UI.InGameUI inGameUI = FindFirstObjectByType<LostSpells.UI.InGameUI>();
+                if (inGameUI != null)
+                {
+                    inGameUI.ShowStageClear();
+                }
+                yield break;
+            }
+
+            Debug.Log($"[EnemySpawner] All enemies defeated! Next wave in {delayBetweenWaves}s...");
+            yield return new WaitForSeconds(delayBetweenWaves);
+            StartNextWave();
+        }
+
+        /// <summary>
+        /// 스폰 포인트 업데이트
+        /// </summary>
+        private void UpdateSpawnPoints()
+        {
+            if (mainCamera == null) return;
+
+            // 오른쪽 스폰 포인트 (화면 밖)
+            rightSpawnPoint = mainCamera.ViewportToWorldPoint(new Vector3(1.15f, 0.5f, 10f));
+            rightSpawnPoint.y = spawnHeight;
+            rightSpawnPoint.z = 0;
+
+            // 왼쪽 스폰 포인트 (화면 밖)
+            leftSpawnPoint = mainCamera.ViewportToWorldPoint(new Vector3(-0.15f, 0.5f, 10f));
+            leftSpawnPoint.y = spawnHeight;
+            leftSpawnPoint.z = 0;
         }
 
         /// <summary>
@@ -80,164 +225,255 @@ namespace LostSpells.Systems
         /// </summary>
         public void StartWave(int waveNumber)
         {
+            if (isSpawning)
+            {
+                Debug.LogWarning("[EnemySpawner] Already spawning!");
+                return;
+            }
+
+            if (chapterData == null)
+            {
+                Debug.LogError("[EnemySpawner] No chapter data assigned!");
+                return;
+            }
+
             currentWave = waveNumber;
 
-            if (!isSpawning)
+            // GameStateManager 및 UI 업데이트
+            if (GameStateManager.Instance != null)
             {
-                StartCoroutine(SpawnWave());
+                GameStateManager.Instance.SetCurrentWave(waveNumber);
+            }
+
+            // InGameUI 웨이브 정보 업데이트
+            LostSpells.UI.InGameUI inGameUI = FindFirstObjectByType<LostSpells.UI.InGameUI>();
+            if (inGameUI != null)
+            {
+                inGameUI.UpdateWaveInfo();
+            }
+
+            StartCoroutine(SpawnWaveCoroutine(waveNumber));
+        }
+
+        /// <summary>
+        /// 다음 웨이브 시작
+        /// </summary>
+        public void StartNextWave()
+        {
+            StartWave(currentWave + 1);
+        }
+
+        /// <summary>
+        /// 웨이브 스폰 코루틴
+        /// </summary>
+        private IEnumerator SpawnWaveCoroutine(int waveNumber)
+        {
+            isSpawning = true;
+
+            WaveInfo waveInfo = chapterData.GetWave(waveNumber);
+            if (waveInfo == null)
+            {
+                Debug.LogError($"[EnemySpawner] Wave {waveNumber} not found!");
+                isSpawning = false;
+                yield break;
+            }
+
+            Debug.Log($"[EnemySpawner] Starting Wave {waveNumber}");
+
+            // 웨이브 시작 대기
+            yield return new WaitForSeconds(waveInfo.startDelay);
+
+            // 각 적 그룹 스폰
+            foreach (var enemyInfo in waveInfo.enemies)
+            {
+                GameObject prefab = enemyInfo.LoadPrefab();
+                if (prefab == null)
+                {
+                    Debug.LogWarning($"[EnemySpawner] Enemy prefab '{enemyInfo.enemyPrefabName}' not found, skipping...");
+                    continue;
+                }
+
+                yield return StartCoroutine(SpawnEnemyGroup(prefab, enemyInfo, waveNumber));
+            }
+
+            isSpawning = false;
+            isWaitingForEnemiesClear = true; // 적이 모두 처치될 때까지 대기
+            Debug.Log($"[EnemySpawner] Wave {waveNumber} spawning complete! Waiting for enemies to be defeated...");
+        }
+
+        /// <summary>
+        /// 적 그룹 스폰
+        /// </summary>
+        private IEnumerator SpawnEnemyGroup(GameObject prefab, EnemySpawnInfo info, int waveNumber)
+        {
+            int leftCount = 0;
+            int rightCount = 0;
+
+            for (int i = 0; i < info.count; i++)
+            {
+                Vector3 spawnPos;
+                int moveDirection;
+
+                // 스폰 위치 결정
+                switch (info.spawnSide)
+                {
+                    case SpawnSide.Left:
+                        spawnPos = leftSpawnPoint;
+                        moveDirection = 1; // 오른쪽으로 이동
+                        break;
+
+                    case SpawnSide.Right:
+                        spawnPos = rightSpawnPoint;
+                        moveDirection = -1; // 왼쪽으로 이동
+                        break;
+
+                    case SpawnSide.Both:
+                    default:
+                        // 번갈아가며 스폰
+                        if (i % 2 == 0)
+                        {
+                            spawnPos = rightSpawnPoint;
+                            moveDirection = -1;
+                            rightCount++;
+                        }
+                        else
+                        {
+                            spawnPos = leftSpawnPoint;
+                            moveDirection = 1;
+                            leftCount++;
+                        }
+                        break;
+                }
+
+                // 적 생성
+                SpawnEnemy(prefab, spawnPos, moveDirection, waveNumber, info);
+
+                yield return new WaitForSeconds(info.spawnInterval);
             }
         }
 
         /// <summary>
-        /// 웨이브의 적들을 생성
+        /// 개별 적 스폰
         /// </summary>
-        private IEnumerator SpawnWave()
+        private void SpawnEnemy(GameObject prefab, Vector3 position, int moveDirection, int waveNumber, EnemySpawnInfo info)
         {
-            isSpawning = true;
+            GameObject enemyObj = Instantiate(prefab, position, Quaternion.identity);
+            enemyObj.name = $"{prefab.name} (Wave {waveNumber})";
 
-            int enemiesToSpawn = enemiesPerWave + (currentWave - 1) * 2; // 웨이브마다 2마리씩 증가
-
-            for (int i = 0; i < enemiesToSpawn; i++)
+            // Body(스프라이트)만 크기 조절 (UI는 유지)
+            Transform body = enemyObj.transform.Find("Body");
+            if (body != null)
             {
-                SpawnEnemy();
-                yield return new WaitForSeconds(spawnInterval);
+                body.localScale = Vector3.one * enemyScale;
             }
 
+            // UI 위치 및 크기 조절 (플레이어와 동일하게)
+            // Body 스프라이트가 sortingOrder=100이므로 UI는 그 위에 표시되어야 함
+            Transform healthBar = enemyObj.transform.Find("HealthBarBackground");
+            if (healthBar != null)
+            {
+                // 적 스프라이트 위에 보이도록 높이 조절
+                healthBar.localPosition = new Vector3(0, 1.5f, 0);
+                healthBar.localScale = new Vector3(1f, 0.2f, 1f);
+
+                // SortingOrder를 Body(100)보다 높게 설정
+                SpriteRenderer healthBarSprite = healthBar.GetComponent<SpriteRenderer>();
+                if (healthBarSprite != null)
+                {
+                    healthBarSprite.sortingOrder = 110;
+                }
+
+                // HealthBarFill도 설정
+                Transform healthBarFill = healthBar.Find("HealthBarFill");
+                if (healthBarFill != null)
+                {
+                    SpriteRenderer fillSprite = healthBarFill.GetComponent<SpriteRenderer>();
+                    if (fillSprite != null)
+                    {
+                        fillSprite.sortingOrder = 115;
+                    }
+                }
+            }
+
+            Transform nameText = enemyObj.transform.Find("NameText");
+            if (nameText != null)
+            {
+                // 체력바 위에 보이도록 높이 조절
+                RectTransform rectTransform = nameText.GetComponent<RectTransform>();
+                if (rectTransform != null)
+                {
+                    rectTransform.anchoredPosition = new Vector2(0, 1.8f);
+                }
+
+                // SortingOrder를 Body(100)보다 높게 설정
+                MeshRenderer meshRenderer = nameText.GetComponent<MeshRenderer>();
+                if (meshRenderer != null)
+                {
+                    meshRenderer.sortingOrder = 110;
+                }
+            }
+
+            // EnemyComponent 설정
+            EnemyComponent enemy = enemyObj.GetComponent<EnemyComponent>();
+            if (enemy != null)
+            {
+                // 웨이브별 스탯 보너스 적용
+                int bonusHealth = info.healthBonus * (waveNumber - 1);
+                float bonusSpeed = info.speedBonus * (waveNumber - 1);
+
+                enemy.ApplyWaveBonus(bonusHealth, bonusSpeed);
+                enemy.SetMoveDirection(moveDirection);
+
+                // 웨이브별 점수 보너스: 웨이브 * 10 (웨이브 1 = 10점, 웨이브 5 = 50점)
+                enemy.SetScoreValue(waveNumber * 10);
+            }
+
+            // Enemy 레이어 설정
+            enemyObj.layer = LayerMask.NameToLayer("Enemy");
+        }
+
+        /// <summary>
+        /// 챕터 데이터 설정
+        /// </summary>
+        public void SetChapterData(ChapterWaveData data)
+        {
+            chapterData = data;
+        }
+
+        /// <summary>
+        /// 스폰 중지
+        /// </summary>
+        public void StopSpawning()
+        {
+            StopAllCoroutines();
             isSpawning = false;
         }
 
         /// <summary>
-        /// 적 하나 생성
-        /// </summary>
-        private void SpawnEnemy()
-        {
-            if (enemyPrefab == null)
-            {
-                Debug.LogWarning("Enemy Prefab이 설정되지 않았습니다!");
-                return;
-            }
-
-            // 적 생성
-            GameObject enemyObj = Instantiate(enemyPrefab, spawnPoint.position, Quaternion.identity);
-            enemyObj.name = $"Enemy (Wave {currentWave})";
-
-            // 적 컴포넌트 설정
-            EnemyComponent enemy = enemyObj.GetComponent<EnemyComponent>();
-            if (enemy != null)
-            {
-                // 몬스터 데이터 가져오기
-                Sprite monsterSprite = null;
-                string monsterName = "Enemy";
-                int health = baseHealth;
-                float speed = baseSpeed;
-
-                // 챕터별 몬스터 사용
-                if (useChapterMonster && chapterMonsters != null && chapterMonsters.Length > 0)
-                {
-                    // GameStateManager에서 현재 챕터 ID 가져오기 (없으면 1로 기본값)
-                    int currentChapterId = 1;
-
-                    // GameStateManager가 있으면 현재 챕터 가져오기
-                    if (LostSpells.Systems.GameStateManager.Instance != null)
-                    {
-                        currentChapterId = LostSpells.Systems.GameStateManager.Instance.GetCurrentChapterId();
-                    }
-
-                    // 현재 챕터에 맞는 몬스터 데이터 찾기
-                    LostSpells.Data.ChapterMonsterData monsterData = null;
-                    foreach (var data in chapterMonsters)
-                    {
-                        if (data != null && data.chapterId == currentChapterId)
-                        {
-                            monsterData = data;
-                            break;
-                        }
-                    }
-
-                    // 몬스터 데이터 적용
-                    if (monsterData != null)
-                    {
-                        monsterSprite = monsterData.monsterSprite;
-                        monsterName = monsterData.monsterName;
-                        health = monsterData.baseHealth;
-                        speed = monsterData.baseSpeed;
-                    }
-                    else
-                    {
-                        Debug.LogWarning($"챕터 {currentChapterId}에 대한 몬스터 데이터를 찾을 수 없습니다. 수동 설정을 사용합니다.");
-                        monsterSprite = manualMonsterSprite;
-                    }
-                }
-                else
-                {
-                    // 수동 몬스터 설정 사용
-                    monsterSprite = manualMonsterSprite;
-                }
-
-                // 웨이브가 높아질수록 적 능력치 증가
-                health += (currentWave - 1) * 10;
-                speed += (currentWave - 1) * 0.2f;
-
-                // 적 초기화 (스프라이트 포함)
-                enemy.Initialize(monsterName, health, speed, monsterSprite);
-            }
-        }
-
-        /// <summary>
-        /// 적 Prefab 설정
-        /// </summary>
-        public void SetEnemyPrefab(GameObject prefab)
-        {
-            enemyPrefab = prefab;
-        }
-
-        public bool IsSpawning() => isSpawning;
-
-        /// <summary>
-        /// Scene 뷰에서 스폰 위치 시각화 (에디터 전용)
+        /// Scene 뷰에서 스폰 위치 시각화
         /// </summary>
         private void OnDrawGizmosSelected()
         {
-            // 스폰 위치 계산
-            Vector3 spawnPosition = Vector3.zero;
+            UnityEngine.Camera cam = UnityEngine.Camera.main;
+            if (cam == null) return;
 
-            if (spawnPoint != null)
-            {
-                // SpawnPoint가 있으면 그 위치 사용
-                spawnPosition = spawnPoint.position;
-            }
-            else
-            {
-                // SpawnPoint가 없으면 예상 위치 계산
-                UnityEngine.Camera mainCam = UnityEngine.Camera.main;
-                if (mainCam != null)
-                {
-                    spawnPosition = mainCam.ViewportToWorldPoint(new Vector3(1.1f, 0.5f, 10f));
-                    spawnPosition.y = spawnHeight;
-                }
-            }
+            // 오른쪽 스폰 위치
+            Vector3 rightPos = cam.ViewportToWorldPoint(new Vector3(1.15f, 0.5f, 10f));
+            rightPos.y = spawnHeight;
+            rightPos.z = 0;
 
-            // Gizmo 그리기
             Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(spawnPosition, 0.5f); // 스폰 위치에 빨간 원
+            Gizmos.DrawWireSphere(rightPos, 0.5f);
+            Gizmos.DrawLine(rightPos + Vector3.up, rightPos + Vector3.down);
 
-            Gizmos.color = Color.yellow;
-            Gizmos.DrawLine(spawnPosition + Vector3.up * 1f, spawnPosition + Vector3.down * 1f); // 세로선
-            Gizmos.DrawLine(spawnPosition + Vector3.left * 0.5f, spawnPosition + Vector3.right * 0.5f); // 가로선
-        }
+            // 왼쪽 스폰 위치
+            Vector3 leftPos = cam.ViewportToWorldPoint(new Vector3(-0.15f, 0.5f, 10f));
+            leftPos.y = spawnHeight;
+            leftPos.z = 0;
 
-        /// <summary>
-        /// Inspector에서 값이 변경될 때 호출
-        /// </summary>
-        private void OnValidate()
-        {
-            #if UNITY_EDITOR
-            // 에디터에서 spawnHeight 변경 시 SpawnPoint 위치 업데이트
-            if (Application.isPlaying && spawnPoint != null)
-            {
-                UpdateSpawnPointPosition();
-            }
-            #endif
+            Gizmos.color = Color.green;
+            Gizmos.DrawWireSphere(leftPos, 0.5f);
+            Gizmos.DrawLine(leftPos + Vector3.up, leftPos + Vector3.down);
         }
     }
 }

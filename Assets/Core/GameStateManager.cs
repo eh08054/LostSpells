@@ -56,6 +56,9 @@ namespace LostSpells.Systems
         // 엔드리스 모드 여부
         private bool isEndlessMode = false;
 
+        // 점수 시스템
+        private int currentScore = 0;
+
         private void Awake()
         {
             if (instance != null && instance != this)
@@ -101,6 +104,7 @@ namespace LostSpells.Systems
             currentChapterId = chapterId;
             currentWaveNumber = 1; // 웨이브 초기화
             isEndlessMode = false;
+            currentScore = 0; // 점수 초기화
 
             // 챕터 ID에 따른 맵 설정 (1-12 챕터 순서대로, 초과 시 순환)
             int mapIndex = (chapterId - 1) % predefinedMaps.Length;
@@ -111,7 +115,7 @@ namespace LostSpells.Systems
             currentMountainNumber = map.mountain;
             currentGroundNumber = map.ground;
 
-            Debug.Log($"[GameState] Chapter {chapterId} started with Map {mapIndex + 1}: Sky-{currentSkyNumber}, Mountain-{currentMountainNumber}, Ground-{currentGroundNumber}");
+            // Debug.Log($"[GameState] Chapter {chapterId} started with Map {mapIndex + 1}: Sky-{currentSkyNumber}, Mountain-{currentMountainNumber}, Ground-{currentGroundNumber}");
         }
 
         /// <summary>
@@ -122,6 +126,7 @@ namespace LostSpells.Systems
             currentChapterId = -1;
             currentWaveNumber = 1;
             isEndlessMode = true;
+            currentScore = 0; // 점수 초기화
 
             // 엔드리스 모드는 랜덤 맵 선택
             int mapIndex = Random.Range(0, predefinedMaps.Length);
@@ -130,7 +135,7 @@ namespace LostSpells.Systems
             currentMountainNumber = map.mountain;
             currentGroundNumber = map.ground;
 
-            Debug.Log($"[GameState] Endless Mode started with Map {mapIndex + 1}: Sky-{currentSkyNumber}, Mountain-{currentMountainNumber}, Ground-{currentGroundNumber}");
+            // Debug.Log($"[GameState] Endless Mode started with Map {mapIndex + 1}: Sky-{currentSkyNumber}, Mountain-{currentMountainNumber}, Ground-{currentGroundNumber}");
         }
 
         /// <summary>
@@ -211,6 +216,7 @@ namespace LostSpells.Systems
             currentMountainNumber = 1;
             currentGroundNumber = 1;
             isEndlessMode = false;
+            currentScore = 0;
         }
 
         /// <summary>
@@ -235,6 +241,32 @@ namespace LostSpells.Systems
         public bool IsFromInGame()
         {
             return previousScene == "InGame";
+        }
+
+        // ========== 점수 시스템 ==========
+
+        /// <summary>
+        /// 점수 추가
+        /// </summary>
+        public void AddScore(int amount)
+        {
+            currentScore += amount;
+        }
+
+        /// <summary>
+        /// 현재 점수 가져오기
+        /// </summary>
+        public int GetScore()
+        {
+            return currentScore;
+        }
+
+        /// <summary>
+        /// 점수 초기화
+        /// </summary>
+        public void ResetScore()
+        {
+            currentScore = 0;
         }
     }
 }

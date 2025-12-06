@@ -1,5 +1,6 @@
 using UnityEngine;
 using TMPro;
+using LostSpells.Systems;
 
 namespace LostSpells.Components
 {
@@ -20,6 +21,7 @@ namespace LostSpells.Components
         [SerializeField] private float stoppingDistance = 1.5f; // 플레이어와 유지할 거리
         [SerializeField] private int attackDamage = 10; // 공격 데미지
         [SerializeField] private float attackCooldown = 1f; // 공격 쿨다운 (초)
+        [SerializeField] private int scoreValue = 10; // 처치 시 획득 점수
 
         [Header("Visual")]
         [SerializeField] private SpriteRenderer spriteRenderer;
@@ -34,6 +36,7 @@ namespace LostSpells.Components
         private Transform player;
         private Rigidbody2D rb;
         private float lastAttackTime = 0f; // 마지막 공격 시간
+        private bool hasSpeedParameter = false; // Animator에 Speed 파라미터 존재 여부
 
         private void Awake()
         {
@@ -53,6 +56,7 @@ namespace LostSpells.Components
             {
                 rb = gameObject.AddComponent<Rigidbody2D>();
             }
+            rb.bodyType = RigidbodyType2D.Dynamic; // Dynamic으로 설정 (Static은 velocity 사용 불가)
             rb.gravityScale = 1; // 중력 적용
             rb.constraints = RigidbodyConstraints2D.FreezeRotation; // 회전 방지
 
@@ -115,10 +119,33 @@ namespace LostSpells.Components
                         }
                     }
                 }
+
+                // 플레이어와의 물리 충돌 무시 (플레이어는 적을 통과)
+                if (player != null)
+                {
+                    PlayerComponent playerComponent = player.GetComponent<PlayerComponent>();
+                    if (playerComponent != null)
+                    {
+                        playerComponent.IgnoreEnemyCollision(myCollider, true);
+                    }
+                }
             }
 
             // 체력바 초기화
             UpdateHealthBar();
+
+            // Animator Speed 파라미터 존재 확인
+            if (animator != null && animator.runtimeAnimatorController != null)
+            {
+                foreach (var param in animator.parameters)
+                {
+                    if (param.name == "Speed" && param.type == AnimatorControllerParameterType.Float)
+                    {
+                        hasSpeedParameter = true;
+                        break;
+                    }
+                }
+            }
         }
 
         private void FixedUpdate()
@@ -222,7 +249,7 @@ namespace LostSpells.Components
             }
 
             // 애니메이터 Speed 파라미터 업데이트
-            if (animator != null && animator.runtimeAnimatorController != null)
+            if (hasSpeedParameter)
             {
                 float speed = Mathf.Abs(velocity.x);
                 animator.SetFloat("Speed", speed);
@@ -234,12 +261,21 @@ namespace LostSpells.Components
         /// </summary>
         public void Initialize(string name, int health, float speed, Sprite sprite = null)
         {
+            Initialize(name, health, speed, 10, sprite); // 기본 점수 10
+        }
+
+        /// <summary>
+        /// 적 초기화 (점수 포함)
+        /// </summary>
+        public void Initialize(string name, int health, float speed, int score, Sprite sprite = null)
+        {
             enemyName = name;
             maxHealth = health;
             currentHealth = health;
             moveSpeed = speed;
+            scoreValue = score;
 
-            // 스프라이트 설정
+            // 스프라이트 설정 (sprite가 제공되면 무조건 사용)
             if (sprite != null)
             {
                 enemySprite = sprite;
@@ -248,6 +284,11 @@ namespace LostSpells.Components
                     spriteRenderer.sprite = sprite;
                 }
             }
+            else
+            {
+                // sprite가 null이면 경고 - 프리팹 기본값이 사용됨
+                Debug.LogWarning($"[EnemyComponent] {name}: No sprite provided! Using prefab default.");
+            }
 
             if (nameText != null)
             {
@@ -255,6 +296,21 @@ namespace LostSpells.Components
             }
 
             UpdateHealthBar();
+        }
+
+        /// <summary>
+        /// 이동 방향 설정 (스프라이트 방향 초기화용)
+        /// -1: 왼쪽으로 이동 (오른쪽을 바라봄), 1: 오른쪽으로 이동 (왼쪽을 바라봄)
+        /// </summary>
+        public void SetMoveDirection(int direction)
+        {
+            // 스프라이트 방향 설정 (이동 방향의 반대를 바라봄)
+            if (spriteRenderer != null)
+            {
+                // direction이 -1이면 왼쪽으로 이동 = 오른쪽을 바라봄 (flipX = false)
+                // direction이 1이면 오른쪽으로 이동 = 왼쪽을 바라봄 (flipX = true)
+                spriteRenderer.flipX = direction > 0;
+            }
         }
 
         /// <summary>
@@ -323,7 +379,7 @@ namespace LostSpells.Components
             // Death 애니메이션 재생
             if (animator != null && animator.runtimeAnimatorController != null)
             {
-                animator.SetBool("IsDead", true);
+                animator.SetBool("Die", true);
             }
 
             // 이동 멈추기
@@ -349,7 +405,18 @@ namespace LostSpells.Components
             // Death 애니메이션 길이 후에 제거 (0.5초)
             Destroy(gameObject, 0.5f);
 
-            // TODO: 경험치/골드 드랍
+            // 점수 추가
+            if (GameStateManager.Instance != null)
+            {
+                GameStateManager.Instance.AddScore(scoreValue);
+
+                // UI 업데이트
+                LostSpells.UI.InGameUI inGameUI = FindFirstObjectByType<LostSpells.UI.InGameUI>();
+                if (inGameUI != null)
+                {
+                    inGameUI.UpdateScore();
+                }
+            }
         }
 
         /// <summary>
@@ -376,5 +443,25 @@ namespace LostSpells.Components
         public string GetEnemyName() => enemyName;
         public int GetCurrentHealth() => currentHealth;
         public int GetMaxHealth() => maxHealth;
+
+        /// <summary>
+        /// 점수 설정
+        /// </summary>
+        public void SetScoreValue(int score)
+        {
+            scoreValue = score;
+        }
+
+        /// <summary>
+        /// 웨이브 보너스 적용 (체력/속도 증가)
+        /// </summary>
+        public void ApplyWaveBonus(int healthBonus, float speedBonus)
+        {
+            maxHealth += healthBonus;
+            currentHealth = maxHealth;
+            moveSpeed += speedBonus;
+
+            UpdateHealthBar();
+        }
     }
 }

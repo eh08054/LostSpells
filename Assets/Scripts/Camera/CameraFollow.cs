@@ -64,7 +64,7 @@ namespace LostSpells.Camera
                 if (player != null)
                 {
                     target = player.transform;
-                    Debug.Log("[CameraFollow] 플레이어를 찾았습니다: " + player.name);
+                    // Debug.Log("[CameraFollow] 플레이어를 찾았습니다: " + player.name);
                 }
                 else
                 {

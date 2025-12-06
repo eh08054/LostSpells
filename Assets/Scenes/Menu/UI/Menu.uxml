@@ -1,7 +1,14 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements"
         editor-extension-mode="False">
-    <!-- USS 스타일시트 -->
+    <!-- USS 스타일시트 (순서 중요: 공통 먼저, 메뉴 스타일이 덮어쓰기) -->
+    <Style src="/Assets/Scenes/Common/UI/Common.uss"/>
     <Style src="/Assets/Scenes/Menu/UI/Menu.uss"/>
+    <Style src="/Assets/Scenes/Menu/UI/Options.uss"/>
+    <Style src="/Assets/Scenes/Menu/UI/Store.uss"/>
+
+    <!-- 공용 템플릿 -->
+    <ui:Template name="OptionsContent" src="/Assets/Scenes/Common/UI/OptionsContent.uxml"/>
+    <ui:Template name="StoreContent" src="/Assets/Scenes/Common/UI/StoreContent.uxml"/>
 
     <!-- 전체 화면 컨테이너 -->
     <ui:VisualElement name="Menu" class="screen-container">
@@ -118,6 +125,58 @@
                     <!-- 플레이 버튼 -->
                     <ui:Button text="Start Game" name="EndlessPlayButton" class="play-button"/>
                 </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- ========== 옵션 패널 ========== -->
+        <ui:VisualElement name="OptionsPanel" class="menu-panel" style="display: none;">
+            <ui:VisualElement class="ui-content">
+                <!-- 상단 헤더 바 -->
+                <ui:VisualElement name="HeaderBar" class="header-bar">
+                    <ui:VisualElement class="header-side header-left">
+                        <ui:Button text="" name="OptionsBackButton" class="back-button"/>
+                    </ui:VisualElement>
+                    <ui:Label text="Options" name="OptionsTitle" class="header-title"/>
+                    <ui:VisualElement class="header-side"/>
+                </ui:VisualElement>
+
+                <!-- 공용 옵션 컨텐츠 템플릿 -->
+                <ui:Instance template="OptionsContent"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- ========== 상점 패널 ========== -->
+        <ui:VisualElement name="StorePanel" class="menu-panel" style="display: none;">
+            <ui:VisualElement class="ui-content">
+                <!-- 상단 헤더 바 -->
+                <ui:VisualElement name="HeaderBar" class="header-bar">
+                    <ui:VisualElement class="header-side header-left">
+                        <ui:Button text="" name="StoreBackButton" class="back-button"/>
+                    </ui:VisualElement>
+                    <ui:Label text="Store" name="StoreTitle" class="header-title"/>
+                    <!-- 오른쪽 영역: 보유 아이템 표시 -->
+                    <ui:VisualElement class="header-side header-right">
+                        <!-- 다이아 표시 -->
+                        <ui:VisualElement class="header-currency-bar">
+                            <ui:VisualElement class="currency-icon-large diamond-icon"/>
+                            <ui:VisualElement class="currency-bar-content">
+                                <ui:Label text="0" name="HeaderDiamonds" class="currency-amount"/>
+                                <ui:VisualElement class="currency-plus-button"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <!-- 부활석 표시 -->
+                        <ui:VisualElement class="header-currency-bar">
+                            <ui:VisualElement class="currency-icon-large revive-stone-icon"/>
+                            <ui:VisualElement class="currency-bar-content">
+                                <ui:Label text="0" name="HeaderReviveStones" class="currency-amount"/>
+                                <ui:VisualElement class="currency-plus-button"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <!-- 공용 상점 컨텐츠 템플릿 -->
+                <ui:Instance template="StoreContent"/>
             </ui:VisualElement>
         </ui:VisualElement>
 

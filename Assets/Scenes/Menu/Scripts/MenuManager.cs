@@ -20,7 +20,9 @@ namespace LostSpells.UI
             MainMenu,
             GameModeSelection,
             StoryMode,
-            EndlessMode
+            EndlessMode,
+            Options,
+            Store
         }
 
         private UIDocument uiDocument;
@@ -32,6 +34,8 @@ namespace LostSpells.UI
         private VisualElement gameModeSelectionPanel;
         private VisualElement storyModePanel;
         private VisualElement endlessModePanel;
+        private VisualElement optionsPanel;
+        private VisualElement storePanel;
 
         // 현재 활성화된 패널
         private MenuPanel currentPanel = MenuPanel.MainMenu;
@@ -45,6 +49,12 @@ namespace LostSpells.UI
         // 챕터 데이터
         private List<ChapterData> chapters;
         private PlayerSaveData saveData;
+
+        // Options 패널 참조
+        private OptionsPanelController optionsPanelController;
+
+        // Store 패널 참조
+        private StorePanelController storePanelController;
 
         private void Awake()
         {
@@ -61,6 +71,8 @@ namespace LostSpells.UI
             gameModeSelectionPanel = root.Q<VisualElement>("GameModeSelectionPanel");
             storyModePanel = root.Q<VisualElement>("StoryModePanel");
             endlessModePanel = root.Q<VisualElement>("EndlessModePanel");
+            optionsPanel = root.Q<VisualElement>("OptionsPanel");
+            storePanel = root.Q<VisualElement>("StorePanel");
             quitConfirmation = root.Q<VisualElement>("QuitConfirmation");
 
             // 이벤트 등록
@@ -68,6 +80,8 @@ namespace LostSpells.UI
             SetupGameModeSelectionEvents();
             SetupStoryModeEvents();
             SetupEndlessModeEvents();
+            SetupOptionsPanelEvents();
+            SetupStorePanelEvents();
 
             // Localization 이벤트 등록
             LocalizationManager.Instance.OnLanguageChanged += UpdateLocalization;
@@ -138,6 +152,14 @@ namespace LostSpells.UI
                     if (endlessModePanel != null) endlessModePanel.style.display = DisplayStyle.Flex;
                     LoadEndlessRankings();
                     break;
+                case MenuPanel.Options:
+                    if (optionsPanel != null) optionsPanel.style.display = DisplayStyle.Flex;
+                    if (optionsPanelController != null) optionsPanelController.OnPanelShown();
+                    break;
+                case MenuPanel.Store:
+                    if (storePanel != null) storePanel.style.display = DisplayStyle.Flex;
+                    if (storePanelController != null) storePanelController.OnPanelShown();
+                    break;
             }
 
             currentPanel = panel;
@@ -168,6 +190,12 @@ namespace LostSpells.UI
                     case MenuPanel.EndlessMode:
                         if (endlessModePanel != null) endlessModePanel.style.display = DisplayStyle.Flex;
                         break;
+                    case MenuPanel.Options:
+                        if (optionsPanel != null) optionsPanel.style.display = DisplayStyle.Flex;
+                        break;
+                    case MenuPanel.Store:
+                        if (storePanel != null) storePanel.style.display = DisplayStyle.Flex;
+                        break;
                 }
 
                 currentPanel = previousPanel;
@@ -185,6 +213,8 @@ namespace LostSpells.UI
             if (gameModeSelectionPanel != null) gameModeSelectionPanel.style.display = DisplayStyle.None;
             if (storyModePanel != null) storyModePanel.style.display = DisplayStyle.None;
             if (endlessModePanel != null) endlessModePanel.style.display = DisplayStyle.None;
+            if (optionsPanel != null) optionsPanel.style.display = DisplayStyle.None;
+            if (storePanel != null) storePanel.style.display = DisplayStyle.None;
         }
 
         #endregion
@@ -201,8 +231,8 @@ namespace LostSpells.UI
             var quitCancelButton = root.Q<Button>("QuitCancelButton");
 
             if (playButton != null) playButton.clicked += () => ShowPanel(MenuPanel.GameModeSelection);
-            if (optionsButton != null) optionsButton.clicked += () => SceneManager.LoadScene("Options");
-            if (storeButton != null) storeButton.clicked += () => SceneManager.LoadScene("Store");
+            if (optionsButton != null) optionsButton.clicked += () => ShowPanel(MenuPanel.Options);
+            if (storeButton != null) storeButton.clicked += () => ShowPanel(MenuPanel.Store);
             if (quitButton != null) quitButton.clicked += ShowQuitConfirmation;
             if (quitConfirmButton != null) quitConfirmButton.clicked += QuitGame;
             if (quitCancelButton != null) quitCancelButton.clicked += HideQuitConfirmation;
@@ -436,6 +466,34 @@ namespace LostSpells.UI
 
         #endregion
 
+        #region Options Panel Events
+
+        private void SetupOptionsPanelEvents()
+        {
+            // Options 패널 Back 버튼
+            var optionsBackButton = root.Q<Button>("OptionsBackButton");
+            if (optionsBackButton != null) optionsBackButton.clicked += () => ShowPanel(MenuPanel.MainMenu);
+
+            // OptionsPanelController 초기화
+            optionsPanelController = new OptionsPanelController(root, optionsPanel, this);
+        }
+
+        #endregion
+
+        #region Store Panel Events
+
+        private void SetupStorePanelEvents()
+        {
+            // Store 패널 Back 버튼
+            var storeBackButton = root.Q<Button>("StoreBackButton");
+            if (storeBackButton != null) storeBackButton.clicked += () => ShowPanel(MenuPanel.MainMenu);
+
+            // StorePanelController 초기화
+            storePanelController = new StorePanelController(root, storePanel, this);
+        }
+
+        #endregion
+
         #region Localization
 
         private void UpdateLocalization()
@@ -506,6 +564,18 @@ namespace LostSpells.UI
 
             var endlessPlayButton = root.Q<Button>("EndlessPlayButton");
             if (endlessPlayButton != null) endlessPlayButton.text = loc.GetText("endless_mode_start_game");
+
+            // Options 패널 로컬라이제이션
+            if (optionsPanelController != null)
+            {
+                optionsPanelController.UpdateLocalization(loc);
+            }
+
+            // Store 패널 로컬라이제이션
+            if (storePanelController != null)
+            {
+                storePanelController.UpdateLocalization(loc);
+            }
         }
 
         #endregion

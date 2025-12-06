@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UIElements;
 using System.Collections;
 using LostSpells.Data;
 using LostSpells.Components;
@@ -7,11 +8,33 @@ using LostSpells.Components;
 namespace LostSpells.Systems
 {
     /// <summary>
-    /// 음성 인식 매니저
+    /// 게임 컨텍스트 (현재 화면 상태)
+    /// </summary>
+    public enum GameContext
+    {
+        Unknown,
+        Menu_MainMenu,
+        Menu_GameModeSelection,
+        Menu_StoryMode,
+        Menu_EndlessMode,
+        InGame_Playing,
+        InGame_Paused,
+        InGame_GameOver,
+        Options,
+        Store
+    }
+
+    /// <summary>
+    /// 음성 인식 매니저 (전역 싱글톤)
     /// 스페이스바로 음성 인식 시작/중지
+    /// 모든 씬에서 동작하며 씬 전환 시에도 유지됨
     /// </summary>
     public class VoiceRecognitionManager : MonoBehaviour
     {
+        // 싱글톤 인스턴스
+        private static VoiceRecognitionManager _instance;
+        public static VoiceRecognitionManager Instance => _instance;
+
         [Header("Components")]
         [Tooltip("음성 녹음 컴포넌트")]
         public VoiceRecorder voiceRecorder;
@@ -39,13 +62,15 @@ namespace LostSpells.Systems
 
         private void Awake()
         {
-            // 중복 방지: VoiceRecognitionManager가 이미 존재하면 이 인스턴스 제거
-            VoiceRecognitionManager[] managers = FindObjectsByType<VoiceRecognitionManager>(FindObjectsSortMode.None);
-            if (managers.Length > 1)
+            // 싱글톤 패턴: 이미 인스턴스가 있으면 제거
+            if (_instance != null && _instance != this)
             {
                 Destroy(gameObject);
                 return;
             }
+
+            _instance = this;
+            DontDestroyOnLoad(gameObject); // 씬 전환 시에도 유지
 
             // 컴포넌트 자동 찾기 - Awake에서 초기화하여 다른 스크립트의 Start보다 먼저 실행되도록 함
             if (voiceRecorder == null)
@@ -59,25 +84,18 @@ namespace LostSpells.Systems
                 if (serverClient == null)
                 {
                     GameObject serverObj = new GameObject("VoiceServerClient");
+                    serverObj.transform.SetParent(transform); // 자식으로 설정하여 함께 유지
                     serverClient = serverObj.AddComponent<VoiceServerClient>();
                 }
             }
+
+            // 씬 로드 이벤트 등록
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
         }
 
         private void Start()
         {
-            if (playerComponent == null)
-            {
-                playerComponent = FindFirstObjectByType<PlayerComponent>();
-            }
-
-            if (playerComponent != null)
-            {
-                originalPlayerName = playerComponent.GetPlayerName();
-            }
-
-            // InGameUI 찾기
-            inGameUI = FindFirstObjectByType<LostSpells.UI.InGameUI>();
+            RefreshSceneReferences();
 
             // 언어 설정 로드
             LoadLanguageSettings();
@@ -89,12 +107,49 @@ namespace LostSpells.Systems
             InitializeSkills();
         }
 
+        /// <summary>
+        /// 씬이 로드될 때마다 참조 갱신
+        /// </summary>
+        private void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
+        {
+            // Additive 로드는 무시 (Options 등)
+            if (mode == UnityEngine.SceneManagement.LoadSceneMode.Additive)
+                return;
+
+            RefreshSceneReferences();
+        }
+
+        /// <summary>
+        /// 현재 씬의 참조 갱신
+        /// </summary>
+        private void RefreshSceneReferences()
+        {
+            playerComponent = FindFirstObjectByType<PlayerComponent>();
+            if (playerComponent != null)
+            {
+                originalPlayerName = playerComponent.GetPlayerName();
+            }
+
+            // InGameUI 찾기 (없으면 null)
+            inGameUI = FindFirstObjectByType<LostSpells.UI.InGameUI>();
+
+            // 스킬 초기화
+            InitializeSkills();
+        }
+
         private void OnDestroy()
         {
             // 이벤트 해제
             if (LocalizationManager.Instance != null)
             {
                 LocalizationManager.Instance.OnLanguageChanged -= OnUILanguageChanged;
+            }
+
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoaded;
+
+            if (_instance == this)
+            {
+                _instance = null;
             }
         }
 
@@ -188,8 +243,8 @@ namespace LostSpells.Systems
                 }
             }
 
-            // 최대 녹음 시간 체크
-            if (isRecording && Time.time - recordingStartTime >= maxRecordingTime)
+            // 최대 녹음 시간 체크 (Time.unscaledTime 사용 - 일시정지 중에도 동작)
+            if (isRecording && Time.unscaledTime - recordingStartTime >= maxRecordingTime)
             {
                 StopVoiceRecording();
             }
@@ -263,7 +318,7 @@ namespace LostSpells.Systems
             }
 
             isRecording = true;
-            recordingStartTime = Time.time;
+            recordingStartTime = Time.unscaledTime; // 일시정지 중에도 동작하도록
 
             // 새로운 인식 시작 시 이전 정확도 초기화
             if (inGameUI != null)
@@ -287,7 +342,7 @@ namespace LostSpells.Systems
                 return;
             }
 
-            float recordingDuration = Time.time - recordingStartTime;
+            float recordingDuration = Time.unscaledTime - recordingStartTime; // 일시정지 중에도 동작하도록
             if (recordingDuration < minRecordingTime)
             {
                 isRecording = false;
@@ -321,13 +376,17 @@ namespace LostSpells.Systems
             {
                 string failedText = LocalizationManager.Instance.GetText("voice_failed");
                 UpdateVoiceRecognitionDisplay(failedText);
-                yield return new WaitForSeconds(2f);
+                yield return new WaitForSecondsRealtime(2f); // 일시정지 중에도 동작
                 UpdateVoiceRecognitionDisplay("");
                 yield break;
             }
 
-            // 서버로 전송
-            yield return serverClient.RecognizeSkill(audioData, OnRecognitionResult);
+            // 현재 컨텍스트와 키워드 가져오기
+            string context = GetCurrentContextString();
+            string contextKeywords = GetContextKeywords();
+
+            // 서버로 전송 (컨텍스트 정보 포함)
+            yield return serverClient.RecognizeSkill(audioData, context, contextKeywords, OnRecognitionResult);
         }
 
         /// <summary>
@@ -409,10 +468,17 @@ namespace LostSpells.Systems
         }
 
         /// <summary>
-        /// 스킬의 로컬라이즈된 이름 가져오기
+        /// 스킬 또는 시스템 명령의 표시 이름 가져오기
         /// </summary>
         private string GetSkillDisplayName(string voiceKeyword)
         {
+            // 시스템 명령 처리
+            if (voiceKeyword.StartsWith("SYSTEM:"))
+            {
+                string command = voiceKeyword.Substring(7);
+                return GetSystemCommandDisplayName(command);
+            }
+
             // activeSkills에서 먼저 찾기 (현재 탭의 스킬 우선)
             if (activeSkills != null && activeSkills.Count > 0)
             {
@@ -439,11 +505,58 @@ namespace LostSpells.Systems
         }
 
         /// <summary>
-        /// 일정 시간 후 음성인식 표시 지우기
+        /// 시스템 명령의 표시 이름 가져오기
+        /// </summary>
+        private string GetSystemCommandDisplayName(string command)
+        {
+            switch (command)
+            {
+                case "OpenSettings": return "설정 열기";
+                case "CloseSettings": return "설정 닫기";
+                case "OpenMenu": return "메뉴 열기";
+                case "CloseMenu": return "메뉴 닫기";
+                case "PauseGame": return "일시정지";
+                case "ResumeGame": return "게임 재개";
+                case "RestartGame": return "재시작";
+                case "QuitToMainMenu": return "메인 메뉴로";
+                case "OpenInventory": return "인벤토리";
+                case "CloseInventory": return "인벤토리 닫기";
+                case "OpenMap": return "지도";
+                case "CloseMap": return "지도 닫기";
+                case "ShowHelp": return "도움말";
+                // 메뉴 네비게이션
+                case "StartGame": return "게임 시작";
+                case "SelectStoryMode": return "스토리 모드";
+                case "SelectEndlessMode": return "무한 모드";
+                case "StartEndless": return "무한 모드 시작";
+                case "GoBack": return "뒤로가기";
+                case "GoToMainMenu": return "메인 메뉴로";
+                case "GoToGameModeSelection": return "게임 모드 선택으로";
+                case "OpenStore": return "상점";
+                // 튜토리얼 및 챕터 선택
+                case "SelectTutorial": return "튜토리얼";
+                case "SelectChapter1": return "챕터 1";
+                case "SelectChapter2": return "챕터 2";
+                case "SelectChapter3": return "챕터 3";
+                case "SelectChapter4": return "챕터 4";
+                case "SelectChapter5": return "챕터 5";
+                case "SelectChapter6": return "챕터 6";
+                case "SelectChapter7": return "챕터 7";
+                case "SelectChapter8": return "챕터 8";
+                case "SelectChapter9": return "챕터 9";
+                case "SelectChapter10": return "챕터 10";
+                case "SelectChapter11": return "챕터 11";
+                case "SelectChapter12": return "챕터 12";
+                default: return command;
+            }
+        }
+
+        /// <summary>
+        /// 일정 시간 후 음성인식 표시 지우기 (일시정지 중에도 동작)
         /// </summary>
         private IEnumerator ClearVoiceRecognitionDisplayAfterDelay(float delay)
         {
-            yield return new WaitForSeconds(delay);
+            yield return new WaitForSecondsRealtime(delay); // 일시정지 중에도 동작
             UpdateVoiceRecognitionDisplay("");
         }
 
@@ -459,9 +572,38 @@ namespace LostSpells.Systems
         }
 
         /// <summary>
-        /// 인식된 스킬 실행
+        /// 인식된 스킬 또는 시스템 명령 실행
         /// </summary>
         private void ExecuteSkill(string skillName)
+        {
+            // Debug.Log($"[VoiceRecognition] ExecuteSkill 호출됨: {skillName}");
+
+            // 시스템 명령 처리 (SYSTEM:OpenSettings 형식)
+            if (skillName.StartsWith("SYSTEM:"))
+            {
+                string systemCommand = skillName.Substring(7); // "SYSTEM:" 제거
+
+                // SYSTEM:UseXXX 형태는 스킬로 처리 (서버에서 잘못 분류된 경우)
+                if (systemCommand.StartsWith("Use"))
+                {
+                    string extractedSkillName = systemCommand.Substring(3); // "Use" 제거
+                    // Debug.Log($"[VoiceRecognition] SYSTEM:Use 명령을 스킬로 변환: {extractedSkillName}");
+                    ExecuteSkillByName(extractedSkillName);
+                    return;
+                }
+
+                // Debug.Log($"[VoiceRecognition] 시스템 명령 추출됨: {systemCommand}");
+                ExecuteSystemCommand(systemCommand);
+                return;
+            }
+
+            ExecuteSkillByName(skillName);
+        }
+
+        /// <summary>
+        /// 스킬 이름으로 스킬 실행
+        /// </summary>
+        private void ExecuteSkillByName(string skillName)
         {
             if (playerComponent == null)
             {
@@ -475,16 +617,388 @@ namespace LostSpells.Systems
                 return;
             }
 
+            // 정확한 키워드 매칭
             foreach (var skill in activeSkills)
             {
                 if (skill.voiceKeyword == skillName)
                 {
+                    // Debug.Log($"[VoiceRecognition] 스킬 실행: {skill.GetLocalizedName()}");
+                    playerComponent.CastSkill(skill);
+                    return;
+                }
+            }
+
+            // 스킬 이름으로 부분 매칭 시도 (UseFireball -> Fireball -> 파이어볼)
+            string skillNameLower = skillName.ToLower();
+            foreach (var skill in activeSkills)
+            {
+                // 영어 스킬 이름으로 매칭
+                if (!string.IsNullOrEmpty(skill.skillNameEn) &&
+                    skill.skillNameEn.ToLower().Contains(skillNameLower))
+                {
+                    // Debug.Log($"[VoiceRecognition] 영어 이름으로 스킬 매칭: {skill.GetLocalizedName()}");
+                    playerComponent.CastSkill(skill);
+                    return;
+                }
+
+                // 한국어 스킬 이름으로 매칭
+                if (!string.IsNullOrEmpty(skill.skillName) &&
+                    skill.skillName.Contains(skillName))
+                {
+                    // Debug.Log($"[VoiceRecognition] 한국어 이름으로 스킬 매칭: {skill.GetLocalizedName()}");
                     playerComponent.CastSkill(skill);
                     return;
                 }
             }
 
             Debug.LogWarning($"[VoiceRecognition] 스킬을 찾을 수 없음: {skillName}");
+        }
+
+        /// <summary>
+        /// 시스템 명령 실행
+        /// </summary>
+        private void ExecuteSystemCommand(string command)
+        {
+            // Debug.Log($"[VoiceRecognition] 시스템 명령 실행 시도: {command}");
+
+            // 현재 게임 컨텍스트 확인
+            GameContext currentContext = GetCurrentGameContext();
+            // Debug.Log($"[VoiceRecognition] 현재 컨텍스트: {currentContext}");
+
+            // 컨텍스트에서 허용되지 않는 명령인지 확인
+            if (!IsCommandAllowedInContext(command, currentContext))
+            {
+                string hint = GetContextHintMessage(command, currentContext);
+                Debug.LogWarning($"[VoiceRecognition] 현재 컨텍스트({currentContext})에서 '{command}' 명령 불가: {hint}");
+                UpdateVoiceRecognitionDisplay(hint);
+                StartCoroutine(ClearVoiceRecognitionDisplayAfterDelay(3f));
+                return;
+            }
+
+            // Debug.Log($"[VoiceRecognition] 명령 실행: {command}");
+
+            switch (command)
+            {
+                case "OpenSettings":
+                    // 설정창 열기 - 내장 Options 팝업 표시
+                    if (inGameUI != null && !inGameUI.IsOptionsPopupVisible())
+                    {
+                        Time.timeScale = 0f;
+                        inGameUI.OpenOptionsPopup();
+                    }
+                    break;
+
+                case "CloseSettings":
+                    // 설정창 닫기 - 내장 Options 팝업 숨기기
+                    if (inGameUI != null && inGameUI.IsOptionsPopupVisible())
+                    {
+                        inGameUI.CloseOptionsPopup();
+                    }
+                    break;
+
+                case "OpenMenu":
+                case "PauseGame":
+                    // 일시정지 및 메뉴 팝업 열기
+                    if (inGameUI != null)
+                    {
+                        // InGameUI의 메뉴 팝업 열기
+                        var root = inGameUI.GetComponent<UIDocument>()?.rootVisualElement;
+                        var menuPopup = root?.Q<VisualElement>("MenuPopup");
+                        if (menuPopup != null)
+                        {
+                            menuPopup.style.display = DisplayStyle.Flex;
+                            // 사이드바 숨기기
+                            var leftSidebar = root.Q<VisualElement>("LeftSidebar");
+                            var rightSidebar = root.Q<VisualElement>("RightSidebar");
+                            if (leftSidebar != null) leftSidebar.style.display = DisplayStyle.None;
+                            if (rightSidebar != null) rightSidebar.style.display = DisplayStyle.None;
+                        }
+                    }
+                    Time.timeScale = 0f;
+                    // Debug.Log("[VoiceRecognition] 게임 일시정지됨");
+                    break;
+
+                case "CloseMenu":
+                case "ResumeGame":
+                    // 재개 및 메뉴 팝업 닫기
+                    if (inGameUI != null)
+                    {
+                        var root = inGameUI.GetComponent<UIDocument>()?.rootVisualElement;
+                        var menuPopup = root?.Q<VisualElement>("MenuPopup");
+                        if (menuPopup != null)
+                        {
+                            menuPopup.style.display = DisplayStyle.None;
+                            // 사이드바 다시 표시
+                            var leftSidebar = root.Q<VisualElement>("LeftSidebar");
+                            var rightSidebar = root.Q<VisualElement>("RightSidebar");
+                            if (leftSidebar != null) leftSidebar.style.display = DisplayStyle.Flex;
+                            if (rightSidebar != null) rightSidebar.style.display = DisplayStyle.Flex;
+                        }
+                    }
+                    Time.timeScale = 1f;
+                    // Debug.Log("[VoiceRecognition] 게임 재개됨");
+                    break;
+
+                case "RestartGame":
+                    // 게임 재시작
+                    Time.timeScale = 1f;
+                    UnityEngine.SceneManagement.SceneManager.LoadScene(
+                        UnityEngine.SceneManagement.SceneManager.GetActiveScene().name);
+                    break;
+
+                case "QuitToMainMenu":
+                    // 메뉴로 이동
+                    Time.timeScale = 1f;
+                    UnityEngine.SceneManagement.SceneManager.LoadScene("Menu");
+                    break;
+
+                case "OpenInventory":
+                    // Debug.Log("[VoiceRecognition] 인벤토리 열기 (미구현)");
+                    break;
+
+                case "CloseInventory":
+                    // Debug.Log("[VoiceRecognition] 인벤토리 닫기 (미구현)");
+                    break;
+
+                case "OpenMap":
+                    // Debug.Log("[VoiceRecognition] 지도 열기 (미구현)");
+                    break;
+
+                case "CloseMap":
+                    // Debug.Log("[VoiceRecognition] 지도 닫기 (미구현)");
+                    break;
+
+                case "ShowHelp":
+                    // Debug.Log("[VoiceRecognition] 도움말 표시 (미구현)");
+                    break;
+
+                // 메뉴 네비게이션 명령어
+                case "StartGame":
+                    // 게임 모드 선택 화면으로 이동
+                    NavigateMenuPanel("GameModeSelection");
+                    break;
+
+                case "SelectStoryMode":
+                    // 스토리 모드 선택
+                    NavigateMenuPanel("StoryMode");
+                    break;
+
+                case "SelectEndlessMode":
+                    // 무한 모드 선택
+                    NavigateMenuPanel("EndlessMode");
+                    break;
+
+                case "StartEndless":
+                    // 무한 모드 게임 시작
+                    if (GameStateManager.Instance != null)
+                    {
+                        GameStateManager.Instance.StartEndlessMode();
+                    }
+                    UnityEngine.SceneManagement.SceneManager.LoadScene("InGame");
+                    break;
+
+                case "GoBack":
+                    // 이전 화면으로
+                    NavigateMenuBack();
+                    break;
+
+                case "GoToMainMenu":
+                    // 메인 메뉴로 이동
+                    var currentSceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+                    if (currentSceneName == "Store")
+                    {
+                        // Store에서는 Menu 씬으로 이동
+                        UnityEngine.SceneManagement.SceneManager.LoadScene("Menu");
+                    }
+                    else
+                    {
+                        // Menu 씬 내에서는 패널 전환
+                        NavigateMenuPanel("MainMenu");
+                    }
+                    break;
+
+                case "GoToGameModeSelection":
+                    // 게임 모드 선택으로 이동
+                    NavigateMenuPanel("GameModeSelection");
+                    break;
+
+                case "OpenStore":
+                    // 상점 열기 - 내장 Store 팝업 표시
+                    if (inGameUI != null && !inGameUI.IsStorePopupVisible())
+                    {
+                        inGameUI.OpenStorePopup();
+                    }
+                    break;
+
+                // 튜토리얼 선택
+                case "SelectTutorial":
+                    // Debug.Log("[VoiceRecognition] 튜토리얼 선택 명령 감지");
+                    StartChapter(0);
+                    break;
+
+                // 챕터 선택 (1-12)
+                case "SelectChapter1":
+                case "SelectChapter2":
+                case "SelectChapter3":
+                case "SelectChapter4":
+                case "SelectChapter5":
+                case "SelectChapter6":
+                case "SelectChapter7":
+                case "SelectChapter8":
+                case "SelectChapter9":
+                case "SelectChapter10":
+                case "SelectChapter11":
+                case "SelectChapter12":
+                    // Debug.Log($"[VoiceRecognition] 챕터 선택 명령 감지: {command}");
+                    // 챕터 번호 추출 (SelectChapter1 -> 1)
+                    string chapterNumStr = command.Substring("SelectChapter".Length);
+                    // Debug.Log($"[VoiceRecognition] 챕터 번호 문자열: {chapterNumStr}");
+                    int chapterId = int.Parse(chapterNumStr);
+                    // Debug.Log($"[VoiceRecognition] 파싱된 챕터 ID: {chapterId}");
+                    StartChapter(chapterId);
+                    break;
+
+                default:
+                    Debug.LogWarning($"[VoiceRecognition] 알 수 없는 시스템 명령: {command}");
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Menu 씬의 패널 네비게이션
+        /// </summary>
+        private void NavigateMenuPanel(string panelName)
+        {
+            // Debug.Log($"[VoiceRecognition] NavigateMenuPanel 호출됨: {panelName}");
+
+            // 현재 씬 확인
+            var currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+            // Debug.Log($"[VoiceRecognition] 현재 씬: {currentScene}");
+
+            if (currentScene != "Menu")
+            {
+                Debug.LogWarning($"[VoiceRecognition] Menu 씬이 아닙니다. 현재: {currentScene}");
+                return;
+            }
+
+            var menuManager = FindFirstObjectByType<LostSpells.UI.MenuManager>();
+            if (menuManager != null)
+            {
+                // Debug.Log($"[VoiceRecognition] MenuManager 찾음, 패널 전환 시도: {panelName}");
+                switch (panelName)
+                {
+                    case "GameModeSelection":
+                        menuManager.ShowPanel(LostSpells.UI.MenuManager.MenuPanel.GameModeSelection);
+                        break;
+                    case "StoryMode":
+                        menuManager.ShowPanel(LostSpells.UI.MenuManager.MenuPanel.StoryMode);
+                        break;
+                    case "EndlessMode":
+                        menuManager.ShowPanel(LostSpells.UI.MenuManager.MenuPanel.EndlessMode);
+                        break;
+                    case "MainMenu":
+                        menuManager.ShowPanel(LostSpells.UI.MenuManager.MenuPanel.MainMenu);
+                        break;
+                }
+                // Debug.Log($"[VoiceRecognition] 메뉴 패널 이동 완료: {panelName}");
+            }
+            else
+            {
+                Debug.LogError("[VoiceRecognition] MenuManager를 찾을 수 없습니다! FindFirstObjectByType 실패");
+            }
+        }
+
+        /// <summary>
+        /// 챕터 시작
+        /// </summary>
+        private void StartChapter(int chapterId)
+        {
+            // Debug.Log($"[VoiceRecognition] StartChapter 호출됨: 챕터 {chapterId}");
+
+            // GameStateManager를 통해 챕터 시작
+            if (GameStateManager.Instance != null)
+            {
+                GameStateManager.Instance.StartChapter(chapterId);
+                // Debug.Log($"[VoiceRecognition] GameStateManager.StartChapter({chapterId}) 호출 완료");
+            }
+            else
+            {
+                Debug.LogError("[VoiceRecognition] GameStateManager.Instance가 null입니다!");
+            }
+
+            // InGame 씬으로 이동
+            // Debug.Log("[VoiceRecognition] InGame 씬으로 이동 시도...");
+            UnityEngine.SceneManagement.SceneManager.LoadScene("InGame");
+        }
+
+        /// <summary>
+        /// Menu 씬에서 이전 화면으로 돌아가기
+        /// </summary>
+        private void NavigateMenuBack()
+        {
+            // Options 씬이 열려있으면 닫기
+            if (IsSceneLoaded("Options"))
+            {
+                UnityEngine.SceneManagement.SceneManager.UnloadSceneAsync("Options");
+                // InGame에서 메뉴 팝업이 열려있으면 일시정지 유지
+                if (!IsInGameMenuPopupVisible())
+                {
+                    Time.timeScale = 1f;
+                }
+                return;
+            }
+
+            // Store 씬이 열려있으면 Menu로 이동
+            var currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+            if (currentScene == "Store")
+            {
+                UnityEngine.SceneManagement.SceneManager.LoadScene("Menu");
+                return;
+            }
+
+            // Menu 씬에서는 MenuManager의 GoBack 사용
+            var menuManager = FindFirstObjectByType<LostSpells.UI.MenuManager>();
+            if (menuManager != null)
+            {
+                menuManager.GoBack();
+                // Debug.Log("[VoiceRecognition] 이전 메뉴로 돌아가기");
+            }
+        }
+
+        /// <summary>
+        /// 특정 씬이 로드되어 있는지 확인
+        /// </summary>
+        private bool IsSceneLoaded(string sceneName)
+        {
+            for (int i = 0; i < UnityEngine.SceneManagement.SceneManager.sceneCount; i++)
+            {
+                var scene = UnityEngine.SceneManagement.SceneManager.GetSceneAt(i);
+                if (scene.name == sceneName && scene.isLoaded)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// InGame에서 메뉴 팝업이 열려있는지 확인
+        /// </summary>
+        private bool IsInGameMenuPopupVisible()
+        {
+            var currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+            if (currentScene != "InGame") return false;
+
+            if (inGameUI != null)
+            {
+                var root = inGameUI.GetComponent<UIDocument>()?.rootVisualElement;
+                var menuPopup = root?.Q<VisualElement>("MenuPopup");
+                if (menuPopup != null && menuPopup.style.display == DisplayStyle.Flex)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         /// <summary>
@@ -505,5 +1019,232 @@ namespace LostSpells.Systems
                 serverClient.SetLanguage(languageCode);
             }
         }
+
+        #region Context-Aware Command Filtering
+
+        /// <summary>
+        /// 현재 게임 컨텍스트 감지
+        /// </summary>
+        private GameContext GetCurrentGameContext()
+        {
+            var currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+
+            // Options 씬이 Additive로 로드되어 있는지 확인
+            if (IsSceneLoaded("Options"))
+            {
+                return GameContext.Options;
+            }
+
+            // Store 씬 확인
+            if (currentScene == "Store")
+            {
+                return GameContext.Store;
+            }
+
+            // Menu 씬 확인
+            if (currentScene == "Menu")
+            {
+                var menuManager = FindFirstObjectByType<LostSpells.UI.MenuManager>();
+                if (menuManager != null)
+                {
+                    // MenuManager의 currentPanel 필드에 접근 (public으로 변경하거나 메서드 추가 필요)
+                    // 현재는 reflection 없이 간단히 처리
+                    return GetMenuPanelContext(menuManager);
+                }
+                return GameContext.Menu_MainMenu;
+            }
+
+            // InGame 씬 확인
+            if (currentScene == "InGame")
+            {
+                // 일시정지 상태 확인 (Time.timeScale == 0)
+                if (Time.timeScale == 0f)
+                {
+                    // 게임오버인지 일시정지인지 확인
+                    if (inGameUI != null)
+                    {
+                        var root = inGameUI.GetComponent<UIDocument>()?.rootVisualElement;
+                        var gameOverPopup = root?.Q<VisualElement>("GameOverPopup");
+                        if (gameOverPopup != null && gameOverPopup.style.display == DisplayStyle.Flex)
+                        {
+                            return GameContext.InGame_GameOver;
+                        }
+                    }
+                    return GameContext.InGame_Paused;
+                }
+                return GameContext.InGame_Playing;
+            }
+
+            return GameContext.Unknown;
+        }
+
+        /// <summary>
+        /// MenuManager의 현재 패널 컨텍스트 가져오기
+        /// </summary>
+        private GameContext GetMenuPanelContext(LostSpells.UI.MenuManager menuManager)
+        {
+            // MenuManager에 GetCurrentPanel() 메서드가 없으므로
+            // 현재 활성화된 UI 요소로 판단
+            var root = FindFirstObjectByType<UIDocument>()?.rootVisualElement;
+            if (root == null) return GameContext.Menu_MainMenu;
+
+            var mainMenuPanel = root.Q<VisualElement>("MainMenuPanel");
+            var gameModePanel = root.Q<VisualElement>("GameModeSelectionPanel");
+            var storyModePanel = root.Q<VisualElement>("StoryModePanel");
+            var endlessModePanel = root.Q<VisualElement>("EndlessModePanel");
+
+            if (storyModePanel != null && storyModePanel.style.display == DisplayStyle.Flex)
+                return GameContext.Menu_StoryMode;
+            if (endlessModePanel != null && endlessModePanel.style.display == DisplayStyle.Flex)
+                return GameContext.Menu_EndlessMode;
+            if (gameModePanel != null && gameModePanel.style.display == DisplayStyle.Flex)
+                return GameContext.Menu_GameModeSelection;
+
+            return GameContext.Menu_MainMenu;
+        }
+
+        /// <summary>
+        /// 현재 컨텍스트에서 명령어가 허용되는지 확인
+        /// </summary>
+        private bool IsCommandAllowedInContext(string command, GameContext context)
+        {
+            switch (context)
+            {
+                case GameContext.Menu_MainMenu:
+                    // 메인 메뉴: 게임 시작, 설정, 상점
+                    return command == "StartGame" || command == "OpenSettings" || command == "OpenStore";
+
+                case GameContext.Menu_GameModeSelection:
+                    // 게임 모드 선택: 스토리/무한 모드 선택, 뒤로, 메인메뉴로, 설정
+                    return command == "SelectStoryMode" || command == "SelectEndlessMode" ||
+                           command == "GoBack" || command == "GoToMainMenu" || command == "OpenSettings";
+
+                case GameContext.Menu_StoryMode:
+                    // 스토리 모드: 챕터 선택, 뒤로, 메인메뉴로, 게임모드선택으로, 설정
+                    return command == "SelectTutorial" ||
+                           command.StartsWith("SelectChapter") ||
+                           command == "GoBack" || command == "GoToMainMenu" ||
+                           command == "GoToGameModeSelection" || command == "OpenSettings";
+
+                case GameContext.Menu_EndlessMode:
+                    // 무한 모드: 시작, 뒤로, 메인메뉴로, 게임모드선택으로, 설정
+                    return command == "StartEndless" || command == "GoBack" ||
+                           command == "GoToMainMenu" || command == "GoToGameModeSelection" ||
+                           command == "OpenSettings";
+
+                case GameContext.InGame_Playing:
+                    // 인게임 플레이 중: 일시정지/메뉴 열기만 가능
+                    return command == "PauseGame" || command == "OpenMenu";
+
+                case GameContext.InGame_Paused:
+                    // 인게임 일시정지: 재개, 설정, 재시작, 메인메뉴
+                    return command == "ResumeGame" || command == "CloseMenu" ||
+                           command == "OpenSettings" || command == "RestartGame" ||
+                           command == "QuitToMainMenu";
+
+                case GameContext.InGame_GameOver:
+                    // 게임오버: 재시작, 메인메뉴
+                    return command == "RestartGame" || command == "QuitToMainMenu";
+
+                case GameContext.Options:
+                    // 설정창: 닫기/뒤로만 가능
+                    return command == "CloseSettings" || command == "GoBack";
+
+                case GameContext.Store:
+                    // 상점: 뒤로, 메인메뉴로
+                    return command == "GoBack" || command == "GoToMainMenu";
+
+                default:
+                    return false;
+            }
+        }
+
+        /// <summary>
+        /// 현재 컨텍스트에 맞는 Whisper 키워드 반환
+        /// </summary>
+        public string GetContextKeywords()
+        {
+            GameContext context = GetCurrentGameContext();
+            return GetKeywordsForContext(context);
+        }
+
+        /// <summary>
+        /// 특정 컨텍스트에 대한 Whisper 키워드 반환
+        /// </summary>
+        private string GetKeywordsForContext(GameContext context)
+        {
+            switch (context)
+            {
+                case GameContext.Menu_MainMenu:
+                    return "게임 시작, 플레이, 시작, 설정, 옵션, 상점, 스토어";
+
+                case GameContext.Menu_GameModeSelection:
+                    return "스토리 모드, 스토리, 무한 모드, 엔드리스, 뒤로, 뒤로가기, 메인 메뉴, 설정";
+
+                case GameContext.Menu_StoryMode:
+                    return "튜토리얼, 챕터 0, 챕터 1, 챕터 2, 챕터 3, 챕터 4, 챕터 5, 챕터 6, 챕터 7, 챕터 8, 챕터 9, 챕터 10, 챕터 11, 챕터 12, 뒤로, 뒤로가기, 메인 메뉴, 게임 모드, 설정";
+
+                case GameContext.Menu_EndlessMode:
+                    return "게임 시작, 시작, 플레이, 뒤로, 뒤로가기, 메인 메뉴, 게임 모드, 설정";
+
+                case GameContext.InGame_Playing:
+                    return "일시정지, 멈춰, 정지, 메뉴";
+
+                case GameContext.InGame_Paused:
+                    return "계속, 재개, 게임 계속, 설정, 옵션, 재시작, 다시 시작, 메인 메뉴, 나가기";
+
+                case GameContext.InGame_GameOver:
+                    return "재도전, 재시작, 다시, 다시 시작, 메인 메뉴, 나가기";
+
+                case GameContext.Options:
+                    return "뒤로, 뒤로가기, 닫기, 설정 닫기";
+
+                case GameContext.Store:
+                    return "뒤로, 뒤로가기, 메인 메뉴";
+
+                default:
+                    // 알 수 없는 컨텍스트면 모든 키워드 반환
+                    return "설정, 옵션, 메뉴, 일시정지, 멈춰, 계속, 재시작, 재도전, 게임 시작, 플레이, 스토리 모드, 무한 모드, 뒤로, 상점, 튜토리얼, 메인 메뉴";
+            }
+        }
+
+        /// <summary>
+        /// 현재 게임 컨텍스트 문자열로 반환 (서버 전송용)
+        /// </summary>
+        public string GetCurrentContextString()
+        {
+            GameContext context = GetCurrentGameContext();
+            return context.ToString();
+        }
+
+        /// <summary>
+        /// 컨텍스트에 맞지 않는 명령어에 대한 안내 메시지
+        /// </summary>
+        private string GetContextHintMessage(string command, GameContext context)
+        {
+            switch (context)
+            {
+                case GameContext.InGame_Playing:
+                    if (command == "OpenSettings" || command == "RestartGame" || command == "QuitToMainMenu")
+                        return "먼저 '일시정지' 또는 '메뉴'를 말해주세요";
+                    break;
+
+                case GameContext.Menu_MainMenu:
+                    if (command == "SelectStoryMode" || command == "SelectEndlessMode")
+                        return "먼저 '게임 시작'을 말해주세요";
+                    if (command.StartsWith("SelectChapter") || command == "SelectTutorial")
+                        return "먼저 '게임 시작' 후 '스토리 모드'를 선택해주세요";
+                    break;
+
+                case GameContext.Menu_GameModeSelection:
+                    if (command.StartsWith("SelectChapter") || command == "SelectTutorial")
+                        return "먼저 '스토리 모드'를 선택해주세요";
+                    break;
+            }
+
+            return "현재 화면에서 사용할 수 없는 명령입니다";
+        }
+
+        #endregion
     }
 }
