@@ -206,9 +206,6 @@ namespace LostSpells.Components
             // 스킬 입력 처리
             HandleSkillInput();
 
-            // 넉백 중에는 이동 불가
-            if (isKnockedBack) return;
-
             if (isAutoMoving)
             {
                 UpdateAnimationState(); 
@@ -1371,7 +1368,7 @@ namespace LostSpells.Components
         /// <summary>
         /// 스킬 데이터로 스킬 시전 (UI 클릭에서 호출)
         /// </summary>
-        public bool CastSkillByData(LostSpells.Data.SkillData skill)
+        public bool CastSkillByData(LostSpells.Data.SkillData skill, string direction, int location)
         {
             if (skill == null)
             {
@@ -1409,20 +1406,20 @@ namespace LostSpells.Components
             }
 
             // 스킬이 목록에 있으면 기존 CastSkill 호출 (쿨다운 체크 포함)
-            CastSkill(skillIndex);
+            CastSkill(skillIndex, direction, location);
             return true;
         }
 
         /// <summary>
         /// 스킬 ID로 스킬 시전
         /// </summary>
-        public bool CastSkillById(string skillId)
+        public bool CastSkillById(string skillId, string direction, int location)
         {
             for (int i = 0; i < availableSkills.Length; i++)
             {
                 if (availableSkills[i] != null && availableSkills[i].skillId == skillId)
                 {
-                    CastSkill(i);
+                    CastSkill(i, direction, location);
                     return true;
                 }
             }

@@ -543,7 +543,7 @@ namespace LostSpells.UI
 
                 // 클릭 이벤트 추가 - 스킬 발사
                 var capturedSkill = skill; // 클로저를 위한 지역 변수 캡처
-                skillItem.RegisterCallback<ClickEvent>(evt => OnSkillItemClicked(capturedSkill));
+                skillItem.RegisterCallback<ClickEvent>(evt => OnSkillItemClicked(capturedSkill, "", 0));
 
                 // 정확도 맵 초기화
                 if (!string.IsNullOrEmpty(skill.voiceKeyword))
@@ -610,7 +610,7 @@ namespace LostSpells.UI
 
             // 클릭 이벤트 추가 - 스킬 발사
             var capturedSkill = skill; // 클로저를 위한 지역 변수 캡처
-            skillItem.RegisterCallback<ClickEvent>(evt => OnSkillItemClicked(capturedSkill));
+            skillItem.RegisterCallback<ClickEvent>(evt => OnSkillItemClicked(capturedSkill, "", 0));
 
             if (!string.IsNullOrEmpty(skill.voiceKeyword))
             {
@@ -621,7 +621,7 @@ namespace LostSpells.UI
         /// <summary>
         /// 스킬 아이템 클릭 시 스킬 발사
         /// </summary>
-        private void OnSkillItemClicked(SkillData skill)
+        private void OnSkillItemClicked(SkillData skill, string direction, int location)
         {
             if (playerComponent == null)
             {
@@ -630,7 +630,7 @@ namespace LostSpells.UI
             }
 
             // 플레이어 스킬 시전
-            bool success = playerComponent.CastSkillByData(skill);
+            bool success = playerComponent.CastSkillByData(skill, direction, location);
             if (success)
             {
                 Debug.Log($"[InGameUI] 스킬 발사: {skill.GetLocalizedName()}");
@@ -1739,6 +1739,10 @@ namespace LostSpells.UI
         public void SettingsOrdered()
         {
             OnSettingsButtonClicked();
+        }
+        public void OptionsCloseOrdered()
+        {
+            OnOptionsCloseButtonClicked();
         }
         public void MenuOrdered()
         {

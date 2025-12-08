@@ -12,7 +12,7 @@ namespace LostSpells.UI
     /// <summary>
     /// Options 패널 컨트롤러 - MenuManager에서 사용
     /// </summary>
-    public class OptionsPanelController
+    public class OptionsPanelController 
     {
         private VisualElement root;
         private VisualElement optionsPanel;
@@ -724,11 +724,6 @@ namespace LostSpells.UI
             {
                 gameResetConfirmation.style.display = DisplayStyle.None;
             }
-        }
-
-        public void backOrdered()
-        {
-            OnBackButtonClicked();
         }
         private void SaveSettings()
         {

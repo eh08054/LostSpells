@@ -9,7 +9,7 @@ namespace LostSpells.UI
     /// <summary>
     /// Store 패널 컨트롤러 - MenuManager에서 사용
     /// </summary>
-    public class StorePanelController
+    public class StorePanelController  
     {
         private VisualElement root;
         private VisualElement storePanel;
