@@ -22,7 +22,7 @@ class WhisperHandler:
 
         # GPU 사용 가능 여부 확인 (하지만 sm_120 같은 최신 GPU는 지원 안 됨)
         # 안전하게 CPU 모드로 실행
-        self.device = "cpu"
+        self.device = "cuda"
 
         if torch.cuda.is_available():
             gpu_name = torch.cuda.get_device_name(0)
@@ -43,7 +43,7 @@ class WhisperHandler:
         self.model = whisper.load_model(model_name, device=self.device)
         print(f"[Whisper] Model loaded successfully!")
 
-    def transcribe(self, audio_path, skill_names=None):
+    def transcribe(self, audio_path, skill_names=None, word_list=None):
         """
         음성 파일을 텍스트로 변환
 
@@ -58,16 +58,20 @@ class WhisperHandler:
                 "confidence": 신뢰도 (평균)
             }
         """
-        # 스킬명을 프롬프트로 사용 (인식 정확도 향상)
-        prompt = None
-        if skill_names:
-            prompt = ", ".join(skill_names[:20])  # 최대 20개 스킬명만 사용
+        # 스킬명과 가능한 명령명을 프롬프트로 사용 (인식 정확도 향상)    
+        prompt_message = "명령은 다음 단어들을 포함할 수 있습니다: "
+        if(self.language == "ko"):
+            if skill_names:
+                prompt_message += ", ".join(skill_names[:20])   # 최대 20개 스킬명만 사용
+            if word_list:
+                prompt_message += ", " + ", ".join(word_list)
 
+        print(f"[Whisper] Using prompt: {prompt_message}")
         # Whisper 실행
         result = self.model.transcribe(
             str(audio_path),
             language=self.language,
-            initial_prompt=prompt,  # 스킬명 힌트 제공
+            initial_prompt=prompt_message,  # 스킬명 및 명령명 힌트 제공
         )
 
         # 신뢰도 계산 (세그먼트별 평균)

@@ -49,6 +49,7 @@ namespace LostSpells.Components
 
         protected virtual void Update()
         {
+            Debug.Log(transform.position);
             // 발사체 이동
             MoveSkill();
 

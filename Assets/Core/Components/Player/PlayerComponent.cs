@@ -589,35 +589,27 @@ namespace LostSpells.Components
                 return false;
             }
 
+            Debug.Log($"공격 방향: {direction}, 위치: {location}");
             // 발사 위치 결정
             Vector3 castPosition = GetSkillCastPosition();
             Quaternion castRotation = GetSkillCastRotation();
 
-            if ((direction == "right" || direction == "left"))
+            float xOffset = castPosition.x;
+            if (location != 0)
             {
-                Vector3 castOrigin = GetSkillCastPosition();
-
-                // 3. 최종 발사 위치 (Position) 계산
-                float xOffset =  castPosition.x;
-                if (location != 0)
-                {
-                    xOffset = location * PIXEL_TO_UNIT_FACTOR;
-                }
-                float directionSign = 0f;
-
-                if (direction.ToLower() == "left")
-                {
-                    directionSign = -1f;
-                }
-                else if (direction.ToLower() == "right")
-                {
-                    directionSign = 1f;
-                }
-
-                // 최종 스킬 생성 위치 (Position)
-                castPosition = castOrigin + new Vector3(xOffset * directionSign, 0, 0);
+                xOffset += location * PIXEL_TO_UNIT_FACTOR;
             }
 
+            castPosition =  new Vector3(xOffset, castPosition.y, castPosition.z);
+            if(direction == "left")
+            {
+                castRotation = Quaternion.Euler(0, 180, 0);
+            }
+            else if (direction == "right") 
+            {
+                castRotation = Quaternion.identity;
+            }   
+            Debug.Log($"스킬 발사 위치: {castPosition}, 회전: {castRotation.eulerAngles}");
             // 스킬 생성
             GameObject skillInstance = Instantiate(skillPrefab, castPosition, castRotation);
 

@@ -113,9 +113,11 @@ async def recognize_voice(
             skill_list = [s.strip() for s in skills.split(",") if s.strip()]
             skill_matcher.set_skills(skill_list)
 
+        word_list = choose_action.GetWords()
+
         # 음성 인식
         print(f"[Server] Starting transcription...")
-        result = whisper_handler.transcribe(audio_path, skill_names=skill_list)
+        result = whisper_handler.transcribe(audio_path, skill_names=skill_list, word_list=word_list)
         print(f"[Server] Transcription result: {result['text']}")
         
         found_action = choose_action.FindActions(result["text"], skill_list)

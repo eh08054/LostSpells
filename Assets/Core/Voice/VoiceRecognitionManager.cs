@@ -52,8 +52,9 @@ namespace LostSpells.Systems
         private System.Collections.Generic.List<SkillData> activeSkills = new System.Collections.Generic.List<SkillData>();
         private UI.InGameUI inGameUI;
         private UI.OptionsUI optionUI;
+        private UI. StoreUI storeUI;
         private UIDocument inGame_uiDocument;
-        private UIDocument option_uiDocument;
+
 
 
         private void Awake()
@@ -264,28 +265,33 @@ namespace LostSpells.Systems
             }
         }
 
-        //현재 인덱스 앞 sampleSize만큼의 음성의 RMS를 계산함. (ConstantRecording 로직)
+        //현재 인덱스 앞 sampleSize만큼의 음성의 RMS를 계산함.
         private float CalculateRMS(int currentPos)
         {
             int startReadPos = currentPos - sampleSize;
             if (startReadPos < 0) startReadPos += audioClip.samples;
 
             float[] tempSamples = new float[sampleSize];
-            if (startReadPos + sampleSize < audioClip.samples)
+            if (startReadPos + sampleSize <= audioClip.samples)
             {
                 audioClip.GetData(tempSamples, startReadPos);
             }
             else
             {
                 int endCount = audioClip.samples - startReadPos;
-                float[] part1 = new float[endCount];
-                float[] part2 = new float[sampleSize - endCount];
-
-                audioClip.GetData(part1, startReadPos);
-                audioClip.GetData(part2, 0);
-
-                Array.Copy(part1, 0, tempSamples, 0, endCount);
-                Array.Copy(part2, 0, tempSamples, endCount, part2.Length);
+                int remainingCount = sampleSize - endCount;
+                if(endCount > 0)
+                {
+                    float[] part1 = new float[endCount];
+                    audioClip.GetData(part1, startReadPos);
+                    Array.Copy(part1, 0, tempSamples, 0, endCount);
+                }
+                if (remainingCount > 0)
+                {
+                    float[] part2 = new float[remainingCount];
+                    audioClip.GetData(part2, 0);
+                    Array.Copy(part2, 0, tempSamples, endCount, remainingCount);
+                }
             }
 
             float sum = 0f;
@@ -293,6 +299,7 @@ namespace LostSpells.Systems
             {
                 sum += tempSamples[i] * tempSamples[i];
             }
+            if (tempSamples.Length == 0) return 0f;
             return Mathf.Sqrt(sum / tempSamples.Length);
         }
 
@@ -459,7 +466,9 @@ namespace LostSpells.Systems
                     }
                     if (scene.name == "Store")
                     {
-                        inGameUI.ShopCloseOrdered();
+                        storeUI = FindFirstObjectByType<LostSpells.UI.StoreUI>();
+                        storeUI.backOrdered();
+                        break;
                     }
                 }
 
@@ -484,6 +493,7 @@ namespace LostSpells.Systems
                     for (int i = 0; i < SceneManager.sceneCount; i++)
                     {
                         Scene scene = SceneManager.GetSceneAt(i);
+                        Debug.Log(scene.name + " ");
                         if (scene.name == "Options")
                         {
                             optionUI = FindFirstObjectByType<LostSpells.UI.OptionsUI>();
@@ -507,7 +517,9 @@ namespace LostSpells.Systems
                         Debug.Log(scene.name + " ");
                         if (scene.name == "Store")
                         {
-                            inGameUI.ShopCloseOrdered();
+                            storeUI = FindFirstObjectByType<LostSpells.UI.StoreUI>();
+                            storeUI.backOrdered();
+                            break;
                         }
                     }
                 }
@@ -519,6 +531,10 @@ namespace LostSpells.Systems
             else if (result.action.Equals("revival"))
             {
                 inGameUI.RevivalOrdered();
+            }
+            else if (result.action.Equals("restart"))
+            {
+                inGameUI.RestartOrdered();
             }
             else
             {

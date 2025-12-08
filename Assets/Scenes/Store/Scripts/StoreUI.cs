@@ -543,5 +543,9 @@ namespace LostSpells.UI
             saveData = SaveManager.Instance.GetCurrentSaveData();
             UpdateCurrencyDisplay();
         }
+        public void backOrdered()
+        {
+            OnBackButtonClicked();
+        }
     }
 }

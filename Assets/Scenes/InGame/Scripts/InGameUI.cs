@@ -1435,6 +1435,10 @@ namespace LostSpells.UI
         {
             OnMainMenuButtonClicked();
         }
+        public void RestartOrdered()
+        {
+            OnRetryButtonClicked();
+        }
         public void RevivalOrdered()
         {
             OnReviveButtonClicked();
