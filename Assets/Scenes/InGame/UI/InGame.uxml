@@ -3,6 +3,12 @@
     <!-- USS 스타일시트 -->
     <Style src="project://database/Assets/Scenes/Common/UI/Common.uss"/>
     <Style src="project://database/Assets/Scenes/InGame/UI/InGame.uss"/>
+    <Style src="project://database/Assets/Scenes/Menu/UI/Options.uss"/>
+    <Style src="project://database/Assets/Scenes/Menu/UI/Store.uss"/>
+
+    <!-- 공용 템플릿 -->
+    <ui:Template name="OptionsContent" src="project://database/Assets/Scenes/Common/UI/OptionsContent.uxml"/>
+    <ui:Template name="StoreContent" src="project://database/Assets/Scenes/Common/UI/StoreContent.uxml"/>
 
     <!-- 전체 화면 컨테이너 -->
     <ui:VisualElement name="InGame" class="screen-container">
@@ -18,9 +24,10 @@
                 <ui:Label text="Chapter 1 - Pride" name="ChapterInfo" class="chapter-info"/>
             </ui:VisualElement>
 
-            <!-- 중앙 영역: 웨이브 정보 -->
+            <!-- 중앙 영역: 웨이브 정보 + 점수 -->
             <ui:VisualElement name="CenterSection" class="center-section">
                 <ui:Label text="Wave 1" name="WaveInfo" class="wave-info"/>
+                <ui:Label text="점수: 0" name="ScoreDisplay" class="score-display"/>
             </ui:VisualElement>
 
             <!-- 오른쪽 영역: 아이템 (상점 스타일) -->
@@ -189,54 +196,73 @@
                     </ui:VisualElement>
                 </ui:VisualElement>
 
-                <!-- 상점 팝업 (기본 숨김) - 전체 화면 -->
-                <ui:VisualElement name="StorePopup" class="store-popup" style="display: none;">
-                    <!-- 상단 헤더 -->
-                    <ui:VisualElement name="StoreHeader" class="store-header">
-                        <!-- 닫기 버튼 -->
-                        <ui:Button text="✕" name="StoreCloseButton" class="store-close-button"/>
+                <!-- 스테이지 클리어 팝업 (기본 숨김) - 중앙 배치 -->
+                <ui:VisualElement name="StageClearPopup" class="menu-popup" style="display: none;">
+                    <ui:Label text="STAGE CLEAR!" name="StageClearTitle" class="menu-title"/>
 
-                        <!-- 제목 -->
-                        <ui:Label text="Store" name="StoreTitle" class="menu-title"/>
-
-                        <!-- 화폐 표시 -->
-                        <ui:VisualElement name="StoreCurrency" class="store-currency">
-                            <ui:VisualElement class="header-currency-bar">
-                                <ui:VisualElement class="currency-icon-large diamond-icon"/>
-                                <ui:Label text="0" name="StoreDiamondCount" class="currency-amount"/>
-                            </ui:VisualElement>
-                            <ui:VisualElement class="header-currency-bar">
-                                <ui:VisualElement class="currency-icon-large revive-stone-icon"/>
-                                <ui:Label text="0" name="StoreReviveStoneCount" class="currency-amount"/>
-                            </ui:VisualElement>
-                        </ui:VisualElement>
+                    <!-- 점수 영역 -->
+                    <ui:VisualElement name="ClearScoreArea" class="score-area">
+                        <ui:Label text="Score" class="score-label"/>
+                        <ui:Label text="0" name="ClearScoreValue" class="score-value"/>
                     </ui:VisualElement>
 
-                    <!-- 컨텐츠 영역 -->
-                    <ui:VisualElement name="StoreContent" class="store-content">
-                        <!-- 카테고리 버튼 -->
-                        <ui:VisualElement name="StoreCategory" class="store-category">
-                            <ui:Button text="Diamonds" name="StoreDiamondButton" class="store-category-button"/>
-                            <ui:Button text="Revive Stones" name="StoreReviveStoneButton" class="store-category-button"/>
-                        </ui:VisualElement>
-
-                        <!-- 상품 목록 -->
-                        <ui:VisualElement name="StoreProducts" class="store-products">
-                            <!-- 다이아몬드 상품 -->
-                            <ui:ScrollView name="StoreDiamondPanel" class="store-product-panel">
-                                <ui:VisualElement name="StoreDiamondGrid" class="store-product-grid"/>
-                            </ui:ScrollView>
-
-                            <!-- 부활석 상품 -->
-                            <ui:ScrollView name="StoreReviveStonePanel" class="store-product-panel" style="display: none;">
-                                <ui:VisualElement name="StoreReviveStoneGrid" class="store-product-grid"/>
-                            </ui:ScrollView>
-                        </ui:VisualElement>
+                    <!-- 버튼들 (가로 배치) -->
+                    <ui:VisualElement name="StageClearButtons" class="game-over-buttons">
+                        <ui:Button text="Next Chapter" name="NextChapterButton" class="game-over-button"/>
+                        <ui:Button text="Main Menu" name="ClearMainMenuButton" class="game-over-button"/>
                     </ui:VisualElement>
                 </ui:VisualElement>
 
             </ui:VisualElement>
 
+        </ui:VisualElement>
+
+        <!-- 상점 팝업 (기본 숨김) - 전체 화면 오버레이 -->
+        <ui:VisualElement name="StorePopup" class="options-popup" style="display: none;">
+            <!-- 상단 헤더 바 -->
+            <ui:VisualElement name="StoreHeader" class="header-bar">
+                <ui:VisualElement class="header-side header-left">
+                    <ui:Button text="" name="StoreCloseButton" class="back-button"/>
+                </ui:VisualElement>
+                <ui:Label text="Store" name="StorePopupTitle" class="header-title"/>
+                <!-- 오른쪽 영역: 보유 아이템 표시 -->
+                <ui:VisualElement class="header-side header-right">
+                    <!-- 다이아 표시 -->
+                    <ui:VisualElement class="header-currency-bar">
+                        <ui:VisualElement class="currency-icon-large diamond-icon"/>
+                        <ui:VisualElement class="currency-bar-content">
+                            <ui:Label text="0" name="HeaderDiamonds" class="currency-amount"/>
+                            <ui:VisualElement class="currency-plus-button"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <!-- 부활석 표시 -->
+                    <ui:VisualElement class="header-currency-bar">
+                        <ui:VisualElement class="currency-icon-large revive-stone-icon"/>
+                        <ui:VisualElement class="currency-bar-content">
+                            <ui:Label text="0" name="HeaderReviveStones" class="currency-amount"/>
+                            <ui:VisualElement class="currency-plus-button"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <!-- 공용 상점 컨텐츠 템플릿 -->
+            <ui:Instance template="StoreContent"/>
+        </ui:VisualElement>
+
+        <!-- 옵션 팝업 (기본 숨김) - 전체 화면 오버레이 -->
+        <ui:VisualElement name="OptionsPopup" class="options-popup" style="display: none;">
+            <!-- 상단 헤더 바 -->
+            <ui:VisualElement name="OptionsHeader" class="header-bar">
+                <ui:VisualElement class="header-side header-left">
+                    <ui:Button text="" name="OptionsCloseButton" class="back-button"/>
+                </ui:VisualElement>
+                <ui:Label text="Options" name="OptionsPopupTitle" class="header-title"/>
+                <ui:VisualElement class="header-side"/>
+            </ui:VisualElement>
+
+            <!-- 공용 옵션 컨텐츠 템플릿 -->
+            <ui:Instance template="OptionsContent"/>
         </ui:VisualElement>
 
     </ui:VisualElement>

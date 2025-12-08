@@ -1,0 +1,184 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements"
+        editor-extension-mode="False">
+    <!-- USS 스타일시트 (순서 중요: 공통 먼저, 메뉴 스타일이 덮어쓰기) -->
+    <Style src="/Assets/Scenes/Common/UI/Common.uss"/>
+    <Style src="/Assets/Scenes/Menu/UI/Menu.uss"/>
+    <Style src="/Assets/Scenes/Menu/UI/Options.uss"/>
+    <Style src="/Assets/Scenes/Menu/UI/Store.uss"/>
+
+    <!-- 공용 템플릿 -->
+    <ui:Template name="OptionsContent" src="/Assets/Scenes/Common/UI/OptionsContent.uxml"/>
+    <ui:Template name="StoreContent" src="/Assets/Scenes/Common/UI/StoreContent.uxml"/>
+
+    <!-- 전체 화면 컨테이너 -->
+    <ui:VisualElement name="Menu" class="screen-container">
+        <!-- 공유 배경 레이어들 (모든 패널에서 공유) -->
+        <ui:VisualElement name="Sky" class="parallax-layer sky-layer"/>
+        <ui:VisualElement name="Mountain" class="parallax-layer mountain-layer"/>
+        <ui:VisualElement name="MiddleFar" class="parallax-layer middle-far-layer"/>
+        <ui:VisualElement name="MiddleNear" class="parallax-layer middle-near-layer"/>
+        <ui:VisualElement name="Ground" class="parallax-layer ground-layer"/>
+
+        <!-- ========== 메인메뉴 패널 ========== -->
+        <ui:VisualElement name="MainMenuPanel" class="menu-panel">
+            <ui:VisualElement class="ui-content main-menu-content">
+                <!-- 게임 제목 -->
+                <ui:Label text="Lost Spells" name="GameTitle" class="game-title"/>
+
+                <!-- 메뉴 버튼들 -->
+                <ui:Button text="Play" name="PlayButton" class="menu-button"/>
+                <ui:Button text="Options" name="OptionsButton" class="menu-button"/>
+                <ui:Button text="Store" name="StoreButton" class="menu-button"/>
+                <ui:Button text="Quit" name="QuitButton" class="menu-button"/>
+            </ui:VisualElement>
+
+            <!-- 종료 확인 팝업 -->
+            <ui:VisualElement name="QuitConfirmation" class="quit-confirmation">
+                <ui:VisualElement class="quit-popup-container">
+                    <ui:VisualElement class="quit-popup">
+                        <ui:Label text="Quit Game?" name="QuitTitle" class="quit-title"/>
+                        <ui:Label text="Are you sure you want to quit?" name="QuitMessage" class="quit-message"/>
+                        <ui:VisualElement name="QuitButtons" class="quit-buttons">
+                            <ui:Button text="Quit" name="QuitConfirmButton" class="quit-button-confirm"/>
+                            <ui:Button text="Cancel" name="QuitCancelButton" class="quit-button-cancel"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- ========== 게임모드 선택 패널 ========== -->
+        <ui:VisualElement name="GameModeSelectionPanel" class="menu-panel" style="display: none;">
+            <ui:VisualElement class="ui-content">
+                <!-- 헤더 -->
+                <ui:VisualElement name="HeaderBar" class="header-bar">
+                    <ui:VisualElement class="header-side header-left">
+                        <ui:Button text="" name="GameModeBackButton" class="back-button"/>
+                    </ui:VisualElement>
+                    <ui:Label text="Select Game Mode" name="GameModeTitle" class="header-title"/>
+                    <ui:VisualElement class="header-side"/>
+                </ui:VisualElement>
+
+                <!-- 컨텐츠 -->
+                <ui:VisualElement class="content-area">
+                    <ui:VisualElement class="button-container">
+                        <ui:Button text="Story Mode" name="StoryModeButton" class="menu-button"/>
+                        <ui:Button text="Endless Mode" name="EndlessModeButton" class="menu-button"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- ========== 스토리모드 패널 ========== -->
+        <ui:VisualElement name="StoryModePanel" class="menu-panel" style="display: none;">
+            <ui:VisualElement class="ui-content">
+                <!-- 헤더 -->
+                <ui:VisualElement name="HeaderBar" class="header-bar">
+                    <ui:VisualElement class="header-side header-left">
+                        <ui:Button text="" name="StoryModeBackButton" class="back-button"/>
+                    </ui:VisualElement>
+                    <ui:Label text="Story Mode" name="StoryModeTitle" class="header-title"/>
+                    <ui:VisualElement class="header-side header-right"/>
+                </ui:VisualElement>
+
+                <!-- 컨텐츠 -->
+                <ui:VisualElement class="story-content">
+                    <ui:ScrollView name="ChapterScrollView" class="slot-scroll-view" mode="Horizontal">
+                        <ui:VisualElement name="ChapterListContainer" class="slot-list-container">
+                            <!-- 챕터들이 동적으로 추가됨 -->
+                        </ui:VisualElement>
+                    </ui:ScrollView>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- ========== 엔드리스모드 패널 ========== -->
+        <ui:VisualElement name="EndlessModePanel" class="menu-panel" style="display: none;">
+            <ui:VisualElement class="ui-content">
+                <!-- 헤더 -->
+                <ui:VisualElement name="HeaderBar" class="header-bar">
+                    <ui:VisualElement class="header-side header-left">
+                        <ui:Button text="" name="EndlessModeBackButton" class="back-button"/>
+                    </ui:VisualElement>
+                    <ui:Label text="Endless Mode" name="EndlessModeTitle" class="header-title"/>
+                    <ui:VisualElement class="header-side"/>
+                </ui:VisualElement>
+
+                <!-- 컨텐츠 -->
+                <ui:VisualElement class="content-area">
+                    <!-- 순위표 제목 -->
+                    <ui:Label text="Best Score" name="RankingTitle" class="ranking-title"/>
+
+                    <!-- 테이블 헤더 -->
+                    <ui:VisualElement name="RankingHeader" class="ranking-header">
+                        <ui:Label text="Rank" name="HeaderRank" class="header-rank"/>
+                        <ui:Label text="Score" name="HeaderScore" class="header-score"/>
+                        <ui:Label text="Wave" name="HeaderWave" class="header-wave"/>
+                        <ui:Label text="Date" name="HeaderDate" class="header-date"/>
+                    </ui:VisualElement>
+
+                    <!-- 순위표 리스트 -->
+                    <ui:VisualElement name="RankingListContainer" class="ranking-list-container">
+                        <!-- 순위 항목들이 동적으로 추가됨 -->
+                    </ui:VisualElement>
+
+                    <!-- 플레이 버튼 -->
+                    <ui:Button text="Start Game" name="EndlessPlayButton" class="play-button"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- ========== 옵션 패널 ========== -->
+        <ui:VisualElement name="OptionsPanel" class="menu-panel" style="display: none;">
+            <ui:VisualElement class="ui-content">
+                <!-- 상단 헤더 바 -->
+                <ui:VisualElement name="HeaderBar" class="header-bar">
+                    <ui:VisualElement class="header-side header-left">
+                        <ui:Button text="" name="OptionsBackButton" class="back-button"/>
+                    </ui:VisualElement>
+                    <ui:Label text="Options" name="OptionsTitle" class="header-title"/>
+                    <ui:VisualElement class="header-side"/>
+                </ui:VisualElement>
+
+                <!-- 공용 옵션 컨텐츠 템플릿 -->
+                <ui:Instance template="OptionsContent"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- ========== 상점 패널 ========== -->
+        <ui:VisualElement name="StorePanel" class="menu-panel" style="display: none;">
+            <ui:VisualElement class="ui-content">
+                <!-- 상단 헤더 바 -->
+                <ui:VisualElement name="HeaderBar" class="header-bar">
+                    <ui:VisualElement class="header-side header-left">
+                        <ui:Button text="" name="StoreBackButton" class="back-button"/>
+                    </ui:VisualElement>
+                    <ui:Label text="Store" name="StoreTitle" class="header-title"/>
+                    <!-- 오른쪽 영역: 보유 아이템 표시 -->
+                    <ui:VisualElement class="header-side header-right">
+                        <!-- 다이아 표시 -->
+                        <ui:VisualElement class="header-currency-bar">
+                            <ui:VisualElement class="currency-icon-large diamond-icon"/>
+                            <ui:VisualElement class="currency-bar-content">
+                                <ui:Label text="0" name="HeaderDiamonds" class="currency-amount"/>
+                                <ui:VisualElement class="currency-plus-button"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <!-- 부활석 표시 -->
+                        <ui:VisualElement class="header-currency-bar">
+                            <ui:VisualElement class="currency-icon-large revive-stone-icon"/>
+                            <ui:VisualElement class="currency-bar-content">
+                                <ui:Label text="0" name="HeaderReviveStones" class="currency-amount"/>
+                                <ui:VisualElement class="currency-plus-button"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <!-- 공용 상점 컨텐츠 템플릿 -->
+                <ui:Instance template="StoreContent"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+    </ui:VisualElement>
+</ui:UXML>

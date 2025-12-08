@@ -15,11 +15,53 @@ namespace LostSpells.Systems
 
         private List<string> currentSkillKeywords = new List<string>();
         private string currentLanguage = "ko"; // 기본값: 한국어
+        private string currentServerMode = "online"; // 기본값: 온라인
 
         private void Start()
         {
+            // 저장된 서버 모드 로드
+            LoadServerModeFromSave();
+
             // 서버 연결 테스트
             StartCoroutine(CheckServerStatus());
+        }
+
+        /// <summary>
+        /// 저장된 서버 모드 로드
+        /// </summary>
+        private void LoadServerModeFromSave()
+        {
+            var saveManager = SaveManager.Instance;
+            if (saveManager != null)
+            {
+                var saveData = saveManager.GetCurrentSaveData();
+                if (saveData != null && !string.IsNullOrEmpty(saveData.voiceServerMode))
+                {
+                    SetServerMode(saveData.voiceServerMode);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 서버 모드 설정 (online/offline)
+        /// </summary>
+        public void SetServerMode(string mode)
+        {
+            currentServerMode = mode;
+
+            // 서버 URL은 동일하게 유지 (같은 포트 사용)
+            // 실제로 다른 서버를 실행해야 하므로 URL은 그대로 유지
+            serverUrl = "http://localhost:8000";
+
+            // Debug.Log($"[VoiceServerClient] 서버 모드 변경: {mode}");
+        }
+
+        /// <summary>
+        /// 현재 서버 모드 반환
+        /// </summary>
+        public string GetServerMode()
+        {
+            return currentServerMode;
         }
 
         /// <summary>
@@ -91,10 +133,21 @@ namespace LostSpells.Systems
         /// </summary>
         public IEnumerator RecognizeSkill(byte[] audioData, Action<RecognitionResult> callback)
         {
+            // 컨텍스트 없이 호출 시 빈 값으로 처리 (하위 호환성)
+            yield return RecognizeSkill(audioData, "", "", callback);
+        }
+
+        /// <summary>
+        /// 음성 파일을 서버로 전송하고 스킬 인식 결과 받기 (컨텍스트 포함)
+        /// </summary>
+        public IEnumerator RecognizeSkill(byte[] audioData, string context, string contextKeywords, Action<RecognitionResult> callback)
+        {
             WWWForm form = new WWWForm();
             form.AddBinaryData("audio", audioData, "recording.wav", "audio/wav");
             form.AddField("language", currentLanguage);
             form.AddField("skills", string.Join(",", currentSkillKeywords)); // 스킬 키워드 전달
+            form.AddField("context", context); // 현재 게임 컨텍스트
+            form.AddField("context_keywords", contextKeywords); // 컨텍스트별 키워드
 
             using (UnityWebRequest request = UnityWebRequest.Post($"{serverUrl}/recognize", form))
             {

@@ -74,6 +74,8 @@ namespace LostSpells.Data
 
         // 설정
         public bool isFullScreen = true;
+        public int qualityLevel = 2; // 0: 1280x720, 1: 1600x900, 2: 1920x1080, 3: 2560x1440
+        public int screenMode = 1;   // 0: Windowed, 1: Fullscreen
 
         // 오디오 장치 설정
         public string microphoneDeviceId = "";
@@ -84,6 +86,9 @@ namespace LostSpells.Data
 
         // 음성인식 모델 설정
         public string voiceRecognitionModel = "base";
+
+        // 음성인식 서버 모드 (online/offline)
+        public string voiceServerMode = "online";
 
         // 키 바인딩 (액션 이름 -> 키 코드)
         public Dictionary<string, string> keyBindings = new Dictionary<string, string>();
@@ -125,10 +130,13 @@ namespace LostSpells.Data
                 unlockedSkills = new List<string>(),
                 purchasedItems = new List<string>(),
                 isFullScreen = true,
+                qualityLevel = 2,
+                screenMode = 1,
                 microphoneDeviceId = "",
                 uiLanguage = "Korean",
                 voiceRecognitionLanguage = "ko",
                 voiceRecognitionModel = "base",
+                voiceServerMode = "online",
                 keyBindings = new Dictionary<string, string>(),
                 totalPlayTime = 0,
                 totalMonstersKilled = 0,

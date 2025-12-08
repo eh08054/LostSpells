@@ -27,6 +27,7 @@ namespace LostSpells.Data
         // 투사체 관련
         public float projectileSpeed = 10f;
         public float projectileLifetime = 3f;
+        public int pierceCount = 0; // 관통 횟수 (0 = 첫 적에서 사라짐, -1 = 무한 관통)
 
         // 비주얼 (경로 문자열로 저장)
         public string iconPath;

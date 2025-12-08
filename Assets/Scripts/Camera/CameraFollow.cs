@@ -27,6 +27,9 @@ namespace LostSpells.Camera
         [SerializeField] private float minY = -10f; // 최소 Y 위치
         [SerializeField] private float maxY = 10f; // 최대 Y 위치
 
+        // SmoothDamp용 속도 변수
+        private Vector3 velocity = Vector3.zero;
+
         private void Start()
         {
             // 타겟이 없으면 플레이어 찾기
@@ -61,7 +64,7 @@ namespace LostSpells.Camera
                 if (player != null)
                 {
                     target = player.transform;
-                    Debug.Log("[CameraFollow] 플레이어를 찾았습니다: " + player.name);
+                    // Debug.Log("[CameraFollow] 플레이어를 찾았습니다: " + player.name);
                 }
                 else
                 {
@@ -72,54 +75,12 @@ namespace LostSpells.Camera
             // 현재 카메라 위치
             Vector3 currentPos = transform.position;
 
-            // 타겟의 월드 위치를 뷰포트 좌표로 변환
-            Vector3 viewportPos = GetComponent<UnityEngine.Camera>().WorldToViewportPoint(target.position);
-
-            // 데드존 체크 (뷰포트 좌표 0~1 범위)
-            float deadZoneLeft = 0.5f - (deadZoneWidth / 20f); // 20은 대략적인 뷰포트 너비
-            float deadZoneRight = 0.5f + (deadZoneWidth / 20f);
-
-            // 목표 위치 계산 (데드존 밖으로 나갔을 때만 이동)
-            Vector3 targetPos = currentPos;
-
-            // X축 체크
-            if (viewportPos.x < deadZoneLeft)
-            {
-                // 왼쪽으로 벗어남
-                targetPos.x = target.position.x + offset.x;
-            }
-            else if (viewportPos.x > deadZoneRight)
-            {
-                // 오른쪽으로 벗어남
-                targetPos.x = target.position.x + offset.x;
-            }
-
-            // Y축 처리
-            if (followY)
-            {
-                // Y축도 추적하는 경우 (데드존 사용)
-                float deadZoneBottom = 0.5f - (deadZoneHeight / 20f);
-                float deadZoneTop = 0.5f + (deadZoneHeight / 20f);
-
-                if (viewportPos.y < deadZoneBottom)
-                {
-                    // 아래로 벗어남
-                    targetPos.y = target.position.y + offset.y;
-                }
-                else if (viewportPos.y > deadZoneTop)
-                {
-                    // 위로 벗어남
-                    targetPos.y = target.position.y + offset.y;
-                }
-            }
-            else
-            {
-                // Y축은 고정 (점프해도 카메라가 따라가지 않음)
-                targetPos.y = offset.y;
-            }
-
-            // Z축은 항상 고정
-            targetPos.z = offset.z;
+            // 목표 위치 계산 (항상 플레이어를 따라감)
+            Vector3 targetPos = new Vector3(
+                target.position.x + offset.x,
+                followY ? target.position.y + offset.y : offset.y,
+                offset.z
+            );
 
             // 카메라 이동 제한 적용
             if (useBounds)
@@ -131,8 +92,9 @@ namespace LostSpells.Camera
                 }
             }
 
-            // 부드러운 카메라 이동
-            transform.position = Vector3.Lerp(currentPos, targetPos, smoothSpeed * Time.deltaTime);
+            // 부드러운 카메라 이동 (SmoothDamp는 거리에 상관없이 일정한 시간에 도달)
+            float smoothTime = 1f / smoothSpeed; // smoothSpeed가 5면 0.2초에 도달
+            transform.position = Vector3.SmoothDamp(currentPos, targetPos, ref velocity, smoothTime);
         }
 
         /// <summary>
@@ -159,6 +121,7 @@ namespace LostSpells.Camera
                 }
 
                 transform.position = targetPos;
+                velocity = Vector3.zero; // 속도 초기화
             }
         }
 

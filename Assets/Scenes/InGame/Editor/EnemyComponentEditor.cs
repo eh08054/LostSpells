@@ -11,8 +11,12 @@ namespace LostSpells.Editor
         private SerializedProperty maxHealth;
         private SerializedProperty currentHealth;
         private SerializedProperty moveSpeed;
+        private SerializedProperty stoppingDistance;
+        private SerializedProperty attackDamage;
+        private SerializedProperty attackCooldown;
         private SerializedProperty spriteRenderer;
-        private SerializedProperty enemyColor;
+        private SerializedProperty enemySprite;
+        private SerializedProperty animator;
         private SerializedProperty nameText;
         private SerializedProperty healthBarBackground;
         private SerializedProperty healthBarFill;
@@ -23,8 +27,12 @@ namespace LostSpells.Editor
             maxHealth = serializedObject.FindProperty("maxHealth");
             currentHealth = serializedObject.FindProperty("currentHealth");
             moveSpeed = serializedObject.FindProperty("moveSpeed");
+            stoppingDistance = serializedObject.FindProperty("stoppingDistance");
+            attackDamage = serializedObject.FindProperty("attackDamage");
+            attackCooldown = serializedObject.FindProperty("attackCooldown");
             spriteRenderer = serializedObject.FindProperty("spriteRenderer");
-            enemyColor = serializedObject.FindProperty("enemyColor");
+            enemySprite = serializedObject.FindProperty("enemySprite");
+            animator = serializedObject.FindProperty("animator");
             nameText = serializedObject.FindProperty("nameText");
             healthBarBackground = serializedObject.FindProperty("healthBarBackground");
             healthBarFill = serializedObject.FindProperty("healthBarFill");
@@ -45,13 +53,17 @@ namespace LostSpells.Editor
             currentHealth.intValue = Mathf.Clamp(newCurrentHealth, 0, maxHealthValue);
 
             EditorGUILayout.PropertyField(moveSpeed);
+            EditorGUILayout.PropertyField(stoppingDistance);
+            EditorGUILayout.PropertyField(attackDamage);
+            EditorGUILayout.PropertyField(attackCooldown);
 
             EditorGUILayout.Space();
 
             // Visual Header
             EditorGUILayout.LabelField("Visual", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(spriteRenderer);
-            EditorGUILayout.PropertyField(enemyColor);
+            EditorGUILayout.PropertyField(enemySprite);
+            EditorGUILayout.PropertyField(animator);
 
             EditorGUILayout.Space();
 

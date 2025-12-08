@@ -1,0 +1,1317 @@
+/* ========================================
+   통합 메뉴 스타일시트
+   모든 메뉴 패널의 스타일을 하나로 통합
+   ======================================== */
+
+/* ========== CSS 변수 정의 ========== */
+:root {
+    /* 색상 */
+    --color-white: rgb(255, 255, 255);
+    --color-black: rgb(0, 0, 0);
+    --color-gray-light: rgb(240, 240, 240);
+    --color-gray-medium: rgb(220, 220, 220);
+    --color-gray-dark: rgb(60, 60, 60);
+
+    /* 간격 */
+    --spacing-small: 8px;
+    --spacing-medium: 16px;
+    --spacing-large: 24px;
+    --spacing-xlarge: 32px;
+
+    /* 테두리 */
+    --border-width: 2px;
+
+    /* 폰트 크기 */
+    --font-size-medium: 18px;
+    --font-size-xlarge: 48px;
+
+    /* 옵션 패널 변수 */
+    --label-width: 300px;
+    --control-width: 366px;
+    --control-height: 32px;
+    --value-label-width: 50px;
+}
+
+/* ========== 전체 화면 컨테이너 ========== */
+.screen-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+/* ========== Parallax 배경 레이어 ========== */
+.parallax-layer {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+}
+
+.sky-layer {
+    background-image: url("project://database/Assets/Templates/2D Scrolling Parallax Background Pack/Backgrounds/Sky/Sky-1.png");
+}
+
+.mountain-layer {
+    background-image: url("project://database/Assets/Templates/2D Scrolling Parallax Background Pack/Backgrounds/Mountain/Mountain-1.png");
+}
+
+.middle-far-layer {
+    /* Middle-Far 폴더에는 개별 Tree 이미지만 있어서 전체 배경으로 사용 불가 */
+}
+
+.middle-near-layer {
+    /* Middle-Near 폴더에는 개별 오브젝트 이미지만 있어서 전체 배경으로 사용 불가 */
+}
+
+.ground-layer {
+    background-image: url("project://database/Assets/Templates/2D Scrolling Parallax Background Pack/Backgrounds/Ground/Ground-1.png");
+}
+
+/* ========== 패널 공통 스타일 ========== */
+.menu-panel {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.ui-content {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    flex-direction: column;
+}
+
+.main-menu-content {
+    align-items: center;
+    justify-content: center;
+}
+
+/* ========== 게임 타이틀 ========== */
+.game-title {
+    font-size: 84px;
+    color: rgb(255, 255, 255);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    letter-spacing: 8px;
+    margin-bottom: 100px;
+    text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.8);
+    -unity-text-outline-width: 2px;
+    -unity-text-outline-color: rgba(0, 0, 0, 0.5);
+}
+
+/* ========== 메뉴 버튼 ========== */
+.menu-button {
+    min-width: 250px;
+    min-height: 50px;
+    margin-top: var(--spacing-small);
+    margin-bottom: var(--spacing-small);
+    padding: var(--spacing-medium);
+
+    background-color: rgba(0, 0, 0, 0.3);
+    border-width: 2px;
+    border-color: rgba(255, 255, 255, 0.5);
+    border-radius: 0;
+
+    color: rgb(255, 255, 255);
+    font-size: var(--font-size-medium);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+
+    transition-property: background-color, border-color, scale;
+    transition-duration: 0.15s;
+}
+
+.menu-button:focus {
+    background-color: rgba(0, 0, 0, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+    border-width: 2px;
+}
+
+.menu-button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.7);
+    scale: 1.02;
+}
+
+.menu-button:active {
+    background-color: rgba(255, 255, 255, 0.2);
+    scale: 0.98;
+}
+
+/* ========== 헤더 바 ========== */
+.header-bar {
+    width: 100%;
+    height: 80px;
+    background-color: rgba(0, 0, 0, 0);
+    flex-direction: row;
+    align-items: center;
+}
+
+.header-side {
+    width: 33.33%;
+    height: 100%;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+.header-left {
+    justify-content: flex-start;
+    padding-left: var(--spacing-large);
+}
+
+.header-right {
+    justify-content: flex-end;
+    padding-right: var(--spacing-large);
+}
+
+.header-title {
+    width: 33.33%;
+    font-size: var(--font-size-xlarge);
+    color: rgb(255, 255, 255);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    -unity-text-outline-width: 1px;
+    -unity-text-outline-color: rgba(0, 0, 0, 0.5);
+}
+
+/* ========== 뒤로가기 버튼 ========== */
+.back-button {
+    width: 60px;
+    height: 60px;
+
+    background-image: url("project://database/Assets/Templates/2D%20Casual%20UI/Sprite/GUI.png#GUI_33");
+    -unity-background-scale-mode: scale-to-fit;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    rotate: 180deg;
+
+    transition-property: scale;
+    transition-duration: 0.15s;
+}
+
+.back-button:hover {
+    scale: 1.1;
+}
+
+.back-button:active {
+    scale: 0.9;
+}
+
+/* ========== 컨텐츠 영역 ========== */
+.content-area {
+    width: 100%;
+    flex-grow: 1;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-xlarge);
+}
+
+.button-container {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 320px;
+}
+
+/* ========== 종료 확인 팝업 ========== */
+.quit-confirmation {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0);
+    display: none;
+}
+
+.quit-popup-container {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.quit-popup {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 450px;
+    height: 300px;
+    padding: 50px 30px 30px 30px;
+    background-image: url('project://database/Assets/Templates/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/UI%20board%20Medium%20%20parchment.png');
+    -unity-background-scale-mode: stretch-to-fill;
+    -unity-slice-left: 80;
+    -unity-slice-right: 80;
+    -unity-slice-top: 80;
+    -unity-slice-bottom: 80;
+}
+
+.quit-title {
+    font-size: 32px;
+    color: rgb(80, 40, 20);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    text-shadow: 0px 0px 0px rgba(0, 0, 0, 0);
+    margin-bottom: 20px;
+}
+
+.quit-message {
+    font-size: 18px;
+    color: rgb(100, 50, 25);
+    -unity-text-align: middle-center;
+    text-shadow: 0px 0px 0px rgba(0, 0, 0, 0);
+    margin-bottom: 30px;
+    white-space: normal;
+}
+
+.quit-buttons {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+
+.quit-button-confirm,
+.quit-button-cancel {
+    min-width: 140px;
+    min-height: 50px;
+    margin-left: 10px;
+    margin-right: 10px;
+    background-image: url('project://database/Assets/Templates/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/TextBTN_Medium.png');
+    -unity-background-scale-mode: stretch-to-fill;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    color: rgb(228, 218, 201);
+    font-size: 18px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    text-shadow: 0px 0px 0px rgba(0, 0, 0, 0);
+    transition-property: scale;
+    transition-duration: 0.1s;
+}
+
+.quit-button-confirm:hover,
+.quit-button-cancel:hover {
+    scale: 1.05;
+}
+
+.quit-button-confirm:active,
+.quit-button-cancel:active {
+    background-image: url('project://database/Assets/Templates/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/TextBTN_Medium_Pressed.png');
+    scale: 0.98;
+}
+
+/* ========== 스토리 모드 스타일 ========== */
+.story-content {
+    width: 100%;
+    flex-grow: 1;
+    padding: 32px 64px;
+    align-items: center;
+    justify-content: center;
+}
+
+.slot-scroll-view {
+    width: 100%;
+    flex-grow: 1;
+}
+
+.slot-scroll-view > .unity-scroll-view__content-and-vertical-scroll-container > .unity-scroller--vertical {
+    width: 0;
+    visibility: hidden;
+}
+
+.slot-scroll-view > .unity-scroll-view__horizontal-scroller {
+    height: 0;
+    visibility: hidden;
+}
+
+.slot-list-container {
+    flex-direction: row;
+    align-items: center;
+    padding: 32px;
+    min-height: 100%;
+}
+
+/* 챕터 버튼 */
+.chapter-button {
+    width: 300px;
+    height: 400px;
+    flex-shrink: 0;
+    margin-right: 32px;
+    padding: 32px;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    background-image: url("project://database/Assets/Templates/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/UI%20board%20Large%20%20parchment.png");
+    -unity-background-scale-mode: stretch-to-fill;
+    -unity-background-image-tint-color: rgb(255, 255, 255);
+    background-color: transparent;
+    border-width: 0;
+    transition-property: -unity-background-image-tint-color, scale;
+    transition-duration: 0.15s;
+}
+
+.chapter-button:hover {
+    -unity-background-image-tint-color: rgb(255, 250, 240);
+    scale: 1.05;
+}
+
+.chapter-button:active {
+    scale: 0.98;
+}
+
+.lock-overlay {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url("project://database/Assets/Templates/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/UI%20board%20Large%20%20parchment.png");
+    -unity-background-scale-mode: stretch-to-fill;
+    -unity-background-image-tint-color: rgba(20, 20, 20, 0.85);
+    justify-content: center;
+    align-items: center;
+}
+
+.chapter-info {
+    flex-direction: column;
+    flex-grow: 1;
+    justify-content: flex-start;
+    align-items: stretch;
+    padding-top: 16px;
+}
+
+.chapter-number {
+    font-size: 16px;
+    color: rgb(120, 100, 80);
+    -unity-font-style: bold;
+    margin-bottom: 8px;
+    -unity-text-align: upper-center;
+    flex-shrink: 0;
+}
+
+.chapter-name {
+    font-size: 28px;
+    color: rgb(80, 60, 40);
+    -unity-font-style: bold;
+    margin-bottom: 24px;
+    -unity-text-align: upper-center;
+    white-space: normal;
+    flex-shrink: 0;
+}
+
+.chapter-progress {
+    font-size: 18px;
+    color: rgb(60, 40, 20);
+    -unity-font-style: bold;
+    margin-top: auto;
+    margin-bottom: 8px;
+    -unity-text-align: middle-center;
+    flex-shrink: 0;
+}
+
+.lock-icon {
+    width: 80px;
+    height: 80px;
+    background-image: url("project://database/Assets/Templates/2D%20Casual%20UI/Sprite/GUI.png#GUI_0");
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+/* ========== 엔드리스 모드 스타일 ========== */
+.ranking-title {
+    font-size: 36px;
+    color: rgb(255, 255, 255);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    margin-top: 0;
+    margin-bottom: 12px;
+    flex-shrink: 0;
+}
+
+.ranking-header {
+    width: 100%;
+    max-width: 700px;
+    height: 35px;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 24px;
+    margin-bottom: 8px;
+    background-color: rgba(40, 30, 20, 0.7);
+    border-radius: 5px;
+    flex-shrink: 0;
+}
+
+.header-rank {
+    font-size: 18px;
+    color: rgb(240, 220, 180);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    width: 60px;
+    flex-shrink: 0;
+}
+
+.header-score {
+    font-size: 18px;
+    color: rgb(240, 220, 180);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    width: 120px;
+    flex-shrink: 0;
+}
+
+.header-wave {
+    font-size: 18px;
+    color: rgb(240, 220, 180);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    width: 120px;
+    flex-shrink: 0;
+}
+
+.header-date {
+    font-size: 18px;
+    color: rgb(240, 220, 180);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    width: 140px;
+    flex-shrink: 0;
+}
+
+.ranking-list-container {
+    width: 100%;
+    max-width: 700px;
+    max-height: 320px;
+    flex-direction: column;
+    align-items: stretch;
+    flex-shrink: 0;
+    margin-bottom: 16px;
+}
+
+.ranking-item {
+    width: 100%;
+    height: 56px;
+    flex-shrink: 0;
+    margin-bottom: 8px;
+    padding: 8px 24px;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    background-image: url("project://database/Assets/Templates/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/UI%20board%20Large%20%20parchment.png");
+    -unity-background-scale-mode: stretch-to-fill;
+    -unity-background-image-tint-color: rgb(255, 255, 255);
+    background-color: transparent;
+    border-width: 0;
+    transition-property: -unity-background-image-tint-color;
+    transition-duration: 0.15s;
+}
+
+.ranking-item:hover {
+    -unity-background-image-tint-color: rgb(255, 250, 240);
+}
+
+/* 1-3등 특별 색상 */
+.ranking-item-gold {
+    -unity-background-image-tint-color: rgb(255, 240, 200);
+}
+
+.ranking-item-silver {
+    -unity-background-image-tint-color: rgb(240, 240, 250);
+}
+
+.ranking-item-bronze {
+    -unity-background-image-tint-color: rgb(255, 230, 210);
+}
+
+/* 순위 정보 */
+.ranking-rank {
+    font-size: 28px;
+    color: rgb(80, 60, 40);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    width: 60px;
+    flex-shrink: 0;
+}
+
+.ranking-score {
+    font-size: 22px;
+    color: rgb(80, 60, 40);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    width: 120px;
+    flex-shrink: 0;
+}
+
+.ranking-wave {
+    font-size: 22px;
+    color: rgb(80, 60, 40);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    width: 120px;
+    flex-shrink: 0;
+}
+
+.ranking-date {
+    font-size: 16px;
+    color: rgb(100, 80, 60);
+    -unity-font-style: italic;
+    -unity-text-align: middle-center;
+    width: 140px;
+    flex-shrink: 0;
+    margin-right: 12px;
+}
+
+.play-button {
+    min-width: 250px;
+    height: 70px;
+    flex-shrink: 0;
+    background-image: url("project://database/Assets/Templates/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/TextBTN_Big.png");
+    -unity-background-scale-mode: stretch-to-fill;
+    background-color: transparent;
+    border-width: 0;
+    padding: 0 20px;
+    color: rgb(240, 220, 180);
+    font-size: 26px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    transition-property: scale;
+    transition-duration: 0.15s;
+    margin-top: 16px;
+    margin-bottom: 0;
+}
+
+.play-button:hover {
+    scale: 1.08;
+}
+
+.play-button:active {
+    scale: 0.95;
+}
+
+/* ========== 옵션 스타일 ========== */
+.options-content {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0;
+    justify-content: flex-start;
+}
+
+.panel-header-bar {
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding-left: 0;
+    padding-right: var(--spacing-large);
+    padding-top: var(--spacing-large);
+    padding-bottom: var(--spacing-medium);
+    flex-shrink: 0;
+}
+
+.current-panel-title {
+    font-size: 32px;
+    color: rgb(255, 255, 255);
+    -unity-font-style: bold;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    margin-left: 232px;
+    flex-grow: 1;
+}
+
+.panel-reset-container {
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.panel-reset-button {
+    width: 100px;
+    height: 36px;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-width: 2px;
+    border-color: rgba(255, 255, 255, 0.5);
+    border-radius: 0;
+    color: rgb(255, 255, 255);
+    font-size: var(--font-size-medium);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    flex-shrink: 0;
+    transition-property: background-color, border-color, scale;
+    transition-duration: 0.15s;
+}
+
+.panel-reset-button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.7);
+    scale: 1.02;
+}
+
+.panel-reset-button:active {
+    background-color: rgba(255, 255, 255, 0.2);
+    scale: 0.98;
+}
+
+.panels-container {
+    flex-grow: 1;
+    flex-direction: row;
+    align-items: stretch;
+}
+
+.left-panel {
+    width: 200px;
+    min-height: 100%;
+    background-color: rgba(0, 0, 0, 0);
+    padding-left: var(--spacing-large);
+    padding-right: var(--spacing-large);
+    padding-bottom: var(--spacing-large);
+    padding-top: 0;
+}
+
+.right-panel-container {
+    flex-grow: 1;
+    background-color: rgba(0, 0, 0, 0);
+    padding-right: var(--spacing-large);
+    padding-bottom: var(--spacing-large);
+    padding-top: 0;
+}
+
+.settings-panel-wrapper {
+    flex-grow: 1;
+    flex-direction: column;
+}
+
+.panel-scroll {
+    flex-grow: 1;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 2px;
+    border-color: rgba(255, 255, 255, 0.3);
+    border-radius: 0;
+}
+
+.panel-scroll > .unity-scroll-view__content-container {
+    padding: 0;
+}
+
+.panel-content {
+    padding-left: var(--spacing-xlarge);
+    padding-right: var(--spacing-xlarge);
+    padding-top: var(--spacing-xlarge);
+    padding-bottom: var(--spacing-xlarge);
+}
+
+.setting-row {
+    flex-direction: row;
+    align-items: flex-start;
+    margin-bottom: var(--spacing-medium);
+    min-height: 40px;
+}
+
+.setting-label {
+    width: var(--label-width);
+    margin-right: var(--spacing-large);
+    font-size: var(--font-size-medium);
+    color: rgb(255, 255, 255);
+    -unity-font-style: bold;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.category-button {
+    min-height: 60px;
+    margin-bottom: var(--spacing-medium);
+    padding: var(--spacing-medium);
+
+    background-color: rgba(0, 0, 0, 0.3);
+    border-width: 2px;
+    border-color: rgb(255, 255, 255);
+    border-radius: 0;
+
+    color: rgb(255, 255, 255);
+    font-size: var(--font-size-medium);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+
+    transition-property: background-color, border-color, scale;
+    transition-duration: 0.15s;
+}
+
+.category-button:focus {
+    background-color: rgba(0, 0, 0, 0.3);
+    border-color: rgb(255, 255, 255);
+    border-width: 2px;
+}
+
+.category-button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    scale: 1.02;
+}
+
+.category-button:active {
+    background-color: rgba(255, 255, 255, 0.2);
+    scale: 0.98;
+}
+
+/* ========== 커스텀 드롭다운 ========== */
+.custom-dropdown-container {
+    width: var(--control-width);
+    flex-direction: column;
+}
+
+.custom-dropdown-button {
+    width: 100%;
+    height: var(--control-height);
+    background-color: rgba(0, 0, 0, 0.3);
+    border-width: 2px;
+    border-color: rgba(255, 255, 255, 0.3);
+    border-radius: 0;
+    padding: 0;
+    margin: 0;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    overflow: hidden;
+    transition-property: border-color;
+    transition-duration: 0.15s;
+}
+
+.custom-dropdown-button.expanded {
+    border-bottom-width: 0;
+}
+
+.custom-dropdown-label {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+    color: rgb(255, 255, 255);
+    font-size: var(--font-size-medium);
+    -unity-text-align: middle-left;
+    padding-left: 10px;
+    padding-right: 5px;
+    margin: 0;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.custom-dropdown-arrow {
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    margin-right: 10px;
+    flex-shrink: 0;
+    background-image: url("project://database/Assets/Templates/2D%20Casual%20UI/Sprite/GUI.png#GUI_33");
+    -unity-background-scale-mode: scale-to-fit;
+    rotate: 90deg;
+    transition-property: rotate;
+    transition-duration: 0.15s;
+}
+
+.custom-dropdown-button.expanded .custom-dropdown-arrow {
+    rotate: 270deg;
+}
+
+.custom-dropdown-list {
+    width: 100%;
+    max-height: 200px;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-width: 0;
+    border-left-width: 2px;
+    border-right-width: 2px;
+    border-bottom-width: 2px;
+    border-color: rgba(255, 255, 255, 0.3);
+    border-radius: 0;
+    overflow: auto;
+    display: none;
+}
+
+.custom-dropdown-list.expanded {
+    display: flex;
+    flex-direction: column;
+}
+
+.custom-dropdown-item-container {
+    width: 100%;
+    height: var(--control-height);
+    flex-direction: row;
+    align-items: center;
+    border-top-width: 1px;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.custom-dropdown-checkmark {
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    margin-left: 8px;
+    margin-right: 4px;
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.custom-dropdown-checkmark.checked {
+    background-image: url("project://database/Assets/Templates/2D%20Casual%20UI/Sprite/GUI.png#GUI_66");
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.custom-dropdown-item {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+    height: var(--control-height);
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-radius: 0;
+    padding-left: 4px;
+    padding-right: 10px;
+    margin: 0;
+    color: rgb(255, 255, 255);
+    font-size: var(--font-size-medium);
+    -unity-text-align: middle-left;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    transition-property: background-color;
+    transition-duration: 0.1s;
+}
+
+.custom-dropdown-item:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+.custom-dropdown-item:active {
+    background-color: rgba(255, 255, 255, 0.4);
+}
+
+/* ========== 키 바인딩 ========== */
+.section-title {
+    font-size: var(--font-size-medium);
+    color: rgb(255, 255, 255);
+    -unity-font-style: bold;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.section-toggle {
+    width: 30px;
+    height: 30px;
+    background-image: url("project://database/Assets/Templates/2D%20Casual%20UI/Sprite/GUI.png#GUI_33");
+    -unity-background-scale-mode: scale-to-fit;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    rotate: 0deg;
+    transition-property: scale, rotate;
+    transition-duration: 0.15s;
+}
+
+.section-toggle:hover {
+    scale: 1.1;
+}
+
+.section-toggle:active {
+    scale: 0.9;
+}
+
+.section-toggle.expanded {
+    rotate: 90deg;
+}
+
+.keybinding-section {
+    margin-top: 8px;
+    margin-bottom: var(--spacing-medium);
+    padding: var(--spacing-medium);
+    background-color: rgba(0, 0, 0, 0.3);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.scene-title {
+    font-size: 20px;
+    color: rgb(255, 220, 150);
+    -unity-font-style: bold;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+    margin-bottom: var(--spacing-medium);
+}
+
+.keybinding-row {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: var(--spacing-small);
+    min-height: 36px;
+}
+
+.keybinding-label {
+    width: 200px;
+    margin-right: var(--spacing-medium);
+    font-size: var(--font-size-medium);
+    color: rgb(255, 255, 255);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.key-button {
+    width: 150px;
+    height: 32px;
+    background-color: rgba(50, 50, 50, 0.8);
+    border-width: var(--border-width);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: rgb(255, 255, 255);
+    font-size: var(--font-size-medium);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    transition-property: background-color, scale;
+    transition-duration: 0.15s;
+}
+
+.key-button:hover {
+    background-color: rgba(80, 80, 80, 0.9);
+    scale: 1.02;
+}
+
+.key-button:active {
+    background-color: rgba(30, 30, 30, 0.9);
+    scale: 0.98;
+}
+
+.voice-recognition-section {
+    margin-top: 8px;
+    margin-bottom: var(--spacing-medium);
+    padding: var(--spacing-medium);
+    background-color: rgba(0, 0, 0, 0.3);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.reset-game-button {
+    min-width: 150px;
+    min-height: 40px;
+    background-color: rgba(80, 80, 80, 0.8);
+    border-width: 2px;
+    border-color: rgba(150, 150, 150, 0.9);
+    border-radius: 5px;
+    color: rgb(255, 255, 255);
+    font-size: var(--font-size-medium);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    transition-property: background-color, border-color, scale;
+    transition-duration: 0.15s;
+}
+
+.reset-game-button:hover {
+    background-color: rgba(120, 120, 120, 0.9);
+    border-color: rgba(200, 200, 200, 1);
+    scale: 1.05;
+}
+
+.reset-game-button:active {
+    background-color: rgba(60, 60, 60, 0.9);
+    scale: 0.95;
+}
+
+/* ========== 게임 리셋 확인 팝업 ========== */
+.game-reset-confirmation {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0);
+    display: none;
+}
+
+.game-reset-popup-container {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.game-reset-popup {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 450px;
+    height: 300px;
+    padding: 50px 30px 30px 30px;
+    background-image: url('project://database/Assets/Templates/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/UI%20board%20Medium%20%20parchment.png');
+    -unity-background-scale-mode: stretch-to-fill;
+    -unity-slice-left: 80;
+    -unity-slice-right: 80;
+    -unity-slice-top: 80;
+    -unity-slice-bottom: 80;
+}
+
+.game-reset-title {
+    font-size: 32px;
+    color: rgb(80, 40, 20);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    text-shadow: 0px 0px 0px rgba(0, 0, 0, 0);
+    margin-bottom: 20px;
+}
+
+.game-reset-message {
+    font-size: 18px;
+    color: rgb(100, 50, 25);
+    -unity-text-align: middle-center;
+    text-shadow: 0px 0px 0px rgba(0, 0, 0, 0);
+    margin-bottom: 30px;
+    white-space: normal;
+}
+
+.game-reset-buttons {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+
+.game-reset-button-confirm,
+.game-reset-button-cancel {
+    min-width: 140px;
+    min-height: 50px;
+    margin-left: 10px;
+    margin-right: 10px;
+    background-image: url('project://database/Assets/Templates/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/TextBTN_Medium.png');
+    -unity-background-scale-mode: stretch-to-fill;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    color: rgb(228, 218, 201);
+    font-size: 18px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    text-shadow: 0px 0px 0px rgba(0, 0, 0, 0);
+    transition-property: scale;
+    transition-duration: 0.1s;
+}
+
+.game-reset-button-confirm:hover,
+.game-reset-button-cancel:hover {
+    scale: 1.05;
+}
+
+.game-reset-button-confirm:active,
+.game-reset-button-cancel:active {
+    background-image: url('project://database/Assets/Templates/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/TextBTN_Medium_Pressed.png');
+    scale: 0.98;
+}
+
+/* ========== 상점 스타일 ========== */
+.store-content {
+    flex-direction: row;
+    align-items: stretch;
+    padding: 0;
+}
+
+.right-panel {
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+.store-panel {
+    padding: var(--spacing-xlarge) var(--spacing-xlarge) var(--spacing-xlarge) 80px;
+}
+
+.product-grid {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    padding-top: var(--spacing-medium);
+}
+
+.product-card {
+    width: 200px;
+    height: 240px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    margin-right: var(--spacing-large);
+    margin-bottom: var(--spacing-large);
+    background-image: url("project://database/Assets/Templates/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/UI%20board%20Large%20%20parchment.png");
+    -unity-background-scale-mode: stretch-to-fill;
+    -unity-background-image-tint-color: rgb(255, 255, 255);
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    transition-property: -unity-background-image-tint-color, scale;
+    transition-duration: 0.15s;
+}
+
+.product-card:hover {
+    -unity-background-image-tint-color: rgb(255, 250, 240);
+    scale: 1.03;
+}
+
+.buy-button {
+    width: 100%;
+    min-height: 40px;
+    padding: 8px;
+    background-image: url("project://database/Assets/Templates/Fantasy%20Wooden%20GUI%20%20Free/normal_ui_set%20A/TextBTN_Big.png");
+    -unity-background-scale-mode: stretch-to-fill;
+    -unity-background-image-tint-color: rgb(255, 255, 255);
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    color: rgb(255, 255, 255);
+    font-size: 14px;
+    -unity-font-style: bold;
+    -unity-text-outline-width: 1px;
+    -unity-text-outline-color: rgb(40, 30, 20);
+    transition-property: scale;
+    transition-duration: 0.15s;
+}
+
+.buy-button:hover {
+    scale: 1.05;
+}
+
+.buy-button:active {
+    scale: 0.95;
+}
+
+/* ========== 헤더 화폐 표시 ========== */
+.header-currency-bar {
+    flex-direction: row;
+    align-items: center;
+    height: 45px;
+    margin-left: var(--spacing-small);
+    background-image: url("project://database/Assets/Templates/2D%20Casual%20UI/Sprite/GUI.png#GUI_9");
+    -unity-background-scale-mode: stretch-to-fill;
+    min-width: 120px;
+    padding-left: 8px;
+    padding-right: 8px;
+    flex-shrink: 0;
+}
+
+.currency-icon-large {
+    width: 50px;
+    height: 50px;
+    margin-left: -8px;
+    margin-right: var(--spacing-small);
+    -unity-background-scale-mode: scale-to-fit;
+    flex-shrink: 0;
+}
+
+.diamond-icon {
+    background-image: url("project://database/Assets/Templates/2D%20Casual%20UI/Sprite/GUI.png#GUI_22");
+}
+
+.revive-stone-icon {
+    background-image: url("project://database/Assets/Templates/2D%20Casual%20UI/Sprite/GUI.png#GUI_20");
+}
+
+.currency-bar-content {
+    flex-direction: row;
+    align-items: center;
+    flex-grow: 1;
+    justify-content: flex-end;
+}
+
+.currency-amount {
+    font-size: 20px;
+    color: rgb(255, 255, 255);
+    -unity-font-style: bold;
+    -unity-text-align: middle-right;
+    margin-right: var(--spacing-small);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.currency-plus-button {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    margin-right: var(--spacing-medium);
+    background-image: url("project://database/Assets/Templates/2D%20Casual%20UI/Sprite/GUI.png#GUI_60");
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+/* ========== 팝업 공통 ========== */
+.menu-popup {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    translate: -50% -50%;
+    width: 550px;
+    height: auto;
+    background-image: url("project://database/Assets/Templates/Fantasy Wooden GUI  Free/normal_ui_set A/UI board Medium  parchment.png");
+    -unity-background-scale-mode: stretch-to-fill;
+    -unity-slice-left: 80;
+    -unity-slice-right: 80;
+    -unity-slice-top: 80;
+    -unity-slice-bottom: 80;
+    border-width: 0;
+    padding: 50px 40px 40px 40px;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.menu-title {
+    font-size: 34px;
+    color: rgb(80, 40, 20);
+    -unity-font-style: bold;
+    text-shadow: 2px 2px 5px rgba(255, 255, 255, 0.5);
+    margin-bottom: 22px;
+    -unity-text-align: middle-center;
+    -unity-text-outline-width: 1.5px;
+    -unity-text-outline-color: rgba(255, 255, 255, 0.3);
+    letter-spacing: 1px;
+    white-space: normal;
+    overflow: hidden;
+    text-overflow: clip;
+}
+
+.insufficient-message {
+    font-size: 17px;
+    color: rgb(60, 40, 30);
+    -unity-font-style: normal;
+    -unity-text-align: middle-center;
+    text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.3);
+    margin-top: 15px;
+    margin-bottom: 25px;
+    white-space: normal;
+    line-height: 26px;
+    overflow: hidden;
+    text-overflow: clip;
+    max-width: 100%;
+}
+
+.insufficient-button-container {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+
+.game-over-button {
+    min-width: 110px;
+    max-width: 110px;
+    height: 50px;
+    background-image: url("project://database/Assets/Templates/Fantasy Wooden GUI  Free/normal_ui_set A/TextBTN_Big.png");
+    -unity-background-scale-mode: stretch-to-fill;
+    -unity-background-image-tint-color: rgb(255, 255, 255);
+    border-width: 0;
+    color: rgb(255, 240, 220);
+    font-size: 16px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    transition-property: scale, -unity-background-image-tint-color;
+    transition-duration: 0.15s;
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.9);
+    -unity-text-outline-width: 1px;
+    -unity-text-outline-color: rgba(80, 40, 20, 0.8);
+    letter-spacing: 1px;
+    scale: 1.0;
+}
+
+.game-over-button:hover {
+    scale: 1.05;
+}
+
+.game-over-button:active {
+    scale: 0.95;
+    -unity-background-image-tint-color: rgb(180, 180, 180);
+}
