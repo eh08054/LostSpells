@@ -294,11 +294,13 @@ namespace LostSpells.Systems
                     // 음성 녹음 키를 누르면 녹음 시작
                     if (Keyboard.current[voiceRecordKey].wasPressedThisFrame)
                     {
+                        Debug.Log($"[VoiceRecognition] 음성 녹음 키 눌림 (TimeScale: {Time.timeScale})");
                         StartVoiceRecording();
                     }
                     // 음성 녹음 키를 떼면 녹음 중지
                     else if (Keyboard.current[voiceRecordKey].wasReleasedThisFrame)
                     {
+                        Debug.Log($"[VoiceRecognition] 음성 녹음 키 뗌 (TimeScale: {Time.timeScale})");
                         StopVoiceRecording();
                     }
                 }
@@ -374,13 +376,17 @@ namespace LostSpells.Systems
         /// </summary>
         private void StartVoiceRecording()
         {
+            Debug.Log($"[VoiceRecognition] StartVoiceRecording 호출됨 (isRecording: {isRecording})");
+
             if (isRecording)
             {
+                Debug.Log("[VoiceRecognition] StartVoiceRecording 무시: 이미 녹음 중");
                 return;
             }
 
             isRecording = true;
             recordingStartTime = Time.unscaledTime; // 일시정지 중에도 동작하도록
+            Debug.Log($"[VoiceRecognition] 녹음 시작 시간: {recordingStartTime}");
 
             // 새로운 인식 시작 시 이전 정확도 초기화
             if (inGameUI != null)

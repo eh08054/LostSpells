@@ -98,13 +98,13 @@ namespace LostSpells.Systems
             }
             else if (isRecording && isVoiceDetected)
             {
-                // 녹음 중
-                recordingTimer += Time.deltaTime;
+                // 녹음 중 (Time.unscaledDeltaTime 사용 - 일시정지/게임오버 중에도 동작)
+                recordingTimer += Time.unscaledDeltaTime;
 
                 if (currentRMS < voiceThreshold / 2)
                 {
                     // 무음 감지
-                    silenceTimer += Time.deltaTime;
+                    silenceTimer += Time.unscaledDeltaTime;
 
                     if (silenceTimer >= silenceTimeout)
                     {
@@ -267,13 +267,21 @@ namespace LostSpells.Systems
         /// </summary>
         public void StartRecording()
         {
-            if (isRecording || !isMicrophoneReady)
+            if (isRecording)
             {
+                Debug.Log("[VoiceRecorder] StartRecording 무시: 이미 녹음 중");
+                return;
+            }
+
+            if (!isMicrophoneReady)
+            {
+                Debug.LogWarning("[VoiceRecorder] StartRecording 실패: 마이크가 준비되지 않음");
                 return;
             }
 
             isRecording = true;
             recordStartPosition = Microphone.GetPosition(microphoneDevice);
+            Debug.Log($"[VoiceRecorder] 녹음 시작됨 (position: {recordStartPosition})");
         }
 
         /// <summary>
@@ -281,13 +289,20 @@ namespace LostSpells.Systems
         /// </summary>
         public void StopRecording()
         {
-            if (!isRecording || !isMicrophoneReady)
+            if (!isRecording)
             {
+                Debug.Log("[VoiceRecorder] StopRecording 무시: 녹음 중이 아님");
                 return;
+            }
+
+            if (!isMicrophoneReady)
+            {
+                Debug.LogWarning("[VoiceRecorder] StopRecording 경고: 마이크가 준비되지 않음");
             }
 
             isRecording = false;
             recordEndPosition = Microphone.GetPosition(microphoneDevice);
+            Debug.Log($"[VoiceRecorder] 녹음 중지됨 (start: {recordStartPosition}, end: {recordEndPosition})");
 
             // 녹음된 구간 추출
             ExtractRecordedAudio();
