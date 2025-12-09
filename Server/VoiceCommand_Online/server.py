@@ -328,10 +328,14 @@ def fallback_classify(text: str) -> dict:
         "메인 메뉴": "GoToMainMenu",
         "메인메뉴": "GoToMainMenu",
         "게임 시작": "StartGame",
+        "게임시작": "StartGame",
+        "플레이": "StartGame",
         "시작": "StartGame",
         "스토리 모드": "SelectStoryMode",
+        "스토리모드": "SelectStoryMode",
         "스토리": "SelectStoryMode",
         "무한 모드": "SelectEndlessMode",
+        "무한모드": "SelectEndlessMode",
         "엔드리스": "SelectEndlessMode",
     }
 

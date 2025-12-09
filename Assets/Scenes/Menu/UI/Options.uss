@@ -128,11 +128,13 @@ TemplateContainer {
 .panels-container {
     flex-grow: 1;
     flex-shrink: 1;
+    flex-basis: 0;
     flex-direction: row;
     align-items: stretch;
     padding-top: 0;
     overflow: hidden;
     min-height: 0;
+    height: 100%;
 }
 
 /* 왼쪽 패널 - 카테고리 버튼들 */
@@ -151,6 +153,7 @@ TemplateContainer {
 .right-panel-container {
     flex-grow: 1;
     flex-shrink: 1;
+    flex-basis: 0;
     flex-direction: column;
     background-color: rgba(0, 0, 0, 0);
     margin-right: var(--spacing-large);
@@ -162,15 +165,18 @@ TemplateContainer {
     border-radius: 0;
     overflow: hidden;
     min-height: 0;
+    height: 100%;
 }
 
 /* 설정 패널 래퍼 */
 .settings-panel-wrapper {
     flex-grow: 1;
     flex-shrink: 1;
+    flex-basis: 0;
     flex-direction: column;
     overflow: hidden;
     min-height: 0;
+    height: 100%;
 }
 
 /* 고정 헤더 */
@@ -187,10 +193,12 @@ TemplateContainer {
 .panel-scroll {
     flex-grow: 1;
     flex-shrink: 1;
+    flex-basis: 0;
     background-color: rgba(0, 0, 0, 0);
     border-width: 0;
     overflow: scroll;
     min-height: 0;
+    height: 100%;
 }
 
 /* ScrollView 기본 패딩 제거 */

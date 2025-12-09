@@ -459,12 +459,14 @@ namespace LostSpells.Systems
             if (result == null)
             {
                 // 실패: "서버 연결 실패" 표시
+                Debug.LogWarning("[VoiceRecognition] 서버 응답 null - 서버 연결 실패");
                 UpdateVoiceRecognitionDisplay("서버 연결 실패");
                 StartCoroutine(ClearVoiceRecognitionDisplayAfterDelay(3f));
                 return;
             }
 
             string recognizedText = result.recognized_text;
+            Debug.Log($"[VoiceRecognition] 서버 응답: text='{recognizedText}', best_match.skill='{result.best_match?.skill}', score={result.best_match?.score}");
 
             // 스킬이 1개뿐이면 무조건 그 스킬 선택
             if (activeSkills != null && activeSkills.Count == 1)
@@ -709,11 +711,11 @@ namespace LostSpells.Systems
         /// </summary>
         private void ExecuteSystemCommand(string command)
         {
-            // Debug.Log($"[VoiceRecognition] 시스템 명령 실행 시도: {command}");
+            Debug.Log($"[VoiceRecognition] 시스템 명령 실행 시도: {command}");
 
             // 현재 게임 컨텍스트 확인
             GameContext currentContext = GetCurrentGameContext();
-            // Debug.Log($"[VoiceRecognition] 현재 컨텍스트: {currentContext}");
+            Debug.Log($"[VoiceRecognition] 현재 컨텍스트: {currentContext}");
 
             // 컨텍스트에서 허용되지 않는 명령인지 확인
             if (!IsCommandAllowedInContext(command, currentContext))
@@ -725,7 +727,7 @@ namespace LostSpells.Systems
                 return;
             }
 
-            // Debug.Log($"[VoiceRecognition] 명령 실행: {command}");
+            Debug.Log($"[VoiceRecognition] 명령 실행 허용됨: {command}");
 
             switch (command)
             {
@@ -961,11 +963,11 @@ namespace LostSpells.Systems
         /// </summary>
         private void NavigateMenuPanel(string panelName)
         {
-            // Debug.Log($"[VoiceRecognition] NavigateMenuPanel 호출됨: {panelName}");
+            Debug.Log($"[VoiceRecognition] NavigateMenuPanel 호출됨: {panelName}");
 
             // 현재 씬 확인
             var currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
-            // Debug.Log($"[VoiceRecognition] 현재 씬: {currentScene}");
+            Debug.Log($"[VoiceRecognition] 현재 씬: {currentScene}");
 
             if (currentScene != "Menu")
             {
@@ -976,7 +978,7 @@ namespace LostSpells.Systems
             var menuManager = FindFirstObjectByType<LostSpells.UI.MenuManager>();
             if (menuManager != null)
             {
-                // Debug.Log($"[VoiceRecognition] MenuManager 찾음, 패널 전환 시도: {panelName}");
+                Debug.Log($"[VoiceRecognition] MenuManager 찾음, 패널 전환 시도: {panelName}");
                 switch (panelName)
                 {
                     case "GameModeSelection":
@@ -992,7 +994,7 @@ namespace LostSpells.Systems
                         menuManager.ShowPanel(LostSpells.UI.MenuManager.MenuPanel.MainMenu);
                         break;
                 }
-                // Debug.Log($"[VoiceRecognition] 메뉴 패널 이동 완료: {panelName}");
+                Debug.Log($"[VoiceRecognition] 메뉴 패널 이동 완료: {panelName}");
             }
             else
             {
