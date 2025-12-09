@@ -25,6 +25,15 @@ namespace LostSpells.Systems
     }
 
     /// <summary>
+    /// 음성 입력 모드
+    /// </summary>
+    public enum VoiceInputMode
+    {
+        KeyTriggered,  // 키(스페이스바) 트리거 모드
+        Continuous     // 연속 음성 감지 모드 (VAD)
+    }
+
+    /// <summary>
     /// 음성 인식 매니저 (전역 싱글톤)
     /// 스페이스바로 음성 인식 시작/중지
     /// 모든 씬에서 동작하며 씬 전환 시에도 유지됨
@@ -51,6 +60,16 @@ namespace LostSpells.Systems
 
         [Tooltip("최소 녹음 시간 (초)")]
         public float minRecordingTime = 0.5f;
+
+        [Header("Voice Input Mode")]
+        [Tooltip("음성 입력 모드 (키 트리거 / 연속 감지)")]
+        public VoiceInputMode inputMode = VoiceInputMode.KeyTriggered;
+
+        [Tooltip("피치 분석 활성화")]
+        public bool enablePitchAnalysis = true;
+
+        [Tooltip("피치 분석기")]
+        public PitchAnalyzer pitchAnalyzer;
 
         private bool isRecording = false;
         private float recordingStartTime = 0f;
@@ -89,6 +108,19 @@ namespace LostSpells.Systems
                 }
             }
 
+            // PitchAnalyzer 초기화
+            if (pitchAnalyzer == null && enablePitchAnalysis)
+            {
+                pitchAnalyzer = gameObject.AddComponent<PitchAnalyzer>();
+            }
+
+            // VoiceRecorder 이벤트 구독 (연속 모드용)
+            if (voiceRecorder != null)
+            {
+                voiceRecorder.OnVoiceDetected += OnContinuousModeVoiceDetected;
+                voiceRecorder.OnVoiceRecordingComplete += OnContinuousModeRecordingComplete;
+            }
+
             // 씬 로드 이벤트 등록
             UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
         }
@@ -100,11 +132,29 @@ namespace LostSpells.Systems
             // 언어 설정 로드
             LoadLanguageSettings();
 
+            // 음성 입력 모드 설정 로드
+            LoadVoiceInputModeSettings();
+
             // UI 언어 변경 시 음성인식 언어도 자동 변경
             LocalizationManager.Instance.OnLanguageChanged += OnUILanguageChanged;
 
             // 스킬 데이터 로드 및 서버 설정
             InitializeSkills();
+        }
+
+        /// <summary>
+        /// 저장된 음성 입력 모드 설정 로드
+        /// </summary>
+        private void LoadVoiceInputModeSettings()
+        {
+            var saveData = SaveManager.Instance?.GetCurrentSaveData();
+            if (saveData != null && !string.IsNullOrEmpty(saveData.voiceInputMode))
+            {
+                VoiceInputMode mode = saveData.voiceInputMode == "Continuous"
+                    ? VoiceInputMode.Continuous
+                    : VoiceInputMode.KeyTriggered;
+                SetVoiceInputMode(mode);
+            }
         }
 
         /// <summary>
@@ -143,6 +193,13 @@ namespace LostSpells.Systems
             if (LocalizationManager.Instance != null)
             {
                 LocalizationManager.Instance.OnLanguageChanged -= OnUILanguageChanged;
+            }
+
+            // VoiceRecorder 이벤트 해제
+            if (voiceRecorder != null)
+            {
+                voiceRecorder.OnVoiceDetected -= OnContinuousModeVoiceDetected;
+                voiceRecorder.OnVoiceRecordingComplete -= OnContinuousModeRecordingComplete;
             }
 
             UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoaded;
@@ -226,28 +283,33 @@ namespace LostSpells.Systems
 
         private void Update()
         {
-            // 키바인딩에서 음성 녹음 키 가져오기
-            if (Keyboard.current != null)
+            // 키 트리거 모드에서만 키 입력 처리
+            if (inputMode == VoiceInputMode.KeyTriggered)
             {
-                Key voiceRecordKey = GetVoiceRecordKey();
-
-                // 음성 녹음 키를 누르면 녹음 시작
-                if (Keyboard.current[voiceRecordKey].wasPressedThisFrame)
+                // 키바인딩에서 음성 녹음 키 가져오기
+                if (Keyboard.current != null)
                 {
-                    StartVoiceRecording();
+                    Key voiceRecordKey = GetVoiceRecordKey();
+
+                    // 음성 녹음 키를 누르면 녹음 시작
+                    if (Keyboard.current[voiceRecordKey].wasPressedThisFrame)
+                    {
+                        StartVoiceRecording();
+                    }
+                    // 음성 녹음 키를 떼면 녹음 중지
+                    else if (Keyboard.current[voiceRecordKey].wasReleasedThisFrame)
+                    {
+                        StopVoiceRecording();
+                    }
                 }
-                // 음성 녹음 키를 떼면 녹음 중지
-                else if (Keyboard.current[voiceRecordKey].wasReleasedThisFrame)
+
+                // 최대 녹음 시간 체크 (Time.unscaledTime 사용 - 일시정지 중에도 동작)
+                if (isRecording && Time.unscaledTime - recordingStartTime >= maxRecordingTime)
                 {
                     StopVoiceRecording();
                 }
             }
-
-            // 최대 녹음 시간 체크 (Time.unscaledTime 사용 - 일시정지 중에도 동작)
-            if (isRecording && Time.unscaledTime - recordingStartTime >= maxRecordingTime)
-            {
-                StopVoiceRecording();
-            }
+            // 연속 모드는 VoiceRecorder의 이벤트로 처리됨
         }
 
         /// <summary>
@@ -1060,6 +1122,84 @@ namespace LostSpells.Systems
                 serverClient.SetLanguage(languageCode);
             }
         }
+
+        #region Voice Input Mode
+
+        /// <summary>
+        /// 음성 입력 모드 설정
+        /// </summary>
+        public void SetVoiceInputMode(VoiceInputMode mode)
+        {
+            inputMode = mode;
+
+            // VoiceRecorder의 연속 모드 설정
+            if (voiceRecorder != null)
+            {
+                voiceRecorder.enableContinuousMode = (mode == VoiceInputMode.Continuous);
+            }
+
+            Debug.Log($"[VoiceRecognition] 음성 입력 모드 변경: {mode}");
+        }
+
+        /// <summary>
+        /// 현재 음성 입력 모드 반환
+        /// </summary>
+        public VoiceInputMode GetVoiceInputMode()
+        {
+            return inputMode;
+        }
+
+        /// <summary>
+        /// 연속 모드: 음성 감지됨 이벤트 핸들러
+        /// </summary>
+        private void OnContinuousModeVoiceDetected()
+        {
+            if (inputMode != VoiceInputMode.Continuous) return;
+
+            isRecording = true;
+            recordingStartTime = Time.unscaledTime;
+
+            // 이전 정확도 초기화
+            if (inGameUI != null)
+            {
+                inGameUI.ClearSkillAccuracy();
+            }
+
+            string listeningText = LocalizationManager.Instance.GetText("voice_listening");
+            if (string.IsNullOrEmpty(listeningText)) listeningText = "듣는 중...";
+            UpdateVoiceRecognitionDisplay(listeningText);
+
+            Debug.Log("[VoiceRecognition] 연속 모드: 음성 감지됨");
+        }
+
+        /// <summary>
+        /// 연속 모드: 녹음 완료 이벤트 핸들러
+        /// </summary>
+        private void OnContinuousModeRecordingComplete(AudioClip recordedClip)
+        {
+            if (inputMode != VoiceInputMode.Continuous) return;
+
+            isRecording = false;
+
+            string processingText = LocalizationManager.Instance.GetText("voice_processing");
+            if (string.IsNullOrEmpty(processingText)) processingText = "처리 중...";
+            UpdateVoiceRecognitionDisplay(processingText);
+
+            Debug.Log("[VoiceRecognition] 연속 모드: 녹음 완료, 서버로 전송");
+
+            // 피치 분석 (인게임에서만 활성화)
+            var currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+            if (enablePitchAnalysis && currentScene == "InGame" && pitchAnalyzer != null && recordedClip != null)
+            {
+                var pitchResult = pitchAnalyzer.AnalyzeClip(recordedClip);
+                // 피치 결과는 PitchAnalyzer에서 콘솔에 출력됨
+            }
+
+            // 서버로 전송
+            StartCoroutine(SendAudioToServer());
+        }
+
+        #endregion
 
         #region Context-Aware Command Filtering
 

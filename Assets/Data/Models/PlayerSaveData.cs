@@ -90,6 +90,14 @@ namespace LostSpells.Data
         // 음성인식 서버 모드 (online/offline)
         public string voiceServerMode = "online";
 
+        // 음성 입력 모드 (KeyTriggered/Continuous)
+        public string voiceInputMode = "KeyTriggered";
+
+        // 피치 분석 경계 주파수 (Hz)
+        // 기본값: 최소 130.81 (C3), 최대 261.63 (C4)
+        public float pitchMinFrequency = 130.81f;
+        public float pitchMaxFrequency = 261.63f;
+
         // 키 바인딩 (액션 이름 -> 키 코드)
         public Dictionary<string, string> keyBindings = new Dictionary<string, string>();
 
@@ -137,6 +145,9 @@ namespace LostSpells.Data
                 voiceRecognitionLanguage = "ko",
                 voiceRecognitionModel = "base",
                 voiceServerMode = "online",
+                voiceInputMode = "KeyTriggered",
+                pitchMinFrequency = 130.81f,
+                pitchMaxFrequency = 261.63f,
                 keyBindings = new Dictionary<string, string>(),
                 totalPlayTime = 0,
                 totalMonstersKilled = 0,

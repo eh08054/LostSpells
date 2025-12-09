@@ -19,6 +19,26 @@ namespace LostSpells.Systems
         [Tooltip("사용할 마이크 인덱스 (0 = 첫 번째)")]
         public int microphoneIndex = 0;
 
+        [Header("Voice Activity Detection (VAD)")]
+        [Tooltip("연속 음성 감지 모드 활성화")]
+        public bool enableContinuousMode = false;
+
+        [Tooltip("음성 감지 임계값 (RMS)")]
+        public float voiceThreshold = 0.02f;
+
+        [Tooltip("무음 지속 시 녹음 종료 시간 (초)")]
+        public float silenceTimeout = 1.0f;
+
+        [Tooltip("발화 전 버퍼 시간 (초) - 놓친 시작 부분 보정")]
+        public float preRollSeconds = 1.0f;
+
+        [Tooltip("최소 녹음 길이 (초) - 이보다 짧으면 무시")]
+        public float minRecordingLength = 2.0f;
+
+        // VAD 이벤트
+        public event System.Action OnVoiceDetected;
+        public event System.Action<AudioClip> OnVoiceRecordingComplete;
+
         // 순환 버퍼용 AudioClip (항상 녹음 중)
         private AudioClip loopingClip;
         private string microphoneDevice;
@@ -34,9 +54,159 @@ namespace LostSpells.Systems
         // 마이크 초기화 상태
         private bool isMicrophoneReady = false;
 
+        // VAD 상태
+        private bool isVoiceDetected = false;
+        private float silenceTimer = 0f;
+        private float recordingTimer = 0f;
+
         void Start()
         {
             InitializeMicrophone();
+        }
+
+        void Update()
+        {
+            // 연속 모드가 아니거나 마이크가 준비되지 않으면 무시
+            if (!enableContinuousMode || !isMicrophoneReady) return;
+
+            float currentRMS = CalculateCurrentRMS();
+
+            if (!isRecording && !isVoiceDetected)
+            {
+                // 음성 대기 중 - RMS가 임계값을 넘으면 녹음 시작
+                if (currentRMS > voiceThreshold)
+                {
+                    Debug.Log($"[VoiceRecorder] 음성 감지됨 (RMS: {currentRMS:F4})");
+                    isVoiceDetected = true;
+                    silenceTimer = 0f;
+                    recordingTimer = 0f;
+
+                    // preRoll 위치 계산 (발화 전 버퍼)
+                    int currentPos = Microphone.GetPosition(microphoneDevice);
+                    int preRollSamples = (int)(preRollSeconds * sampleRate);
+                    int voiceStartPosition = currentPos - preRollSamples;
+                    if (voiceStartPosition < 0)
+                    {
+                        voiceStartPosition += loopingClip.samples;
+                    }
+
+                    recordStartPosition = voiceStartPosition;
+                    isRecording = true;
+
+                    OnVoiceDetected?.Invoke();
+                }
+            }
+            else if (isRecording && isVoiceDetected)
+            {
+                // 녹음 중
+                recordingTimer += Time.deltaTime;
+
+                if (currentRMS < voiceThreshold / 2)
+                {
+                    // 무음 감지
+                    silenceTimer += Time.deltaTime;
+
+                    if (silenceTimer >= silenceTimeout)
+                    {
+                        // 녹음 종료
+                        float recordingLength = GetCurrentRecordingLength();
+                        Debug.Log($"[VoiceRecorder] 무음 감지, 녹음 종료 (길이: {recordingLength:F2}초)");
+
+                        if (recordingLength >= minRecordingLength)
+                        {
+                            StopContinuousRecording();
+                        }
+                        else
+                        {
+                            Debug.Log($"[VoiceRecorder] 녹음이 너무 짧음 ({recordingLength:F2}초 < {minRecordingLength}초), 무시");
+                            // 리셋
+                            isRecording = false;
+                            isVoiceDetected = false;
+                            silenceTimer = 0f;
+                            recordingTimer = 0f;
+                        }
+                    }
+                }
+                else
+                {
+                    // 음성 계속됨, 타이머 리셋
+                    silenceTimer = 0f;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 현재 마이크 입력의 RMS(Root Mean Square) 계산
+        /// </summary>
+        private float CalculateCurrentRMS()
+        {
+            if (loopingClip == null || !isMicrophoneReady) return 0f;
+
+            // 마이크가 실제로 녹음 중인지 확인
+            if (!Microphone.IsRecording(microphoneDevice)) return 0f;
+
+            int currentPosition = Microphone.GetPosition(microphoneDevice);
+            int samplesToAnalyze = 1024; // ~64ms at 16kHz
+
+            if (currentPosition < samplesToAnalyze) return 0f;
+
+            // 오프셋이 유효한 범위인지 확인
+            int offset = currentPosition - samplesToAnalyze;
+            if (offset < 0) return 0f;
+
+            try
+            {
+                float[] samples = new float[samplesToAnalyze];
+                loopingClip.GetData(samples, offset);
+
+                float sum = 0f;
+                for (int i = 0; i < samples.Length; i++)
+                {
+                    sum += Mathf.Abs(samples[i]);
+                }
+                return sum / samples.Length;
+            }
+            catch (System.Exception)
+            {
+                // 클립이 무효화된 경우 0 반환
+                return 0f;
+            }
+        }
+
+        /// <summary>
+        /// 현재 녹음 중인 길이 (초) 반환
+        /// </summary>
+        private float GetCurrentRecordingLength()
+        {
+            int currentPos = Microphone.GetPosition(microphoneDevice);
+            int sampleCount;
+            if (currentPos >= recordStartPosition)
+            {
+                sampleCount = currentPos - recordStartPosition;
+            }
+            else
+            {
+                sampleCount = (loopingClip.samples - recordStartPosition) + currentPos;
+            }
+            return (float)sampleCount / sampleRate;
+        }
+
+        /// <summary>
+        /// 연속 모드 녹음 종료 및 이벤트 발생
+        /// </summary>
+        private void StopContinuousRecording()
+        {
+            recordEndPosition = Microphone.GetPosition(microphoneDevice);
+            isRecording = false;
+            isVoiceDetected = false;
+            silenceTimer = 0f;
+            recordingTimer = 0f;
+
+            // 오디오 추출
+            ExtractRecordedAudio();
+
+            // 이벤트 발생
+            OnVoiceRecordingComplete?.Invoke(recordedClip);
         }
 
         void OnDestroy()
@@ -340,6 +510,41 @@ namespace LostSpells.Systems
             // Debug.Log($"[VoiceRecorder] TrimSilence: {totalSamples} -> {trimmedFrames} frames");
 
             return trimmedClip;
+        }
+
+        /// <summary>
+        /// 연속 모드 일시정지 (다른 컴포넌트가 마이크 사용 시)
+        /// </summary>
+        public void PauseContinuousMode()
+        {
+            if (!enableContinuousMode) return;
+
+            Debug.Log("[VoiceRecorder] 연속 모드 일시정지");
+
+            // 마이크 정지
+            if (!string.IsNullOrEmpty(microphoneDevice) && Microphone.IsRecording(microphoneDevice))
+            {
+                Microphone.End(microphoneDevice);
+            }
+
+            isMicrophoneReady = false;
+            isRecording = false;
+            isVoiceDetected = false;
+            silenceTimer = 0f;
+            recordingTimer = 0f;
+        }
+
+        /// <summary>
+        /// 연속 모드 재개
+        /// </summary>
+        public void ResumeContinuousMode()
+        {
+            if (!enableContinuousMode) return;
+
+            Debug.Log("[VoiceRecorder] 연속 모드 재개");
+
+            // 마이크 재시작
+            StartCoroutine(StartContinuousRecording());
         }
     }
 

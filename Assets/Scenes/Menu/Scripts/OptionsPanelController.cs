@@ -54,6 +54,9 @@ namespace LostSpells.UI
         // Voice Recognition 서버 모드 컨트롤
         private CustomDropdown serverModeDropdown;
 
+        // Voice Input Mode 컨트롤
+        private CustomDropdown voiceInputModeDropdown;
+
         // Game 패널 컨트롤
         private CollapsibleSection keyBindingSection;
         private CollapsibleSection voiceRecognitionSection;
@@ -65,6 +68,57 @@ namespace LostSpells.UI
         private VisualElement gameResetConfirmation;
         private Button confirmResetButton;
         private Button cancelResetButton;
+
+        // 피치 테스트 UI
+        private VisualElement pitchGaugeBar;
+        private VisualElement pitchGaugeLowArea;
+        private VisualElement pitchGaugeMediumArea;
+        private VisualElement pitchGaugeHighArea;
+        private VisualElement pitchMinMarker;
+        private VisualElement pitchMaxMarker;
+        private VisualElement pitchRealtimeIndicator;
+        private Label currentFrequencyLabel;
+        private Label minFrequencyValue;
+        private Label maxFrequencyValue;
+        private Button pitchTestButton;
+        private Label pitchLowLabel;
+        private Label pitchMediumLabel;
+        private Label pitchHighLabel;
+        private Label pitchTestResultLabel;
+
+        // 피치 테스트 상태
+        private bool isRealtimeMonitoring = false;  // 실시간 피치 모니터링 (항상)
+        private bool isTestMode = false;            // 테스트 모드 (종료 버튼 누를때까지 유지)
+        private float currentPitchFrequency = 0f;
+        private float currentMinFrequency = 130.81f; // C3
+        private float currentMaxFrequency = 261.63f; // C4
+        private AudioClip realtimeClip;             // 실시간 모니터링 + 녹음용
+        private PitchAnalyzer pitchAnalyzer;
+        private string micDevice = null;
+
+        // VAD (Voice Activity Detection) 상태
+        private bool isVoiceActive = false;         // 현재 음성 감지 중
+        private float silenceTimer = 0f;            // 무음 지속 시간
+        private int voiceStartPosition = 0;         // 음성 시작 위치
+        private List<float> recordingBuffer = new List<float>(); // 녹음 버퍼
+        private const float VOICE_THRESHOLD = 0.02f;   // 음성 감지 임계값
+        private const float SILENCE_TIMEOUT = 1.0f;    // 무음 지속 시 녹음 종료
+        private const float MIN_RECORDING_LENGTH = 0.5f; // 최소 녹음 길이 (초)
+
+        // 키 트리거 모드 상태
+        private bool isKeyRecording = false;        // 키를 누르고 있는 동안 녹음 중
+
+        // 결과 표시 타이머
+        private float resultDisplayTime = 0f;
+        private const float RESULT_DISPLAY_DURATION = 5f; // 5초간 결과 유지
+
+        // 게이지 범위 상수 (고정값으로 사용)
+        private const float GAUGE_MIN_FREQ = 50f;   // 게이지 최소 주파수
+        private const float GAUGE_MAX_FREQ = 1000f; // 게이지 최대 주파수
+
+        // 마커 드래그 상태
+        private bool isDraggingMinMarker = false;
+        private bool isDraggingMaxMarker = false;
 
         // 서버 체크
         private const string SERVER_URL = "http://localhost:8000";
@@ -148,6 +202,9 @@ namespace LostSpells.UI
             // Voice Recognition 서버 모드 컨트롤
             serverModeDropdown = new CustomDropdown(optionsPanel, "ServerModeDropdownContainer", "ServerModeDropdownButton", "ServerModeDropdownLabel", "ServerModeDropdownList");
 
+            // Voice Input Mode 컨트롤
+            voiceInputModeDropdown = new CustomDropdown(optionsPanel, "VoiceInputModeDropdownContainer", "VoiceInputModeDropdownButton", "VoiceInputModeDropdownLabel", "VoiceInputModeDropdownList");
+
             // Game 패널 컨트롤
             keyBindingSection = new CollapsibleSection(optionsPanel, "KeyBindingsHeader", "KeyBindingsToggleButton", "KeyBindingArea");
             voiceRecognitionSection = new CollapsibleSection(optionsPanel, "VoiceRecognitionHeader", "VoiceRecognitionToggleButton", "VoiceRecognitionArea");
@@ -167,6 +224,43 @@ namespace LostSpells.UI
             gameResetConfirmation = optionsPanel.Q<VisualElement>("GameResetConfirmation");
             confirmResetButton = optionsPanel.Q<Button>("ConfirmResetButton");
             cancelResetButton = optionsPanel.Q<Button>("CancelResetButton");
+
+            // 피치 테스트 UI
+            pitchGaugeBar = optionsPanel.Q<VisualElement>("PitchGaugeBar");
+            pitchGaugeLowArea = optionsPanel.Q<VisualElement>("PitchGaugeLowArea");
+            pitchGaugeMediumArea = optionsPanel.Q<VisualElement>("PitchGaugeMediumArea");
+            pitchGaugeHighArea = optionsPanel.Q<VisualElement>("PitchGaugeHighArea");
+            pitchMinMarker = optionsPanel.Q<VisualElement>("PitchMinMarker");
+            pitchMaxMarker = optionsPanel.Q<VisualElement>("PitchMaxMarker");
+            pitchRealtimeIndicator = optionsPanel.Q<VisualElement>("PitchRealtimeIndicator");
+
+            // 마커가 포인터 이벤트를 받을 수 있도록 설정
+            if (pitchMinMarker != null)
+            {
+                pitchMinMarker.pickingMode = PickingMode.Position;
+            }
+            if (pitchMaxMarker != null)
+            {
+                pitchMaxMarker.pickingMode = PickingMode.Position;
+            }
+
+            // 영역과 실시간 인디케이터는 마커 클릭을 방해하지 않도록 설정
+            if (pitchGaugeLowArea != null)
+                pitchGaugeLowArea.pickingMode = PickingMode.Ignore;
+            if (pitchGaugeMediumArea != null)
+                pitchGaugeMediumArea.pickingMode = PickingMode.Ignore;
+            if (pitchGaugeHighArea != null)
+                pitchGaugeHighArea.pickingMode = PickingMode.Ignore;
+            if (pitchRealtimeIndicator != null)
+                pitchRealtimeIndicator.pickingMode = PickingMode.Ignore;
+            currentFrequencyLabel = optionsPanel.Q<Label>("CurrentFrequencyLabel");
+            minFrequencyValue = optionsPanel.Q<Label>("MinFrequencyValue");
+            maxFrequencyValue = optionsPanel.Q<Label>("MaxFrequencyValue");
+            pitchTestButton = optionsPanel.Q<Button>("PitchTestButton");
+            pitchLowLabel = optionsPanel.Q<Label>("PitchLowLabel");
+            pitchMediumLabel = optionsPanel.Q<Label>("PitchMediumLabel");
+            pitchHighLabel = optionsPanel.Q<Label>("PitchHighLabel");
+            pitchTestResultLabel = optionsPanel.Q<Label>("PitchTestResultLabel");
         }
 
         private void RegisterEvents()
@@ -207,6 +301,24 @@ namespace LostSpells.UI
 
             if (cancelResetButton != null)
                 cancelResetButton.clicked += OnCancelResetButtonClicked;
+
+            // 피치 테스트 이벤트
+            if (pitchTestButton != null)
+                pitchTestButton.clicked += OnPitchTestButtonClicked;
+
+            // 마커 드래그 이벤트 - 마커 자체에 모든 이벤트 등록
+            if (pitchMinMarker != null)
+            {
+                pitchMinMarker.RegisterCallback<PointerDownEvent>(OnMinMarkerPointerDown);
+                pitchMinMarker.RegisterCallback<PointerMoveEvent>(OnMarkerPointerMove);
+                pitchMinMarker.RegisterCallback<PointerUpEvent>(OnMarkerPointerUp);
+            }
+            if (pitchMaxMarker != null)
+            {
+                pitchMaxMarker.RegisterCallback<PointerDownEvent>(OnMaxMarkerPointerDown);
+                pitchMaxMarker.RegisterCallback<PointerMoveEvent>(OnMarkerPointerMove);
+                pitchMaxMarker.RegisterCallback<PointerUpEvent>(OnMarkerPointerUp);
+            }
         }
 
         private void LoadSettings()
@@ -227,6 +339,9 @@ namespace LostSpells.UI
 
             // Key Binding 설정 로드
             LoadKeyBindings();
+
+            // Pitch 설정 로드
+            LoadPitchSettings();
         }
 
         private void LoadAudioSettings()
@@ -299,6 +414,28 @@ namespace LostSpells.UI
         private void LoadVoiceSettings()
         {
             if (saveData == null) return;
+
+            // 음성 입력 모드 드롭다운
+            if (voiceInputModeDropdown != null)
+            {
+                List<string> inputModes = new List<string> { "Key Triggered", "Continuous" };
+
+                // 저장된 음성 입력 모드 확인
+                string selectedInputMode = "Key Triggered";
+                if (!string.IsNullOrEmpty(saveData.voiceInputMode))
+                {
+                    selectedInputMode = saveData.voiceInputMode == "Continuous" ? "Continuous" : "Key Triggered";
+                }
+
+                voiceInputModeDropdown.SetItems(inputModes, selectedInputMode, OnVoiceInputModeChanged);
+
+                // VoiceRecognitionManager에도 적용
+                if (VoiceRecognitionManager.Instance != null)
+                {
+                    VoiceInputMode mode = selectedInputMode == "Continuous" ? VoiceInputMode.Continuous : VoiceInputMode.KeyTriggered;
+                    VoiceRecognitionManager.Instance.SetVoiceInputMode(mode);
+                }
+            }
 
             // 서버 모드 드롭다운
             if (serverModeDropdown != null)
@@ -374,6 +511,121 @@ namespace LostSpells.UI
             }
         }
 
+        private void LoadPitchSettings()
+        {
+            if (saveData == null) return;
+
+            // 저장된 경계 주파수 로드
+            currentMinFrequency = saveData.pitchMinFrequency > 0 ? saveData.pitchMinFrequency : 130.81f;
+            currentMaxFrequency = saveData.pitchMaxFrequency > 0 ? saveData.pitchMaxFrequency : 261.63f;
+
+            // UI 업데이트
+            UpdateFrequencyDisplay();
+            UpdateGaugeAreas();
+            UpdateMarkerPositions();
+        }
+
+        private void UpdateFrequencyDisplay()
+        {
+            if (minFrequencyValue != null)
+            {
+                string note = FrequencyToNote(currentMinFrequency);
+                minFrequencyValue.text = $"{currentMinFrequency:F2} Hz ({note})";
+            }
+            if (maxFrequencyValue != null)
+            {
+                string note = FrequencyToNote(currentMaxFrequency);
+                maxFrequencyValue.text = $"{currentMaxFrequency:F2} Hz ({note})";
+            }
+        }
+
+        private string FrequencyToNote(float frequency)
+        {
+            string[] noteNames = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
+            int noteNumber = Mathf.RoundToInt(57 + 12 * Mathf.Log(frequency / 440.0f, 2));
+            string note = noteNames[noteNumber % 12];
+            int octave = noteNumber / 12;
+            return $"{note}{octave}";
+        }
+
+        private void UpdateGaugeAreas()
+        {
+            if (pitchGaugeBar == null) return;
+
+            // 게이지 범위: 고정값 사용 (로그 스케일)
+            float logMin = Mathf.Log(GAUGE_MIN_FREQ);
+            float logMax = Mathf.Log(GAUGE_MAX_FREQ);
+
+            // 최소 경계 위치 (0~1)
+            float minPos = (Mathf.Log(currentMinFrequency) - logMin) / (logMax - logMin);
+            // 최대 경계 위치 (0~1)
+            float maxPos = (Mathf.Log(currentMaxFrequency) - logMin) / (logMax - logMin);
+
+            // Low 영역: 0% ~ minPos%
+            if (pitchGaugeLowArea != null)
+            {
+                pitchGaugeLowArea.style.left = new StyleLength(new Length(0, LengthUnit.Percent));
+                pitchGaugeLowArea.style.width = new StyleLength(new Length(minPos * 100f, LengthUnit.Percent));
+            }
+
+            // Medium 영역: minPos% ~ maxPos%
+            if (pitchGaugeMediumArea != null)
+            {
+                pitchGaugeMediumArea.style.left = new StyleLength(new Length(minPos * 100f, LengthUnit.Percent));
+                pitchGaugeMediumArea.style.width = new StyleLength(new Length((maxPos - minPos) * 100f, LengthUnit.Percent));
+            }
+
+            // High 영역: maxPos% ~ 100%
+            if (pitchGaugeHighArea != null)
+            {
+                pitchGaugeHighArea.style.left = new StyleLength(new Length(maxPos * 100f, LengthUnit.Percent));
+                pitchGaugeHighArea.style.width = new StyleLength(new Length((1f - maxPos) * 100f, LengthUnit.Percent));
+            }
+        }
+
+        private void UpdateMarkerPositions()
+        {
+            if (pitchGaugeBar == null) return;
+
+            // 게이지 범위: 고정값 사용 (로그 스케일)
+            float logMin = Mathf.Log(GAUGE_MIN_FREQ);
+            float logMax = Mathf.Log(GAUGE_MAX_FREQ);
+
+            // 최소 마커 위치
+            float minPos = (Mathf.Log(currentMinFrequency) - logMin) / (logMax - logMin);
+            if (pitchMinMarker != null)
+            {
+                pitchMinMarker.style.left = new StyleLength(new Length(minPos * 100f - 0.5f, LengthUnit.Percent));
+            }
+
+            // 최대 마커 위치
+            float maxPos = (Mathf.Log(currentMaxFrequency) - logMin) / (logMax - logMin);
+            if (pitchMaxMarker != null)
+            {
+                pitchMaxMarker.style.left = new StyleLength(new Length(maxPos * 100f - 0.5f, LengthUnit.Percent));
+            }
+        }
+
+        private float GetFrequencyFromGaugePosition(float position)
+        {
+            // 게이지 범위: 고정값 사용 (로그 스케일)
+            float logMin = Mathf.Log(GAUGE_MIN_FREQ);
+            float logMax = Mathf.Log(GAUGE_MAX_FREQ);
+
+            float logFreq = logMin + position * (logMax - logMin);
+            return Mathf.Exp(logFreq);
+        }
+
+        private float GetGaugePositionFromFrequency(float frequency)
+        {
+            // 게이지 범위: 고정값 사용 (로그 스케일)
+            float logMin = Mathf.Log(GAUGE_MIN_FREQ);
+            float logMax = Mathf.Log(GAUGE_MAX_FREQ);
+            float logFreq = Mathf.Log(Mathf.Clamp(frequency, GAUGE_MIN_FREQ, GAUGE_MAX_FREQ));
+
+            return (logFreq - logMin) / (logMax - logMin);
+        }
+
         /// <summary>
         /// 패널이 표시될 때 호출
         /// </summary>
@@ -388,6 +640,9 @@ namespace LostSpells.UI
 
             // 서버 상태 체크 시작
             coroutineRunner.StartCoroutine(CheckServerStatus());
+
+            // 실시간 피치 모니터링 시작
+            StartRealtimePitchMonitoring();
         }
 
         /// <summary>
@@ -501,6 +756,11 @@ namespace LostSpells.UI
             if (voiceRecognitionHeader != null)
                 voiceRecognitionHeader.text = loc.GetText("options_game_voice_recognition");
 
+            // Voice Recognition - 음성 입력 모드 라벨
+            var voiceInputModeLabel = optionsPanel.Q<Label>("VoiceInputModeLabel");
+            if (voiceInputModeLabel != null)
+                voiceInputModeLabel.text = loc.GetText("options_voice_input_mode");
+
             // Voice Recognition - 서버 모드 라벨
             var serverModeLabel = optionsPanel.Q<Label>("ServerModeLabel");
             if (serverModeLabel != null)
@@ -530,6 +790,35 @@ namespace LostSpells.UI
                 confirmResetButton.text = loc.GetText("game_reset_popup_confirm");
             if (cancelResetButton != null)
                 cancelResetButton.text = loc.GetText("game_reset_popup_cancel");
+
+            // 피치 테스트 로컬라이제이션
+            var pitchTestLabel = optionsPanel.Q<Label>("PitchTestLabel");
+            if (pitchTestLabel != null)
+                pitchTestLabel.text = loc.GetText("pitch_test_title");
+
+            if (pitchLowLabel != null)
+                pitchLowLabel.text = loc.GetText("pitch_low");
+            if (pitchMediumLabel != null)
+                pitchMediumLabel.text = loc.GetText("pitch_medium");
+            if (pitchHighLabel != null)
+                pitchHighLabel.text = loc.GetText("pitch_high");
+
+            var minFreqLabel = optionsPanel.Q<Label>("MinFrequencyLabel");
+            if (minFreqLabel != null)
+                minFreqLabel.text = loc.GetText("pitch_min_frequency");
+
+            var maxFreqLabel = optionsPanel.Q<Label>("MaxFrequencyLabel");
+            if (maxFreqLabel != null)
+                maxFreqLabel.text = loc.GetText("pitch_max_frequency");
+
+            var pitchHelpLabel = optionsPanel.Q<Label>("PitchHelpLabel");
+            if (pitchHelpLabel != null)
+                pitchHelpLabel.text = loc.GetText("pitch_help_text");
+
+            if (pitchTestButton != null && !isTestMode)
+                pitchTestButton.text = loc.GetText("pitch_start_test");
+            else if (pitchTestButton != null && isTestMode)
+                pitchTestButton.text = loc.GetText("pitch_stop_test");
 
             // 현재 패널 제목 업데이트
             UpdateCurrentPanelTitle();
@@ -615,6 +904,21 @@ namespace LostSpells.UI
             }
         }
 
+        private void OnVoiceInputModeChanged(string value)
+        {
+            if (saveData != null)
+            {
+                saveData.voiceInputMode = value == "Continuous" ? "Continuous" : "KeyTriggered";
+
+                if (VoiceRecognitionManager.Instance != null)
+                {
+                    VoiceInputMode mode = value == "Continuous" ? VoiceInputMode.Continuous : VoiceInputMode.KeyTriggered;
+                    VoiceRecognitionManager.Instance.SetVoiceInputMode(mode);
+                }
+                SaveSettings();
+            }
+        }
+
         private void OnCurrentPanelReset()
         {
             if (currentPanel == audioPanel)
@@ -673,7 +977,15 @@ namespace LostSpells.UI
                     { "VoiceRecord", "Space" },
                     { "SkillPanel", "Tab" }
                 };
+
+                // 피치 설정도 초기화 (기본값: C3 ~ C4)
+                saveData.pitchMinFrequency = 130.81f;
+                saveData.pitchMaxFrequency = 261.63f;
+                currentMinFrequency = 130.81f;
+                currentMaxFrequency = 261.63f;
+
                 LoadKeyBindings();
+                LoadPitchSettings();
                 SaveSettings();
             }
         }
@@ -726,6 +1038,661 @@ namespace LostSpells.UI
             }
         }
 
+        #region Marker Drag Handlers
+
+        private void OnMinMarkerPointerDown(PointerDownEvent evt)
+        {
+            isDraggingMinMarker = true;
+            pitchMinMarker?.CapturePointer(evt.pointerId);
+            evt.StopPropagation();
+        }
+
+        private void OnMaxMarkerPointerDown(PointerDownEvent evt)
+        {
+            isDraggingMaxMarker = true;
+            pitchMaxMarker?.CapturePointer(evt.pointerId);
+            evt.StopPropagation();
+        }
+
+        private void OnMarkerPointerMove(PointerMoveEvent evt)
+        {
+            if (!isDraggingMinMarker && !isDraggingMaxMarker) return;
+            if (pitchGaugeBar == null) return;
+
+            // 게이지 바 기준 위치 계산 (마커의 부모인 게이지 바 좌표로 변환)
+            Vector2 localPos = pitchGaugeBar.WorldToLocal(evt.position);
+            float gaugeWidth = pitchGaugeBar.resolvedStyle.width;
+            float position = Mathf.Clamp01(localPos.x / gaugeWidth);
+
+            // 고정된 게이지 범위로 주파수 계산
+            float newFrequency = GetFrequencyFromGaugePosition(position);
+
+            // 주파수 범위 제한 (50Hz ~ 1000Hz)
+            newFrequency = Mathf.Clamp(newFrequency, GAUGE_MIN_FREQ, GAUGE_MAX_FREQ);
+
+            if (isDraggingMinMarker)
+            {
+                currentMinFrequency = newFrequency;
+            }
+            else if (isDraggingMaxMarker)
+            {
+                currentMaxFrequency = newFrequency;
+            }
+
+            // 두 값이 엇갈리면 스왑 (낮은 값이 항상 min, 높은 값이 항상 max)
+            if (currentMinFrequency > currentMaxFrequency)
+            {
+                float temp = currentMinFrequency;
+                currentMinFrequency = currentMaxFrequency;
+                currentMaxFrequency = temp;
+
+                // 드래그 중인 마커도 스왑
+                bool tempDragging = isDraggingMinMarker;
+                isDraggingMinMarker = isDraggingMaxMarker;
+                isDraggingMaxMarker = tempDragging;
+            }
+
+            // UI 업데이트
+            UpdateFrequencyDisplay();
+            UpdateGaugeAreas();
+            UpdateMarkerPositions();
+
+            evt.StopPropagation();
+        }
+
+        private void OnMarkerPointerUp(PointerUpEvent evt)
+        {
+            if (isDraggingMinMarker || isDraggingMaxMarker)
+            {
+                // 저장
+                SavePitchSettings();
+
+                // PitchAnalyzer에도 적용
+                if (pitchAnalyzer != null)
+                {
+                    pitchAnalyzer.SetBoundaryFrequencies(currentMinFrequency, currentMaxFrequency);
+                }
+
+                Debug.Log($"[OptionsPanelController] Pitch boundaries set: {currentMinFrequency:F2} Hz ~ {currentMaxFrequency:F2} Hz");
+            }
+
+            isDraggingMinMarker = false;
+            isDraggingMaxMarker = false;
+
+            pitchMinMarker?.ReleasePointer(evt.pointerId);
+            pitchMaxMarker?.ReleasePointer(evt.pointerId);
+
+            evt.StopPropagation();
+        }
+
+        private void SavePitchSettings()
+        {
+            if (saveData != null)
+            {
+                saveData.pitchMinFrequency = currentMinFrequency;
+                saveData.pitchMaxFrequency = currentMaxFrequency;
+                SaveSettings();
+            }
+        }
+
+        #endregion
+
+        #region Realtime Pitch Monitoring
+
+        /// <summary>
+        /// 실시간 피치 모니터링 시작 (패널 열릴 때 자동 시작)
+        /// </summary>
+        private void StartRealtimePitchMonitoring()
+        {
+            if (isRealtimeMonitoring) return;
+
+            isRealtimeMonitoring = true;
+
+            // VoiceRecorder의 연속 모드 일시정지 (마이크 충돌 방지)
+            if (VoiceRecognitionManager.Instance != null && VoiceRecognitionManager.Instance.voiceRecorder != null)
+            {
+                VoiceRecognitionManager.Instance.voiceRecorder.PauseContinuousMode();
+            }
+
+            // PitchAnalyzer 찾기 또는 생성
+            pitchAnalyzer = Object.FindObjectOfType<PitchAnalyzer>();
+            if (pitchAnalyzer == null)
+            {
+                var go = new GameObject("PitchAnalyzer_Options");
+                pitchAnalyzer = go.AddComponent<PitchAnalyzer>();
+            }
+            pitchAnalyzer.SetBoundaryFrequencies(currentMinFrequency, currentMaxFrequency);
+
+            // 마이크 장치 설정
+            micDevice = null;
+            if (saveData != null && !string.IsNullOrEmpty(saveData.microphoneDeviceId) && saveData.microphoneDeviceId != "Default")
+            {
+                micDevice = saveData.microphoneDeviceId;
+            }
+
+            // 마이크 시작 (실시간 모니터링용)
+            realtimeClip = Microphone.Start(micDevice, true, 10, 44100); // 10초 순환 버퍼
+
+            // 실시간 인디케이터 표시
+            if (pitchRealtimeIndicator != null)
+            {
+                pitchRealtimeIndicator.style.display = DisplayStyle.Flex;
+            }
+
+            // 실시간 피치 모니터링 코루틴 시작
+            coroutineRunner.StartCoroutine(RealtimePitchCoroutine());
+
+            Debug.Log("[OptionsPanelController] 실시간 피치 모니터링 시작");
+        }
+
+        /// <summary>
+        /// 실시간 피치 모니터링 종료
+        /// </summary>
+        private void StopRealtimePitchMonitoring()
+        {
+            if (!isRealtimeMonitoring) return;
+
+            isRealtimeMonitoring = false;
+
+            // 마이크 정지
+            Microphone.End(micDevice);
+
+            // 실시간 인디케이터 숨기기
+            if (pitchRealtimeIndicator != null)
+            {
+                pitchRealtimeIndicator.style.display = DisplayStyle.None;
+            }
+
+            // VoiceRecorder의 연속 모드 재개
+            if (VoiceRecognitionManager.Instance != null && VoiceRecognitionManager.Instance.voiceRecorder != null)
+            {
+                VoiceRecognitionManager.Instance.voiceRecorder.ResumeContinuousMode();
+            }
+
+            Debug.Log("[OptionsPanelController] 실시간 피치 모니터링 종료");
+        }
+
+        /// <summary>
+        /// 실시간 피치 모니터링 코루틴 (VAD 포함)
+        /// </summary>
+        private IEnumerator RealtimePitchCoroutine()
+        {
+            float[] samples = new float[2048];
+            float lastUpdateTime = 0f;
+
+            while (isRealtimeMonitoring)
+            {
+                yield return null;
+
+                if (realtimeClip == null || pitchAnalyzer == null) continue;
+
+                // 마이크가 녹음 중인지 확인
+                if (!Microphone.IsRecording(micDevice)) continue;
+
+                // 마이크 데이터 읽기
+                int micPosition = Microphone.GetPosition(micDevice);
+                if (micPosition < samples.Length) continue;
+
+                // 오프셋이 유효한 범위인지 확인
+                int offset = micPosition - samples.Length;
+                if (offset < 0) continue;
+
+                try
+                {
+                    realtimeClip.GetData(samples, offset);
+                }
+                catch (System.Exception)
+                {
+                    continue;
+                }
+
+                // RMS 계산 (음성 감지용)
+                float rms = 0f;
+                for (int i = 0; i < samples.Length; i++)
+                {
+                    rms += Mathf.Abs(samples[i]);
+                }
+                rms /= samples.Length;
+
+                // 피치 검출
+                float frequency = pitchAnalyzer.DetectPitchRealtime(samples, 44100);
+
+                // 실시간 인디케이터 위치 업데이트 (빨간색 선) - 항상 동작
+                if (frequency > 0)
+                {
+                    currentPitchFrequency = frequency;
+                    float gaugeValue = GetGaugePositionFromFrequency(frequency);
+                    if (pitchRealtimeIndicator != null)
+                    {
+                        pitchRealtimeIndicator.style.left = new StyleLength(new Length(gaugeValue * 100f, LengthUnit.Percent));
+                    }
+                }
+
+                // 테스트 모드가 아니면 주파수만 표시 (카테고리 없이 Hz만)
+                if (!isTestMode)
+                {
+                    if (frequency > 0 && currentFrequencyLabel != null)
+                    {
+                        currentFrequencyLabel.text = $"{frequency:F1} Hz";
+                    }
+                    continue;
+                }
+
+                // === 테스트 모드 처리 ===
+
+                // 결과 표시 5초 후 자동 삭제
+                if (resultDisplayTime > 0 && Time.realtimeSinceStartup - resultDisplayTime >= RESULT_DISPLAY_DURATION)
+                {
+                    if (pitchTestResultLabel != null)
+                    {
+                        pitchTestResultLabel.text = "";
+                    }
+                    resultDisplayTime = 0f;
+                }
+
+                var voiceInputMode = VoiceRecognitionManager.Instance?.GetVoiceInputMode() ?? VoiceInputMode.KeyTriggered;
+
+                if (voiceInputMode == VoiceInputMode.Continuous)
+                {
+                    // 연속 모드: VAD 기반 음성 감지
+                    ProcessContinuousModeVAD(rms, micPosition);
+                }
+                else
+                {
+                    // 키 트리거 모드: 키 입력 확인
+                    ProcessKeyTriggeredMode(micPosition);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 연속 모드 VAD 처리
+        /// </summary>
+        private void ProcessContinuousModeVAD(float rms, int currentPosition)
+        {
+            if (!isVoiceActive)
+            {
+                // 음성 대기 중
+                if (rms > VOICE_THRESHOLD)
+                {
+                    // 음성 감지 시작
+                    isVoiceActive = true;
+                    silenceTimer = 0f;
+                    recordingBuffer.Clear();
+                    voiceStartPosition = currentPosition;
+
+                    Debug.Log($"[OptionsPanelController] 음성 감지 시작 (RMS: {rms:F4})");
+                }
+            }
+            else
+            {
+                // 녹음 중
+                if (rms < VOICE_THRESHOLD / 2)
+                {
+                    silenceTimer += Time.deltaTime;
+
+                    if (silenceTimer >= SILENCE_TIMEOUT)
+                    {
+                        // 녹음 종료 및 처리
+                        isVoiceActive = false;
+                        ProcessRecordedVoice(voiceStartPosition, currentPosition);
+                    }
+                }
+                else
+                {
+                    silenceTimer = 0f;
+                }
+            }
+        }
+
+        private float lastVADUpdateTime = 0f;
+
+        /// <summary>
+        /// 키 트리거 모드 처리
+        /// </summary>
+        private void ProcessKeyTriggeredMode(int currentPosition)
+        {
+            if (Keyboard.current == null) return;
+
+            Key voiceRecordKey = GetVoiceRecordKeyFromSettings();
+
+            if (Keyboard.current[voiceRecordKey].wasPressedThisFrame && !isKeyRecording)
+            {
+                // 녹음 시작
+                isKeyRecording = true;
+                recordingBuffer.Clear();
+                voiceStartPosition = currentPosition;
+
+                Debug.Log("[OptionsPanelController] 키 트리거 녹음 시작");
+            }
+            else if (Keyboard.current[voiceRecordKey].wasReleasedThisFrame && isKeyRecording)
+            {
+                // 녹음 종료
+                isKeyRecording = false;
+                ProcessRecordedVoice(voiceStartPosition, currentPosition);
+
+                Debug.Log("[OptionsPanelController] 키 트리거 녹음 종료");
+            }
+        }
+
+        /// <summary>
+        /// 저장된 음성 녹음 키 가져오기
+        /// </summary>
+        private Key GetVoiceRecordKeyFromSettings()
+        {
+            var saveData = SaveManager.Instance?.GetCurrentSaveData();
+            if (saveData != null && saveData.keyBindings.TryGetValue("VoiceRecord", out string keyString))
+            {
+                if (System.Enum.TryParse(keyString, out Key key))
+                {
+                    return key;
+                }
+            }
+            return Key.Space; // 기본값
+        }
+
+        /// <summary>
+        /// 녹음된 음성 처리 (피치 분석 + 서버 전송)
+        /// </summary>
+        private void ProcessRecordedVoice(int startPosition, int endPosition)
+        {
+            if (realtimeClip == null) return;
+
+            // 녹음 길이 계산
+            int totalSamples = realtimeClip.samples;
+            int sampleCount;
+
+            if (endPosition >= startPosition)
+            {
+                sampleCount = endPosition - startPosition;
+            }
+            else
+            {
+                // 순환 버퍼
+                sampleCount = (totalSamples - startPosition) + endPosition;
+            }
+
+            float recordingLength = (float)sampleCount / 44100;
+
+            if (recordingLength < MIN_RECORDING_LENGTH)
+            {
+                Debug.Log($"[OptionsPanelController] 녹음이 너무 짧음: {recordingLength:F2}초");
+                return;
+            }
+
+            // 오디오 데이터 추출
+            float[] allSamples = new float[totalSamples];
+            realtimeClip.GetData(allSamples, 0);
+
+            float[] recordedSamples = new float[sampleCount];
+            if (endPosition >= startPosition)
+            {
+                System.Array.Copy(allSamples, startPosition, recordedSamples, 0, sampleCount);
+            }
+            else
+            {
+                int firstPart = totalSamples - startPosition;
+                System.Array.Copy(allSamples, startPosition, recordedSamples, 0, firstPart);
+                System.Array.Copy(allSamples, 0, recordedSamples, firstPart, endPosition);
+            }
+
+            // AudioClip 생성
+            AudioClip recordedClip = AudioClip.Create("RecordedVoice", sampleCount, 1, 44100, false);
+            recordedClip.SetData(recordedSamples, 0);
+
+            // 분석 및 서버 전송
+            coroutineRunner.StartCoroutine(AnalyzeAndSendToServer(recordedClip));
+        }
+
+        /// <summary>
+        /// 피치 분석 및 서버 전송
+        /// </summary>
+        private IEnumerator AnalyzeAndSendToServer(AudioClip recordedClip)
+        {
+            // 피치 분석
+            PitchAnalysisResult pitchResult = null;
+            if (pitchAnalyzer != null)
+            {
+                pitchResult = pitchAnalyzer.AnalyzeClip(recordedClip);
+            }
+
+            // 중간음 범위 판단
+            bool isInMediumRange = false;
+            if (pitchResult != null)
+            {
+                isInMediumRange = (pitchResult.DominantCategory == PitchCategory.Medium);
+                Debug.Log($"[OptionsPanelController] 피치 분석 결과: {pitchResult.DominantCategory} (중간음 범위: {isInMediumRange})");
+            }
+
+            // 서버로 음성 인식 요청
+            var serverClient = Object.FindObjectOfType<VoiceServerClient>();
+            string recognizedText = null;
+
+            if (serverClient != null)
+            {
+                byte[] wavData = AudioClipToWav(recordedClip);
+
+                yield return serverClient.RecognizeSkill(wavData, "Options", "", (result) =>
+                {
+                    if (result != null && !string.IsNullOrEmpty(result.recognized_text))
+                    {
+                        recognizedText = result.recognized_text;
+                    }
+                });
+            }
+
+            // 결과 표시 (테스트 모드 유지)
+            DisplayTestResult(recognizedText, pitchResult, isInMediumRange);
+
+            // 클립 정리
+            Object.Destroy(recordedClip);
+        }
+
+        #endregion
+
+        #region Test Mode Control
+
+        /// <summary>
+        /// 테스트 버튼 클릭 핸들러
+        /// </summary>
+        private void OnPitchTestButtonClicked()
+        {
+            if (isTestMode)
+            {
+                StopTestMode();
+            }
+            else
+            {
+                StartTestMode();
+            }
+        }
+
+        /// <summary>
+        /// 테스트 모드 시작
+        /// </summary>
+        private void StartTestMode()
+        {
+            if (isTestMode) return;
+
+            isTestMode = true;
+            isVoiceActive = false;
+            isKeyRecording = false;
+            silenceTimer = 0f;
+            recordingBuffer.Clear();
+
+            // 버튼 텍스트 변경
+            if (pitchTestButton != null)
+            {
+                pitchTestButton.text = LocalizationManager.Instance.GetText("pitch_stop_test");
+                pitchTestButton.AddToClassList("testing");
+            }
+
+            // 결과 라벨 초기화
+            if (pitchTestResultLabel != null)
+            {
+                pitchTestResultLabel.text = "";
+            }
+
+            var voiceInputMode = VoiceRecognitionManager.Instance?.GetVoiceInputMode() ?? VoiceInputMode.KeyTriggered;
+            Debug.Log($"[OptionsPanelController] 테스트 모드 시작 (모드: {voiceInputMode})");
+        }
+
+        /// <summary>
+        /// 테스트 모드 종료
+        /// </summary>
+        private void StopTestMode()
+        {
+            if (!isTestMode) return;
+
+            isTestMode = false;
+            isVoiceActive = false;
+            isKeyRecording = false;
+            silenceTimer = 0f;
+
+            // 버튼 텍스트 변경
+            if (pitchTestButton != null)
+            {
+                pitchTestButton.text = LocalizationManager.Instance.GetText("pitch_start_test");
+                pitchTestButton.RemoveFromClassList("testing");
+            }
+
+            // 테스트 결과 라벨 초기화
+            if (pitchTestResultLabel != null)
+            {
+                pitchTestResultLabel.text = "";
+            }
+
+            Debug.Log("[OptionsPanelController] 테스트 모드 종료");
+        }
+
+        /// <summary>
+        /// AudioClip을 WAV byte[]로 변환
+        /// </summary>
+        private byte[] AudioClipToWav(AudioClip clip)
+        {
+            float[] samples = new float[clip.samples * clip.channels];
+            clip.GetData(samples, 0);
+
+            int sampleRate = clip.frequency;
+            int channels = clip.channels;
+
+            using (var stream = new System.IO.MemoryStream())
+            {
+                using (var writer = new System.IO.BinaryWriter(stream))
+                {
+                    // WAV 헤더 작성
+                    int bytesPerSample = 2; // 16-bit
+                    int fileSize = 44 + samples.Length * bytesPerSample;
+
+                    // RIFF header
+                    writer.Write(System.Text.Encoding.ASCII.GetBytes("RIFF"));
+                    writer.Write(fileSize - 8);
+                    writer.Write(System.Text.Encoding.ASCII.GetBytes("WAVE"));
+
+                    // fmt chunk
+                    writer.Write(System.Text.Encoding.ASCII.GetBytes("fmt "));
+                    writer.Write(16); // chunk size
+                    writer.Write((short)1); // PCM format
+                    writer.Write((short)channels);
+                    writer.Write(sampleRate);
+                    writer.Write(sampleRate * channels * bytesPerSample); // byte rate
+                    writer.Write((short)(channels * bytesPerSample)); // block align
+                    writer.Write((short)(bytesPerSample * 8)); // bits per sample
+
+                    // data chunk
+                    writer.Write(System.Text.Encoding.ASCII.GetBytes("data"));
+                    writer.Write(samples.Length * bytesPerSample);
+
+                    // 샘플 데이터 작성
+                    foreach (float sample in samples)
+                    {
+                        short intSample = (short)(sample * 32767f);
+                        writer.Write(intSample);
+                    }
+                }
+
+                return stream.ToArray();
+            }
+        }
+
+        /// <summary>
+        /// 테스트 결과 표시 (인식문장(음) 형식)
+        /// </summary>
+        private void DisplayTestResult(string recognizedText, PitchAnalysisResult pitchResult, bool isInMediumRange)
+        {
+            if (pitchTestResultLabel == null) return;
+
+            // 인식 실패 시 표시하지 않음
+            if (string.IsNullOrEmpty(recognizedText))
+            {
+                Debug.Log("[OptionsPanelController] 인식 실패 - 결과 표시 안함");
+                return;
+            }
+
+            string categoryStr = "중";
+            if (pitchResult != null)
+            {
+                categoryStr = GetCategoryStringShort(pitchResult.DominantCategory);
+            }
+
+            // "인식문장(음)" 형식으로 표시
+            pitchTestResultLabel.text = $"{recognizedText}({categoryStr})";
+
+            // 결과 표시 시간 기록 (5초간 유지)
+            resultDisplayTime = Time.realtimeSinceStartup;
+
+            Debug.Log($"[OptionsPanelController] 테스트 결과: {recognizedText}({categoryStr})");
+        }
+
+        /// <summary>
+        /// 피치 카테고리를 문자열로 변환 (풀네임)
+        /// </summary>
+        private string GetCategoryString(PitchCategory category)
+        {
+            var loc = LocalizationManager.Instance;
+            switch (category)
+            {
+                case PitchCategory.Low:
+                    return loc.GetText("pitch_low");
+                case PitchCategory.Medium:
+                    return loc.GetText("pitch_medium");
+                case PitchCategory.High:
+                    return loc.GetText("pitch_high");
+                default:
+                    return loc.GetText("pitch_medium");
+            }
+        }
+
+        /// <summary>
+        /// 피치 카테고리를 짧은 문자열로 변환 (저/중/고)
+        /// </summary>
+        private string GetCategoryStringShort(PitchCategory category)
+        {
+            var loc = LocalizationManager.Instance;
+            if (loc.CurrentLanguage == Language.Korean)
+            {
+                switch (category)
+                {
+                    case PitchCategory.Low: return "저";
+                    case PitchCategory.Medium: return "중";
+                    case PitchCategory.High: return "고";
+                    default: return "중";
+                }
+            }
+            else
+            {
+                switch (category)
+                {
+                    case PitchCategory.Low: return "L";
+                    case PitchCategory.Medium: return "M";
+                    case PitchCategory.High: return "H";
+                    default: return "M";
+                }
+            }
+        }
+
+        #endregion
+
         private void SaveSettings()
         {
             if (saveData == null || saveManager == null) return;
@@ -764,12 +1731,22 @@ namespace LostSpells.UI
 
         public void Dispose()
         {
+            // 테스트 모드 종료
+            if (isTestMode)
+            {
+                StopTestMode();
+            }
+
+            // 실시간 피치 모니터링 중지
+            StopRealtimePitchMonitoring();
+
             // 드롭다운 정리
             microphoneDropdown?.Dispose();
             qualityDropdown?.Dispose();
             screenModeDropdown?.Dispose();
             uiLanguageDropdown?.Dispose();
             serverModeDropdown?.Dispose();
+            voiceInputModeDropdown?.Dispose();
 
             // 접기/펼치기 섹션 정리
             keyBindingSection?.Dispose();

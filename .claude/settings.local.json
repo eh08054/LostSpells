@@ -63,7 +63,9 @@
       "Bash(find:*)",
       "Bash(grep:*)",
       "Bash(git -c user.name=\"qqpmzz\" -c user.email=\"qpmz.official@gmail.com\" commit:*)",
-      "Bash(git reset:*)"
+      "Bash(git reset:*)",
+      "Bash(git -c user.name=\"qqpmzz\" -c user.email=\"qpmz.official@gmail.com\" commit -m \"$(cat <<''EOF''\nFix voice recognition skill execution and context commands\n\n- Fix skill execution to use CastSkillByData (same as UI click)\n- Add OpenStore command to InGame_Paused context\n- Update GetCurrentCategorySkills to use PlayerComponent skills\n- Add missing keywords to server fallback_classify (상점, 뒤로, etc.)\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git -c user.name=\"qqpmzz\" -c user.email=\"qpmz.official@gmail.com\" commit -m \"$(cat <<''EOF''\nUpdate Claude settings with allowed bash commands\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n)\")"
     ],
     "deny": [],
     "ask": []

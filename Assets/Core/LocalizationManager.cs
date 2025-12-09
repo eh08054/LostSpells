@@ -189,6 +189,7 @@ namespace LostSpells.Systems
             AddText("options_keybinding_store", "상점 조작", "Store Controls");
 
             // Options - Voice Recognition
+            AddText("options_voice_input_mode", "음성 입력 모드", "Voice Input Mode");
             AddText("options_voice_server_mode", "서버 모드", "Server Mode");
             AddText("options_voice_server_mode_online", "온라인 (OpenAI API)", "Online (OpenAI API)");
             AddText("options_voice_server_mode_offline", "오프라인 (로컬)", "Offline (Local)");
@@ -255,6 +256,20 @@ namespace LostSpells.Systems
             AddText("voice_processing", "처리 중...", "Processing...");
             AddText("voice_too_short", "너무 짧음!", "Too short!");
             AddText("voice_failed", "실패", "Failed");
+            AddText("voice_listening", "음성 대기 중...", "Listening...");
+
+            // Pitch Test
+            AddText("pitch_test_title", "피치 테스트", "Pitch Test");
+            AddText("pitch_low", "저음", "Low");
+            AddText("pitch_medium", "중음", "Medium");
+            AddText("pitch_high", "고음", "High");
+            AddText("pitch_min_frequency", "최소 주파수", "Min Frequency");
+            AddText("pitch_max_frequency", "최대 주파수", "Max Frequency");
+            AddText("pitch_help_text", "흰색 선을 드래그하여 최소/최대 경계를 조정하세요", "Drag the white lines to adjust min/max boundaries");
+            AddText("pitch_start_test", "테스트 시작", "Start Test");
+            AddText("pitch_stop_test", "테스트 종료", "Stop Test");
+            AddText("pitch_recording", "녹음 중...", "Recording...");
+            AddText("pitch_recognition_failed", "인식 실패", "Recognition failed");
         }
 
         private void AddText(string key, string korean, string english)

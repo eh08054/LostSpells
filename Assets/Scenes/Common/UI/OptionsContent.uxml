@@ -136,8 +136,19 @@
                             <!-- 음성 인식 설정 영역 (숨김) -->
                             <ui:VisualElement name="VoiceRecognitionArea" style="display: none;">
                                 <ui:VisualElement class="voice-recognition-section">
-                                    <!-- 서버 모드 선택 -->
+                                    <!-- 음성 입력 모드 선택 -->
                                     <ui:VisualElement class="setting-row" style="margin-top: 0;">
+                                        <ui:Label text="Voice Input Mode" name="VoiceInputModeLabel" class="setting-label"/>
+                                        <ui:VisualElement name="VoiceInputModeDropdownContainer" class="custom-dropdown-container">
+                                            <ui:Button name="VoiceInputModeDropdownButton" class="custom-dropdown-button">
+                                                <ui:Label name="VoiceInputModeDropdownLabel" text="Key Triggered" class="custom-dropdown-label"/>
+                                                <ui:VisualElement class="custom-dropdown-arrow"/>
+                                            </ui:Button>
+                                            <ui:VisualElement name="VoiceInputModeDropdownList" class="custom-dropdown-list"/>
+                                        </ui:VisualElement>
+                                    </ui:VisualElement>
+                                    <!-- 서버 모드 선택 -->
+                                    <ui:VisualElement class="setting-row">
                                         <ui:Label text="Server Mode" name="ServerModeLabel" class="setting-label"/>
                                         <ui:VisualElement name="ServerModeDropdownContainer" class="custom-dropdown-container">
                                             <ui:Button name="ServerModeDropdownButton" class="custom-dropdown-button">
@@ -151,6 +162,59 @@
                                     <ui:VisualElement class="setting-row">
                                         <ui:Label text="Voice Server Status:" class="setting-label"/>
                                         <ui:Label text="Checking..." name="ServerStatusLabel" class="setting-label server-status-text"/>
+                                    </ui:VisualElement>
+
+                                    <!-- 피치 테스트 섹션 -->
+                                    <ui:VisualElement class="pitch-test-section">
+                                        <ui:Label text="Pitch Test" name="PitchTestLabel" class="setting-label pitch-test-title"/>
+
+                                        <!-- 피치 게이지 -->
+                                        <ui:VisualElement name="PitchGaugeContainer" class="pitch-gauge-container">
+                                            <!-- 카테고리 라벨 -->
+                                            <ui:VisualElement class="pitch-category-labels">
+                                                <ui:Label text="Low" name="PitchLowLabel" class="pitch-category-label"/>
+                                                <ui:Label text="Medium" name="PitchMediumLabel" class="pitch-category-label"/>
+                                                <ui:Label text="High" name="PitchHighLabel" class="pitch-category-label"/>
+                                            </ui:VisualElement>
+
+                                            <!-- 게이지 바 -->
+                                            <ui:VisualElement name="PitchGaugeBar" class="pitch-gauge-bar">
+                                                <!-- 배경 영역 (Low/Medium/High 색상) -->
+                                                <ui:VisualElement name="PitchGaugeLowArea" class="pitch-gauge-area pitch-gauge-low-area"/>
+                                                <ui:VisualElement name="PitchGaugeMediumArea" class="pitch-gauge-area pitch-gauge-medium-area"/>
+                                                <ui:VisualElement name="PitchGaugeHighArea" class="pitch-gauge-area pitch-gauge-high-area"/>
+                                                <!-- 최소 경계 마커 (흰색 선, 드래그 가능) -->
+                                                <ui:VisualElement name="PitchMinMarker" class="pitch-marker pitch-min-marker"/>
+                                                <!-- 최대 경계 마커 (흰색 선, 드래그 가능) -->
+                                                <ui:VisualElement name="PitchMaxMarker" class="pitch-marker pitch-max-marker"/>
+                                                <!-- 실시간 피치 인디케이터 (빨간색 선) -->
+                                                <ui:VisualElement name="PitchRealtimeIndicator" class="pitch-realtime-indicator"/>
+                                            </ui:VisualElement>
+
+                                            <!-- 현재 주파수 표시 -->
+                                            <ui:Label text="-- Hz" name="CurrentFrequencyLabel" class="current-frequency-label"/>
+                                        </ui:VisualElement>
+
+                                        <!-- 최소 주파수 표시 -->
+                                        <ui:VisualElement class="setting-row pitch-frequency-row">
+                                            <ui:Label text="Min Frequency" name="MinFrequencyLabel" class="setting-label"/>
+                                            <ui:Label text="130.81 Hz (C3)" name="MinFrequencyValue" class="frequency-value-label"/>
+                                        </ui:VisualElement>
+
+                                        <!-- 최대 주파수 표시 -->
+                                        <ui:VisualElement class="setting-row pitch-frequency-row">
+                                            <ui:Label text="Max Frequency" name="MaxFrequencyLabel" class="setting-label"/>
+                                            <ui:Label text="261.63 Hz (C4)" name="MaxFrequencyValue" class="frequency-value-label"/>
+                                        </ui:VisualElement>
+
+                                        <!-- 안내 텍스트 -->
+                                        <ui:Label text="Drag the white lines to adjust min/max boundaries" name="PitchHelpLabel" class="pitch-help-label"/>
+
+                                        <!-- 테스트 시작/종료 버튼 -->
+                                        <ui:VisualElement class="setting-row pitch-test-row">
+                                            <ui:Button text="Start Test" name="PitchTestButton" class="pitch-test-button"/>
+                                            <ui:Label text="" name="PitchTestResultLabel" class="pitch-test-result-label"/>
+                                        </ui:VisualElement>
                                     </ui:VisualElement>
                                 </ui:VisualElement>
                             </ui:VisualElement>
