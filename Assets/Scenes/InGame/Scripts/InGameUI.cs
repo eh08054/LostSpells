@@ -721,8 +721,35 @@ namespace LostSpells.UI
         /// </summary>
         public List<SkillData> GetCurrentCategorySkills()
         {
-            var allSkills = DataManager.Instance.GetAllSkillData();
-            if (allSkills == null) return new List<SkillData>();
+            // PlayerComponent에서 스킬 가져오기 (UI에 표시된 스킬과 동일하게)
+            List<SkillData> allSkills = new List<SkillData>();
+
+            if (playerComponent != null)
+            {
+                var playerSkills = playerComponent.GetAllSkills();
+                if (playerSkills != null)
+                {
+                    foreach (var skill in playerSkills)
+                    {
+                        if (skill != null)
+                        {
+                            allSkills.Add(skill);
+                        }
+                    }
+                }
+            }
+
+            // PlayerComponent에 스킬이 없으면 DataManager에서 가져오기 (폴백)
+            if (allSkills.Count == 0)
+            {
+                var dataManagerSkills = DataManager.Instance.GetAllSkillData();
+                if (dataManagerSkills != null)
+                {
+                    allSkills = dataManagerSkills;
+                }
+            }
+
+            if (allSkills.Count == 0) return new List<SkillData>();
 
             // All 탭 (null)이면 모든 스킬 반환
             if (currentSkillCategory == null)

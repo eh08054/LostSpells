@@ -601,7 +601,7 @@ namespace LostSpells.Systems
         }
 
         /// <summary>
-        /// 스킬 이름으로 스킬 실행
+        /// 스킬 이름으로 스킬 실행 (스킬창 클릭과 동일한 방식)
         /// </summary>
         private void ExecuteSkillByName(string skillName)
         {
@@ -611,43 +611,31 @@ namespace LostSpells.Systems
                 return;
             }
 
-            if (activeSkills == null || activeSkills.Count == 0)
+            // activeSkills에서 매칭되는 스킬 찾기 (스킬창에 표시된 스킬과 동일)
+            if (activeSkills != null && activeSkills.Count > 0)
             {
-                Debug.LogError($"[VoiceRecognition] activeSkills가 비어있습니다!");
-                return;
-            }
-
-            // 정확한 키워드 매칭
-            foreach (var skill in activeSkills)
-            {
-                if (skill.voiceKeyword == skillName)
+                string skillNameLower = skillName.ToLower().Replace(" ", "");
+                foreach (var skill in activeSkills)
                 {
-                    // Debug.Log($"[VoiceRecognition] 스킬 실행: {skill.GetLocalizedName()}");
-                    playerComponent.CastSkill(skill);
-                    return;
-                }
-            }
+                    // 영어 스킬 이름으로 매칭
+                    if (!string.IsNullOrEmpty(skill.skillNameEn))
+                    {
+                        string skillEnLower = skill.skillNameEn.ToLower().Replace(" ", "");
+                        if (skillEnLower.Contains(skillNameLower) || skillNameLower.Contains(skillEnLower))
+                        {
+                            // 스킬창 클릭과 동일한 방식으로 발사
+                            playerComponent.CastSkillByData(skill);
+                            return;
+                        }
+                    }
 
-            // 스킬 이름으로 부분 매칭 시도 (UseFireball -> Fireball -> 파이어볼)
-            string skillNameLower = skillName.ToLower();
-            foreach (var skill in activeSkills)
-            {
-                // 영어 스킬 이름으로 매칭
-                if (!string.IsNullOrEmpty(skill.skillNameEn) &&
-                    skill.skillNameEn.ToLower().Contains(skillNameLower))
-                {
-                    // Debug.Log($"[VoiceRecognition] 영어 이름으로 스킬 매칭: {skill.GetLocalizedName()}");
-                    playerComponent.CastSkill(skill);
-                    return;
-                }
-
-                // 한국어 스킬 이름으로 매칭
-                if (!string.IsNullOrEmpty(skill.skillName) &&
-                    skill.skillName.Contains(skillName))
-                {
-                    // Debug.Log($"[VoiceRecognition] 한국어 이름으로 스킬 매칭: {skill.GetLocalizedName()}");
-                    playerComponent.CastSkill(skill);
-                    return;
+                    // 한국어 스킬 이름으로 매칭
+                    if (!string.IsNullOrEmpty(skill.skillName) && skill.skillName.Contains(skillName))
+                    {
+                        // 스킬창 클릭과 동일한 방식으로 발사
+                        playerComponent.CastSkillByData(skill);
+                        return;
+                    }
                 }
             }
 
@@ -680,19 +668,47 @@ namespace LostSpells.Systems
             switch (command)
             {
                 case "OpenSettings":
-                    // 설정창 열기 - 내장 Options 팝업 표시
-                    if (inGameUI != null && !inGameUI.IsOptionsPopupVisible())
+                    // 설정창 열기
+                    var settingsScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+                    if (settingsScene == "InGame")
                     {
-                        Time.timeScale = 0f;
-                        inGameUI.OpenOptionsPopup();
+                        // InGame에서는 내장 Options 팝업 표시
+                        if (inGameUI != null && !inGameUI.IsOptionsPopupVisible())
+                        {
+                            Time.timeScale = 0f;
+                            inGameUI.OpenOptionsPopup();
+                        }
+                    }
+                    else if (settingsScene == "Menu")
+                    {
+                        // Menu에서는 Options 패널로 이동
+                        var menuMgr = FindFirstObjectByType<LostSpells.UI.MenuManager>();
+                        if (menuMgr != null)
+                        {
+                            menuMgr.ShowPanel(LostSpells.UI.MenuManager.MenuPanel.Options);
+                        }
                     }
                     break;
 
                 case "CloseSettings":
-                    // 설정창 닫기 - 내장 Options 팝업 숨기기
-                    if (inGameUI != null && inGameUI.IsOptionsPopupVisible())
+                    // 설정창 닫기
+                    var closeSettingsScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+                    if (closeSettingsScene == "InGame")
                     {
-                        inGameUI.CloseOptionsPopup();
+                        // InGame에서는 내장 Options 팝업 숨기기
+                        if (inGameUI != null && inGameUI.IsOptionsPopupVisible())
+                        {
+                            inGameUI.CloseOptionsPopup();
+                        }
+                    }
+                    else if (closeSettingsScene == "Menu")
+                    {
+                        // Menu에서는 이전 패널로 돌아가기
+                        var closeSettingsMgr = FindFirstObjectByType<LostSpells.UI.MenuManager>();
+                        if (closeSettingsMgr != null)
+                        {
+                            closeSettingsMgr.GoBack();
+                        }
                     }
                     break;
 
@@ -823,10 +839,24 @@ namespace LostSpells.Systems
                     break;
 
                 case "OpenStore":
-                    // 상점 열기 - 내장 Store 팝업 표시
-                    if (inGameUI != null && !inGameUI.IsStorePopupVisible())
+                    // 상점 열기
+                    var storeScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+                    if (storeScene == "InGame")
                     {
-                        inGameUI.OpenStorePopup();
+                        // InGame에서는 내장 Store 팝업 표시
+                        if (inGameUI != null && !inGameUI.IsStorePopupVisible())
+                        {
+                            inGameUI.OpenStorePopup();
+                        }
+                    }
+                    else if (storeScene == "Menu")
+                    {
+                        // Menu에서는 Store 패널로 이동
+                        var storeMgr = FindFirstObjectByType<LostSpells.UI.MenuManager>();
+                        if (storeMgr != null)
+                        {
+                            storeMgr.ShowPanel(LostSpells.UI.MenuManager.MenuPanel.Store);
+                        }
                     }
                     break;
 
@@ -948,8 +978,19 @@ namespace LostSpells.Systems
                 return;
             }
 
-            // Store 씬이 열려있으면 Menu로 이동
             var currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+
+            // InGame에서 OptionsPopup이 열려있으면 닫기
+            if (currentScene == "InGame" && inGameUI != null)
+            {
+                if (inGameUI.IsOptionsPopupVisible())
+                {
+                    inGameUI.CloseOptionsPopup();
+                    return;
+                }
+            }
+
+            // Store 씬이 열려있으면 Menu로 이동
             if (currentScene == "Store")
             {
                 UnityEngine.SceneManagement.SceneManager.LoadScene("Menu");
@@ -1060,10 +1101,18 @@ namespace LostSpells.Systems
                 // 일시정지 상태 확인 (Time.timeScale == 0)
                 if (Time.timeScale == 0f)
                 {
-                    // 게임오버인지 일시정지인지 확인
                     if (inGameUI != null)
                     {
                         var root = inGameUI.GetComponent<UIDocument>()?.rootVisualElement;
+
+                        // OptionsPopup이 열려있는지 확인
+                        var optionsPopup = root?.Q<VisualElement>("OptionsPopup");
+                        if (optionsPopup != null && optionsPopup.style.display == DisplayStyle.Flex)
+                        {
+                            return GameContext.Options;
+                        }
+
+                        // 게임오버인지 확인
                         var gameOverPopup = root?.Q<VisualElement>("GameOverPopup");
                         if (gameOverPopup != null && gameOverPopup.style.display == DisplayStyle.Flex)
                         {
@@ -1092,6 +1141,14 @@ namespace LostSpells.Systems
             var gameModePanel = root.Q<VisualElement>("GameModeSelectionPanel");
             var storyModePanel = root.Q<VisualElement>("StoryModePanel");
             var endlessModePanel = root.Q<VisualElement>("EndlessModePanel");
+            var optionsPanel = root.Q<VisualElement>("OptionsPanel");
+            var storePanel = root.Q<VisualElement>("StorePanel");
+
+            // Options/Store 패널 먼저 확인 (오버레이 패널)
+            if (optionsPanel != null && optionsPanel.style.display == DisplayStyle.Flex)
+                return GameContext.Options;
+            if (storePanel != null && storePanel.style.display == DisplayStyle.Flex)
+                return GameContext.Store;
 
             if (storyModePanel != null && storyModePanel.style.display == DisplayStyle.Flex)
                 return GameContext.Menu_StoryMode;
@@ -1137,10 +1194,10 @@ namespace LostSpells.Systems
                     return command == "PauseGame" || command == "OpenMenu";
 
                 case GameContext.InGame_Paused:
-                    // 인게임 일시정지: 재개, 설정, 재시작, 메인메뉴
+                    // 인게임 일시정지: 재개, 설정, 상점, 재시작, 메인메뉴
                     return command == "ResumeGame" || command == "CloseMenu" ||
-                           command == "OpenSettings" || command == "RestartGame" ||
-                           command == "QuitToMainMenu";
+                           command == "OpenSettings" || command == "OpenStore" ||
+                           command == "RestartGame" || command == "QuitToMainMenu";
 
                 case GameContext.InGame_GameOver:
                     // 게임오버: 재시작, 메인메뉴
@@ -1191,7 +1248,7 @@ namespace LostSpells.Systems
                     return "일시정지, 멈춰, 정지, 메뉴";
 
                 case GameContext.InGame_Paused:
-                    return "계속, 재개, 게임 계속, 설정, 옵션, 재시작, 다시 시작, 메인 메뉴, 나가기";
+                    return "계속, 재개, 게임 계속, 설정, 옵션, 상점, 재시작, 다시 시작, 메인 메뉴, 나가기";
 
                 case GameContext.InGame_GameOver:
                     return "재도전, 재시작, 다시, 다시 시작, 메인 메뉴, 나가기";

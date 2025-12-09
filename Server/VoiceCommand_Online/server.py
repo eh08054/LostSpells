@@ -321,6 +321,18 @@ def fallback_classify(text: str) -> dict:
         "맵": "OpenMap",
         "도움말": "ShowHelp",
         "도와": "ShowHelp",
+        "상점": "OpenStore",
+        "스토어": "OpenStore",
+        "뒤로": "GoBack",
+        "뒤로가기": "GoBack",
+        "메인 메뉴": "GoToMainMenu",
+        "메인메뉴": "GoToMainMenu",
+        "게임 시작": "StartGame",
+        "시작": "StartGame",
+        "스토리 모드": "SelectStoryMode",
+        "스토리": "SelectStoryMode",
+        "무한 모드": "SelectEndlessMode",
+        "엔드리스": "SelectEndlessMode",
     }
 
     for keyword, command in keyword_map.items():
