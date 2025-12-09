@@ -15,7 +15,7 @@ namespace LostSpells.Systems
 
         private List<string> currentSkillKeywords = new List<string>();
         private string currentLanguage = "ko"; // 기본값: 한국어
-        private string currentServerMode = "online"; // 기본값: 온라인
+        private string currentServerMode = "offline"; // 기본값: 온라인
 
         private void Start()
         {

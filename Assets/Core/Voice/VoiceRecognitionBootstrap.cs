@@ -17,7 +17,9 @@ namespace LostSpells.Systems
             {
                 GameObject voiceManagerObj = new GameObject("VoiceRecognitionManager");
                 voiceManagerObj.AddComponent<VoiceRecognitionManager>();
-                // DontDestroyOnLoad은 VoiceRecognitionManager.Awake에서 처리됨
+                GameObject voiceAnaylyzingObj = new GameObject("VoiceAnalyzingManager");
+                voiceAnaylyzingObj.AddComponent<VoiceAnalyzingPitch>();
+                // DontDestroyOnLoad은 VoiceRecognitionManager.Awake, VoiceAnalyzingManager.Awake에서 처리됨
             }
         }
     }

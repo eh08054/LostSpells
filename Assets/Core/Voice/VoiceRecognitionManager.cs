@@ -1,9 +1,11 @@
+using LostSpells.Components;
+using LostSpells.Data;
+using System;
+using System.Collections;
+using System.IO;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
-using System.Collections;
-using LostSpells.Data;
-using LostSpells.Components;
 
 namespace LostSpells.Systems
 {
@@ -35,10 +37,6 @@ namespace LostSpells.Systems
         private static VoiceRecognitionManager _instance;
         public static VoiceRecognitionManager Instance => _instance;
 
-        [Header("Components")]
-        [Tooltip("음성 녹음 컴포넌트")]
-        public VoiceRecorder voiceRecorder;
-
         [Tooltip("서버 클라이언트")]
         public VoiceServerClient serverClient;
 
@@ -50,11 +48,26 @@ namespace LostSpells.Systems
         public float maxRecordingTime = 5f;
 
         [Tooltip("최소 녹음 시간 (초)")]
-        public float minRecordingTime = 0.5f;
+        public float minRecordingTime = 1f;
 
         private bool isRecording = false;
         private float recordingStartTime = 0f;
         private string originalPlayerName = "Wizard"; // PlayerComponent의 기본 이름과 동일하게 설정
+
+        [Header("Constant Recording Settings")]
+        [SerializeField] private int sampleRate = 44100;
+        [SerializeField] private int preRollSeconds = 1; // 발화 전 추가할 시간
+        [SerializeField] private float threshold = 0.02f; // 음성 감지 임계값
+        [SerializeField] private float silenceTimeout = 1f; // 발화 종료 판정 시간
+
+        private AudioClip audioClip;
+
+        private float silenceTimer = 0f;
+
+        private int detectionStartIndex = 0; // 발화 시작 위치 (AudioClip 샘플 인덱스)
+        private int sampleSize = 1024; // RMS 계산에 사용할 샘플 크기
+
+        private bool isProcessing = false; // 서버 통신 중 상태 (중복 방지)
 
         // 현재 활성화된 스킬 목록 (InGameUI에서 설정)
         private System.Collections.Generic.List<SkillData> activeSkills = new System.Collections.Generic.List<SkillData>();
@@ -72,11 +85,7 @@ namespace LostSpells.Systems
             _instance = this;
             DontDestroyOnLoad(gameObject); // 씬 전환 시에도 유지
 
-            // 컴포넌트 자동 찾기 - Awake에서 초기화하여 다른 스크립트의 Start보다 먼저 실행되도록 함
-            if (voiceRecorder == null)
-            {
-                voiceRecorder = gameObject.AddComponent<VoiceRecorder>();
-            }
+            audioClip = Microphone.Start(Microphone.devices[0].ToString(), true, 60, sampleRate);
 
             if (serverClient == null)
             {
@@ -226,28 +235,151 @@ namespace LostSpells.Systems
 
         private void Update()
         {
-            // 키바인딩에서 음성 녹음 키 가져오기
-            if (Keyboard.current != null)
-            {
-                Key voiceRecordKey = GetVoiceRecordKey();
+            // 서버 통신 중이거나 AudioClip이 없으면 로직 건너뛰기
+            if (audioClip == null || isProcessing) return;
 
-                // 음성 녹음 키를 누르면 녹음 시작
-                if (Keyboard.current[voiceRecordKey].wasPressedThisFrame)
+            int currentPos = Microphone.GetPosition(Microphone.devices[0].ToString());
+
+            // 현재 위치의 RMS 계산
+            float rms = CalculateRMS(currentPos);
+
+            if (!isRecording)
+            {
+                // rms가 threshold를 넘을 경우 발화 시작 판정. 
+                if (rms > threshold)
                 {
+                    Debug.Log("Voice detected, starting recording.");
+                    isRecording = true;
+                    detectionStartIndex = currentPos;
+                    silenceTimer = 0f;
+                    recordingStartTime = 0f; // 새로 시작 시 타이머 초기화
+
                     StartVoiceRecording();
                 }
-                // 음성 녹음 키를 떼면 녹음 중지
-                else if (Keyboard.current[voiceRecordKey].wasReleasedThisFrame)
+            }
+            else
+            {
+                recordingStartTime += Time.unscaledDeltaTime;
+
+                // rms가 threshold / 2보다 낮을 경우 "silence" 판정 
+                if (rms < threshold / 2)
                 {
-                    StopVoiceRecording();
+                    silenceTimer += Time.unscaledDeltaTime;
+                    if (silenceTimer > silenceTimeout)
+                    {
+                        Debug.Log("Silence detected, stopping recording.");
+                        Debug.Log("Total Recording Time: " + recordingStartTime + " seconds");
+
+                        // 녹음된 길이가 최소 시간 미만일 시 서버로 전달하지 않음.
+                        if (recordingStartTime < minRecordingTime)
+                        {
+                            Debug.Log("Recording too short, discarding.");
+                            StopVoiceRecording();
+                            isRecording = false;
+                            silenceTimer = 0f;
+                            recordingStartTime = 0f;
+                            return;
+                        }
+                        else
+                        {
+                            // 발화 종료 및 서버 전송
+                            StopAndSend(currentPos);
+                            StopVoiceRecording();
+                            silenceTimer = 0f;
+                            recordingStartTime = 0f;
+                            isRecording = false;
+                        }
+                    }
+                }
+                else // 음성 지속
+                {
+                    silenceTimer = 0f; // 음성이 다시 감지되면 침묵 타이머 초기화
                 }
             }
 
-            // 최대 녹음 시간 체크 (Time.unscaledTime 사용 - 일시정지 중에도 동작)
-            if (isRecording && Time.unscaledTime - recordingStartTime >= maxRecordingTime)
+        }
+        //현재 인덱스 앞 sampleSize만큼의 음성의 RMS를 계산함.
+        private float CalculateRMS(int currentPos)
+        {
+            int startReadPos = currentPos - sampleSize;
+            if (startReadPos < 0) startReadPos += audioClip.samples;
+
+            float[] tempSamples = new float[sampleSize];
+            if (startReadPos + sampleSize <= audioClip.samples)
             {
-                StopVoiceRecording();
+                audioClip.GetData(tempSamples, startReadPos);
             }
+            else
+            {
+                int endCount = audioClip.samples - startReadPos;
+                int remainingCount = sampleSize - endCount;
+                if (endCount > 0)
+                {
+                    float[] part1 = new float[endCount];
+                    audioClip.GetData(part1, startReadPos);
+                    Array.Copy(part1, 0, tempSamples, 0, endCount);
+                }
+                if (remainingCount > 0)
+                {
+                    float[] part2 = new float[remainingCount];
+                    audioClip.GetData(part2, 0);
+                    Array.Copy(part2, 0, tempSamples, endCount, remainingCount);
+                }
+            }
+
+            float sum = 0f;
+            for (int i = 0; i < tempSamples.Length; i++)
+            {
+                sum += tempSamples[i] * tempSamples[i];
+            }
+            if (tempSamples.Length == 0) return 0f;
+            return Mathf.Sqrt(sum / tempSamples.Length);
+        }
+
+        //발화된 시간 사이의 음성 + 발화 전 preRollSeconds를 클립에 합쳐서 처리 준비. (ConstantRecording 로직)
+        private void StopAndSend(int currentPos)
+        {
+            int preRollSamples = preRollSeconds * sampleRate;
+            int finalStartIndex = detectionStartIndex - preRollSamples;
+            if (finalStartIndex < 0) finalStartIndex += audioClip.samples;
+
+            int totalLength = 0;
+            if (currentPos >= finalStartIndex)
+            {
+                totalLength = currentPos - finalStartIndex;
+            }
+            else
+            {
+                totalLength = (audioClip.samples - finalStartIndex) + currentPos;
+            }
+
+            float[] fullData = new float[totalLength];
+
+            if (currentPos >= finalStartIndex)
+            {
+                audioClip.GetData(fullData, finalStartIndex);
+            }
+            else
+            {
+                float[] part1 = new float[audioClip.samples - finalStartIndex];
+                float[] part2 = new float[currentPos];
+
+                audioClip.GetData(part1, finalStartIndex);
+                audioClip.GetData(part2, 0);
+
+                Array.Copy(part1, 0, fullData, 0, part1.Length);
+                Array.Copy(part2, 0, fullData, part1.Length, part2.Length);
+            }
+
+            AudioClip clipToSend = AudioClip.Create("UserVoice", totalLength, 1, sampleRate, false);
+            clipToSend.SetData(fullData, 0);
+
+            // isProcessing 플래그 설정
+            isProcessing = true;
+
+            // 녹음된 클립을 처리하고 서버로 전송
+            StartCoroutine(SendAudioToServer(clipToSend));
+            FindAnyObjectByType<VoiceAnalyzingPitch>()?.AnalyzeRecordedClip(clipToSend);
         }
 
         /// <summary>
@@ -326,8 +458,6 @@ namespace LostSpells.Systems
                 inGameUI.ClearSkillAccuracy();
             }
 
-            voiceRecorder.StartRecording();
-
             string recordingText = LocalizationManager.Instance.GetText("voice_recording");
             UpdateVoiceRecognitionDisplay(recordingText);
         }
@@ -346,7 +476,6 @@ namespace LostSpells.Systems
             if (recordingDuration < minRecordingTime)
             {
                 isRecording = false;
-                voiceRecorder.StopRecording();
                 string tooShortText = LocalizationManager.Instance.GetText("voice_too_short");
                 UpdateVoiceRecognitionDisplay(tooShortText);
                 StartCoroutine(ClearVoiceRecognitionDisplayAfterDelay(1f));
@@ -355,29 +484,28 @@ namespace LostSpells.Systems
 
             isRecording = false;
 
-            voiceRecorder.StopRecording();
-
             string processingText = LocalizationManager.Instance.GetText("voice_processing");
             UpdateVoiceRecognitionDisplay(processingText);
-
-            // 서버로 전송
-            StartCoroutine(SendAudioToServer());
         }
 
-        /// <summary>
-        /// 서버로 오디오 전송
-        /// </summary>
-        private IEnumerator SendAudioToServer()
+        private IEnumerator SendAudioToServer(AudioClip clipToSend)
         {
-            // 녹음된 오디오를 바이트 배열로 변환
-            byte[] audioData = voiceRecorder.GetRecordingAsBytes();
 
-            if (audioData == null)
+            string tempPath = Path.Combine(Application.persistentDataPath, "temp_constant_audio.wav");
+
+            // VoiceRecorder.cs에 있는 SavWav 유틸리티를 사용하여 WAV 파일로 저장
+            SavWav.Save(tempPath, clipToSend);
+
+            // 저장된 파일을 바이트 배열로 읽기
+            byte[] audioData = File.ReadAllBytes(tempPath);
+            File.Delete(tempPath);
+
+            if (audioData == null || audioData.Length == 0)
             {
                 string failedText = LocalizationManager.Instance.GetText("voice_failed");
                 UpdateVoiceRecognitionDisplay(failedText);
-                yield return new WaitForSecondsRealtime(2f); // 일시정지 중에도 동작
-                UpdateVoiceRecognitionDisplay("");
+                isProcessing = false;
+                StartCoroutine(ClearVoiceRecognitionDisplayAfterDelay(2f));
                 yield break;
             }
 
@@ -385,7 +513,7 @@ namespace LostSpells.Systems
             string context = GetCurrentContextString();
             string contextKeywords = GetContextKeywords();
 
-            // 서버로 전송 (컨텍스트 정보 포함)
+            // 서버로 전송
             yield return serverClient.RecognizeSkill(audioData, context, contextKeywords, OnRecognitionResult);
         }
 
@@ -394,6 +522,7 @@ namespace LostSpells.Systems
         /// </summary>
         private void OnRecognitionResult(RecognitionResult result)
         {
+            isProcessing = false;
             if (result == null)
             {
                 // 실패: "서버 연결 실패" 표시
