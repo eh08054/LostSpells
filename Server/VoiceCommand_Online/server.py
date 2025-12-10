@@ -219,6 +219,69 @@ AVAILABLE_FUNCTIONS = [
         "description": "챕터 12를 선택합니다",
         "examples": ["챕터 12", "열두번째 챕터", "12챕터"]
     },
+    # Options 탭 전환
+    {
+        "name": "ShowAudioTab",
+        "description": "설정 화면에서 오디오 탭을 엽니다",
+        "examples": ["오디오 탭", "오디오", "소리 설정", "오디오 열어"]
+    },
+    {
+        "name": "ShowGraphicsTab",
+        "description": "설정 화면에서 그래픽 탭을 엽니다",
+        "examples": ["그래픽 탭", "그래픽", "화면 설정", "그래픽 열어"]
+    },
+    {
+        "name": "ShowLanguageTab",
+        "description": "설정 화면에서 언어 탭을 엽니다",
+        "examples": ["언어 탭", "언어", "언어 설정", "언어 열어"]
+    },
+    {
+        "name": "ShowGameTab",
+        "description": "설정 화면에서 게임 탭을 엽니다",
+        "examples": ["게임 탭", "게임 설정", "게임 열어"]
+    },
+    # Options 섹션 명령
+    {
+        "name": "ExpandVoiceRecognition",
+        "description": "게임 탭에서 음성인식 섹션을 펼칩니다",
+        "examples": ["음성인식 펼쳐", "음성인식 열어", "음성인식 보여줘"]
+    },
+    {
+        "name": "CollapseVoiceRecognition",
+        "description": "게임 탭에서 음성인식 섹션을 접습니다",
+        "examples": ["음성인식 접어", "음성인식 닫아", "음성인식 숨겨"]
+    },
+    {
+        "name": "ExpandKeyBinding",
+        "description": "게임 탭에서 키설정 섹션을 펼칩니다",
+        "examples": ["키설정 펼쳐", "키설정 열어", "키바인딩 펼쳐", "키설정 보여줘"]
+    },
+    {
+        "name": "CollapseKeyBinding",
+        "description": "게임 탭에서 키설정 섹션을 접습니다",
+        "examples": ["키설정 접어", "키설정 닫아", "키바인딩 접어", "키설정 숨겨"]
+    },
+    # InGame 이동 명령
+    {
+        "name": "MoveLeft",
+        "description": "캐릭터를 왼쪽으로 이동합니다",
+        "examples": ["왼쪽", "왼쪽 이동", "왼쪽으로", "왼쪽으로 가"]
+    },
+    {
+        "name": "MoveRight",
+        "description": "캐릭터를 오른쪽으로 이동합니다",
+        "examples": ["오른쪽", "오른쪽 이동", "오른쪽으로", "오른쪽으로 가"]
+    },
+    {
+        "name": "Jump",
+        "description": "캐릭터가 점프합니다",
+        "examples": ["점프", "뛰어", "점프해", "뛰어올라"]
+    },
+    {
+        "name": "StopMove",
+        "description": "캐릭터 이동을 멈춥니다",
+        "examples": ["정지", "멈춰", "이동 멈춰", "그만"]
+    },
 ]
 
 
@@ -266,8 +329,15 @@ async def transcribe_audio(audio_path: str, prompt: str = "") -> str:
 async def classify_intent(text: str) -> dict:
     """LLM을 사용해 사용자 의도를 파악"""
 
+    # 먼저 키워드 기반 분류 시도 (더 정확함)
+    fallback_result = fallback_classify(text)
+    if fallback_result["command"] != "Unknown":
+        print(f"[classify_intent] Keyword match: {fallback_result}")
+        return fallback_result
+
+    # 키워드 매칭 실패 시 LLM 사용
     if not os.getenv("OPENAI_API_KEY"):
-        return fallback_classify(text)
+        return fallback_result
 
     try:
         response = client.chat.completions.create(
@@ -296,21 +366,41 @@ async def classify_intent(text: str) -> dict:
 
     except Exception as e:
         print(f"LLM 분류 오류: {e}")
-        return fallback_classify(text)
+        return fallback_result
 
 
 def fallback_classify(text: str) -> dict:
     """키워드 기반 폴백 분류 (시스템 명령만 - 스킬은 별도 처리)"""
     text_lower = text.lower()
 
+    # 긴 키워드를 먼저 매칭하도록 순서 조정!
     keyword_map = {
+        # 메인 메뉴 관련 (긴 것 먼저)
+        "메인 메뉴": "GoToMainMenu",
+        "메인메뉴": "GoToMainMenu",
+        "메인으로": "GoToMainMenu",
+        # 게임 시작 관련 (긴 것 먼저)
+        "게임 시작": "StartGame",
+        "게임시작": "StartGame",
+        # 스토리 모드 관련 (긴 것 먼저)
+        "스토리 모드": "SelectStoryMode",
+        "스토리모드": "SelectStoryMode",
+        "스토리": "SelectStoryMode",
+        # 무한 모드 관련 (긴 것 먼저)
+        "무한 모드": "SelectEndlessMode",
+        "무한모드": "SelectEndlessMode",
+        "무한": "SelectEndlessMode",
+        "엔드리스": "SelectEndlessMode",
+        # 뒤로가기 관련 (긴 것 먼저)
+        "뒤로가기": "GoBack",
+        "뒤로": "GoBack",
+        # 일반 명령어
         "설정": "OpenSettings",
         "옵션": "OpenSettings",
         "세팅": "OpenSettings",
         "메뉴": "OpenMenu",
         "일시정지": "PauseGame",
-        "멈춰": "PauseGame",
-        "정지": "PauseGame",
+        "퍼즈": "PauseGame",
         "계속": "ResumeGame",
         "재개": "ResumeGame",
         "재시작": "RestartGame",
@@ -323,20 +413,50 @@ def fallback_classify(text: str) -> dict:
         "도와": "ShowHelp",
         "상점": "OpenStore",
         "스토어": "OpenStore",
-        "뒤로": "GoBack",
-        "뒤로가기": "GoBack",
-        "메인 메뉴": "GoToMainMenu",
-        "메인메뉴": "GoToMainMenu",
-        "게임 시작": "StartGame",
-        "게임시작": "StartGame",
         "플레이": "StartGame",
         "시작": "StartGame",
-        "스토리 모드": "SelectStoryMode",
-        "스토리모드": "SelectStoryMode",
-        "스토리": "SelectStoryMode",
-        "무한 모드": "SelectEndlessMode",
-        "무한모드": "SelectEndlessMode",
-        "엔드리스": "SelectEndlessMode",
+        "종료": "QuitGame",
+        "끝내기": "QuitGame",
+        "나가기": "QuitGame",
+        "메인": "GoToMainMenu",
+        "닫기": "CloseSettings",
+        # Options 탭 전환 (구체적인 것 먼저)
+        "오디오 탭": "ShowAudioTab",
+        "오디오탭": "ShowAudioTab",
+        "오디오": "ShowAudioTab",
+        "그래픽 탭": "ShowGraphicsTab",
+        "그래픽탭": "ShowGraphicsTab",
+        "그래픽": "ShowGraphicsTab",
+        "언어 탭": "ShowLanguageTab",
+        "언어탭": "ShowLanguageTab",
+        "언어": "ShowLanguageTab",
+        "게임 탭": "ShowGameTab",
+        "게임탭": "ShowGameTab",
+        # Options 섹션 명령
+        "음성인식 펼쳐": "ExpandVoiceRecognition",
+        "음성인식 열어": "ExpandVoiceRecognition",
+        "음성인식 접어": "CollapseVoiceRecognition",
+        "음성인식 닫아": "CollapseVoiceRecognition",
+        "키설정 펼쳐": "ExpandKeyBinding",
+        "키설정 열어": "ExpandKeyBinding",
+        "키바인딩 펼쳐": "ExpandKeyBinding",
+        "키설정 접어": "CollapseKeyBinding",
+        "키설정 닫아": "CollapseKeyBinding",
+        "키바인딩 접어": "CollapseKeyBinding",
+        # InGame 이동 명령 (긴 것 먼저)
+        "왼쪽으로 이동": "MoveLeft",
+        "왼쪽 이동": "MoveLeft",
+        "왼쪽으로": "MoveLeft",
+        "왼쪽": "MoveLeft",
+        "오른쪽으로 이동": "MoveRight",
+        "오른쪽 이동": "MoveRight",
+        "오른쪽으로": "MoveRight",
+        "오른쪽": "MoveRight",
+        "점프": "Jump",
+        "뛰어": "Jump",
+        "정지": "StopMove",
+        "멈춰": "StopMove",
+        "그만": "StopMove",
     }
 
     for keyword, command in keyword_map.items():
@@ -473,7 +593,26 @@ async def recognize_skill(
         # 3. 임시 파일 삭제
         os.unlink(temp_path)
 
-        # 4. 먼저 시스템 명령인지 확인
+        # 스킬 목록 파싱 (먼저 정의해야 InGame_Playing 최적화에서 사용 가능)
+        skill_list = [s.strip() for s in skills.split(",") if s.strip()] if skills else []
+
+        # 4. 인게임 플레이 중에는 시스템 명령 분류 건너뛰기 (속도 최적화)
+        if context == "InGame_Playing" and skill_list:
+            # 인게임에서는 바로 스킬 매칭 (GPT 분류 건너뛰기)
+            print(f"[/recognize] InGame_Playing: 스킬 매칭만 수행 (시스템 명령 분류 건너뜀)")
+            matched_skill, confidence, candidates = fallback_skill_match(transcribed_text, skill_list)
+            processing_time = time.time() - start_time
+            return {
+                "success": True,
+                "text": transcribed_text,
+                "matched_skill": matched_skill,
+                "confidence": confidence,
+                "candidates": candidates,
+                "processing_time": processing_time,
+                "is_system_command": False
+            }
+
+        # 4-1. 다른 컨텍스트에서는 시스템 명령인지 확인
         system_result = await classify_intent(transcribed_text)
         print(f"[/recognize] System command check: {system_result}")
 

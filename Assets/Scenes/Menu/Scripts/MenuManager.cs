@@ -213,7 +213,14 @@ namespace LostSpells.UI
             if (gameModeSelectionPanel != null) gameModeSelectionPanel.style.display = DisplayStyle.None;
             if (storyModePanel != null) storyModePanel.style.display = DisplayStyle.None;
             if (endlessModePanel != null) endlessModePanel.style.display = DisplayStyle.None;
+
+            // Options 패널 숨김 시 정리 (서버 체크 루프 중지 등)
+            if (optionsPanel != null && optionsPanel.style.display == DisplayStyle.Flex)
+            {
+                if (optionsPanelController != null) optionsPanelController.OnPanelHidden();
+            }
             if (optionsPanel != null) optionsPanel.style.display = DisplayStyle.None;
+
             if (storePanel != null) storePanel.style.display = DisplayStyle.None;
         }
 
@@ -476,6 +483,14 @@ namespace LostSpells.UI
 
             // OptionsPanelController 초기화
             optionsPanelController = new OptionsPanelController(root, optionsPanel, this);
+        }
+
+        /// <summary>
+        /// OptionsPanelController 반환 (음성 명령용)
+        /// </summary>
+        public OptionsPanelController GetOptionsPanelController()
+        {
+            return optionsPanelController;
         }
 
         #endregion

@@ -82,10 +82,10 @@ namespace LostSpells.World
                 pos.x = cameraX - wrapDistanceFromCamera;
                 obj.position = pos;
 
-                if (showDebugInfo)
-                {
-                    Debug.Log($"{obj.name} wrapped: right -> left (x={pos.x})");
-                }
+                // if (showDebugInfo)
+                // {
+                //     Debug.Log($"{obj.name} wrapped: right -> left (x={pos.x})");
+                // }
             }
             // 카메라 기준으로 왼쪽으로 너무 멀리 가면 오른쪽으로 이동
             else if (pos.x < cameraX - wrapDistanceFromCamera)
@@ -93,10 +93,10 @@ namespace LostSpells.World
                 pos.x = cameraX + wrapDistanceFromCamera;
                 obj.position = pos;
 
-                if (showDebugInfo)
-                {
-                    Debug.Log($"{obj.name} wrapped: left -> right (x={pos.x})");
-                }
+                // if (showDebugInfo)
+                // {
+                //     Debug.Log($"{obj.name} wrapped: left -> right (x={pos.x})");
+                // }
             }
         }
 

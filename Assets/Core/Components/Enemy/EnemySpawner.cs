@@ -51,7 +51,7 @@ namespace LostSpells.Systems
                     chapterData = Resources.Load<ChapterWaveData>("WaveData/Chapter1WaveData");
                     if (chapterData != null)
                     {
-                        Debug.Log($"[EnemySpawner] Loaded chapter data: {chapterData.chapterName}");
+                        // Debug.Log($"[EnemySpawner] Loaded chapter data: {chapterData.chapterName}");
                     }
                 }
                 catch (System.Exception e)
@@ -147,7 +147,7 @@ namespace LostSpells.Systems
                 }
             };
 
-            Debug.Log("[EnemySpawner] Created default chapter data");
+            // Debug.Log("[EnemySpawner] Created default chapter data");
         }
 
         private void Start()
@@ -185,7 +185,7 @@ namespace LostSpells.Systems
             // 마지막 웨이브 클리어 시 스테이지 클리어
             if (currentWave >= maxWaves)
             {
-                Debug.Log($"[EnemySpawner] Stage Clear! All {maxWaves} waves completed!");
+                // Debug.Log($"[EnemySpawner] Stage Clear! All {maxWaves} waves completed!");
                 yield return new WaitForSeconds(1f); // 잠시 대기
 
                 // 스테이지 클리어 UI 표시
@@ -197,7 +197,7 @@ namespace LostSpells.Systems
                 yield break;
             }
 
-            Debug.Log($"[EnemySpawner] All enemies defeated! Next wave in {delayBetweenWaves}s...");
+            // Debug.Log($"[EnemySpawner] All enemies defeated! Next wave in {delayBetweenWaves}s...");
             yield return new WaitForSeconds(delayBetweenWaves);
             StartNextWave();
         }
@@ -278,7 +278,7 @@ namespace LostSpells.Systems
                 yield break;
             }
 
-            Debug.Log($"[EnemySpawner] Starting Wave {waveNumber}");
+            // Debug.Log($"[EnemySpawner] Starting Wave {waveNumber}");
 
             // 웨이브 시작 대기
             yield return new WaitForSeconds(waveInfo.startDelay);
@@ -298,7 +298,7 @@ namespace LostSpells.Systems
 
             isSpawning = false;
             isWaitingForEnemiesClear = true; // 적이 모두 처치될 때까지 대기
-            Debug.Log($"[EnemySpawner] Wave {waveNumber} spawning complete! Waiting for enemies to be defeated...");
+            // Debug.Log($"[EnemySpawner] Wave {waveNumber} spawning complete! Waiting for enemies to be defeated...");
         }
 
         /// <summary>

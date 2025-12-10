@@ -51,6 +51,12 @@ namespace LostSpells.Components
         private float manaRegenAccumulator = 0f; // 마나 회복 누적값
         private float healthRegenAccumulator = 0f; // 체력 회복 누적값
 
+        // 음성 명령 이동
+        private int voiceMovementDirection = 0; // -1: 왼쪽, 0: 정지, 1: 오른쪽
+        private bool voiceJumpRequested = false;
+        private bool stopAfterLanding = false; // 착지 후 이동 멈춤 플래그
+        private bool wasGrounded = true; // 이전 프레임 착지 상태
+
         private void Awake()
         {
             // SpriteRenderer가 없으면 추가
@@ -219,7 +225,7 @@ namespace LostSpells.Components
             Key moveRightKey = GetMoveRightKey();
             Key jumpKey = GetJumpKey();
 
-            // 좌우 이동 (새 Input System 사용)
+            // 좌우 이동 (새 Input System 사용 + 음성 명령)
             float horizontal = 0f;
 
             if (Keyboard.current != null)
@@ -241,6 +247,38 @@ namespace LostSpells.Components
                     rb.linearVelocity = velocity;
                 }
             }
+
+            // 착지 감지 (공중에서 땅으로)
+            if (!wasGrounded && isGrounded && stopAfterLanding)
+            {
+                // 점프 후 착지 - 이동 멈춤
+                voiceMovementDirection = 0;
+                stopAfterLanding = false;
+            }
+
+            // 음성 명령 이동 (키보드 입력이 없을 때만 적용)
+            if (horizontal == 0f && voiceMovementDirection != 0)
+            {
+                horizontal = voiceMovementDirection;
+            }
+
+            // 음성 명령 점프
+            if (voiceJumpRequested && isGrounded)
+            {
+                // 이동 중 점프면 착지 후 멈춤 플래그 설정
+                if (voiceMovementDirection != 0)
+                {
+                    stopAfterLanding = true;
+                }
+
+                Vector2 velocity = rb.linearVelocity;
+                velocity.y = jumpForce;
+                rb.linearVelocity = velocity;
+                voiceJumpRequested = false;
+            }
+
+            // 착지 상태 저장 (다음 프레임 비교용)
+            wasGrounded = isGrounded;
 
             // Rigidbody2D로 좌우 이동 (Y축 속도는 유지하여 중력 영향 받도록)
             Vector2 velocity2 = rb.linearVelocity;
@@ -534,7 +572,7 @@ namespace LostSpells.Components
         /// </summary>
         public void ShowVoiceRecognitionParticle()
         {
-            Debug.Log($"[PlayerComponent] ShowVoiceRecognitionParticle 호출됨, particle: {(voiceRecognitionParticle != null ? voiceRecognitionParticle.name : "null")}");
+            // Debug.Log($"[PlayerComponent] ShowVoiceRecognitionParticle 호출됨, particle: {(voiceRecognitionParticle != null ? voiceRecognitionParticle.name : "null")}");
             if (voiceRecognitionParticle != null)
             {
                 // 랜덤 색상 선택 (빨간색, 파란색, 회색)
@@ -548,7 +586,7 @@ namespace LostSpells.Components
                 voiceRecognitionParticle.gameObject.SetActive(true);
                 voiceRecognitionParticle.Clear(true); // 이전 파티클 클리어
                 voiceRecognitionParticle.Play(true);  // 자식 파티클도 함께 재생
-                Debug.Log($"[PlayerComponent] 파티클 재생 시작, isPlaying: {voiceRecognitionParticle.isPlaying}, color: {randomColor}");
+                // Debug.Log($"[PlayerComponent] 파티클 재생 시작, isPlaying: {voiceRecognitionParticle.isPlaying}, color: {randomColor}");
             }
         }
 
@@ -557,12 +595,31 @@ namespace LostSpells.Components
         /// </summary>
         public void HideVoiceRecognitionParticle()
         {
-            Debug.Log($"[PlayerComponent] HideVoiceRecognitionParticle 호출됨");
+            // Debug.Log($"[PlayerComponent] HideVoiceRecognitionParticle 호출됨");
             if (voiceRecognitionParticle != null)
             {
                 voiceRecognitionParticle.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
                 voiceRecognitionParticle.gameObject.SetActive(false);
             }
+        }
+
+        // ========== 음성 명령 이동 ==========
+
+        /// <summary>
+        /// 음성 명령으로 이동 방향 설정
+        /// </summary>
+        /// <param name="direction">-1: 왼쪽, 0: 정지, 1: 오른쪽</param>
+        public void SetVoiceMovement(int direction)
+        {
+            voiceMovementDirection = Mathf.Clamp(direction, -1, 1);
+        }
+
+        /// <summary>
+        /// 음성 명령으로 점프 요청
+        /// </summary>
+        public void VoiceJump()
+        {
+            voiceJumpRequested = true;
         }
 
         // ========== 스킬 시스템 ==========
@@ -1028,7 +1085,7 @@ namespace LostSpells.Components
                 {
                     // 로드된 스프라이트 이름 표시
                     string spriteNames = string.Join(", ", System.Array.ConvertAll(vfxSprites, s => s.name));
-                    Debug.Log($"[PlayerComponent] VFX 스프라이트 로드 성공: {skill.effectPrefabPath}\n  - {vfxSprites.Length}개 프레임: {spriteNames}");
+                    // Debug.Log($"[PlayerComponent] VFX 스프라이트 로드 성공: {skill.effectPrefabPath}\n  - {vfxSprites.Length}개 프레임: {spriteNames}");
                 }
                 else
                 {
@@ -1057,7 +1114,7 @@ namespace LostSpells.Components
                     animator.Initialize(vfxSprites, 12f); // 12 FPS 애니메이션
                 }
 
-                Debug.Log($"[PlayerComponent] VFX 스프라이트 투사체 생성: {skill.skillId}");
+                // Debug.Log($"[PlayerComponent] VFX 스프라이트 투사체 생성: {skill.skillId}");
             }
             else
             {
@@ -1076,7 +1133,7 @@ namespace LostSpells.Components
                 trail.endColor = new Color(skillColor.r, skillColor.g, skillColor.b, 0f);
                 trail.sortingOrder = 100;
 
-                Debug.Log($"[PlayerComponent] 폴백 투사체 생성 (스프라이트 없음): {skill.skillId}");
+                // Debug.Log($"[PlayerComponent] 폴백 투사체 생성 (스프라이트 없음): {skill.skillId}");
             }
 
             // 왼쪽을 향하면 뒤집기
@@ -1106,7 +1163,7 @@ namespace LostSpells.Components
                 skill.pierceCount // 관통 횟수
             );
 
-            Debug.Log($"[PlayerComponent] 투사체 발사: {skill.skillId} at {spawnPosition}, direction: {direction}");
+            // Debug.Log($"[PlayerComponent] 투사체 발사: {skill.skillId} at {spawnPosition}, direction: {direction}");
         }
 
         /// <summary>

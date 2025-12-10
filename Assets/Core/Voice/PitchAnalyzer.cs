@@ -59,7 +59,6 @@ namespace LostSpells.Systems
         {
             if (clip == null)
             {
-                Debug.LogWarning("[PitchAnalyzer] 분석할 클립이 없습니다.");
                 return null;
             }
 
@@ -143,27 +142,7 @@ namespace LostSpells.Systems
             }
             result.DominantCategory = (PitchCategory)maxIndex;
 
-            // 콘솔 출력
-            LogResult(result);
-
             return result;
-        }
-
-        /// <summary>
-        /// 분석 결과를 콘솔에 출력
-        /// </summary>
-        private void LogResult(PitchAnalysisResult result)
-        {
-            if (result.DetectedNotes.Length == 0)
-            {
-                Debug.Log("[PitchAnalyzer] 검출된 음이 없습니다.");
-                return;
-            }
-
-            string notesStr = string.Join(" ", result.DetectedNotes);
-            Debug.Log($"[PitchAnalyzer] Detected notes: {notesStr}");
-            Debug.Log($"[PitchAnalyzer] Category: High({result.HighCount}) Medium({result.MediumCount}) Low({result.LowCount})");
-            Debug.Log($"[PitchAnalyzer] Dominant: {result.DominantCategory}");
         }
 
         /// <summary>

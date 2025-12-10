@@ -96,10 +96,10 @@ namespace LostSpells.Systems
                 }
             }
 
-            if (currentSkillKeywords.Count == 0)
-            {
-                Debug.LogWarning("음성 키워드가 설정된 스킬이 없습니다.");
-            }
+            // if (currentSkillKeywords.Count == 0)
+            // {
+            //     Debug.LogWarning("음성 키워드가 설정된 스킬이 없습니다.");
+            // }
 
             yield break;
         }
@@ -162,7 +162,7 @@ namespace LostSpells.Systems
                 }
                 else
                 {
-                    Debug.LogWarning($"음성 인식 실패: {request.error}");
+                    // Debug.LogWarning($"음성 인식 실패: {request.error}");
                     callback?.Invoke(null);
                 }
             }
@@ -193,7 +193,7 @@ namespace LostSpells.Systems
                 }
                 else
                 {
-                    Debug.LogWarning($"모델 목록 조회 실패: {request.error}");
+                    // Debug.LogWarning($"모델 목록 조회 실패: {request.error}");
                     callback?.Invoke(null);
                 }
             }
@@ -217,7 +217,7 @@ namespace LostSpells.Systems
                 }
                 else
                 {
-                    Debug.LogWarning($"모델 변경 실패: {request.error}");
+                    // Debug.LogWarning($"모델 변경 실패: {request.error}");
                     callback?.Invoke(false);
                 }
             }
@@ -244,7 +244,7 @@ namespace LostSpells.Systems
                 }
                 else
                 {
-                    Debug.LogWarning($"모델 다운로드 실패: {request.error}");
+                    // Debug.LogWarning($"모델 다운로드 실패: {request.error}");
                     callback?.Invoke(false);
                 }
             }
@@ -291,9 +291,9 @@ namespace LostSpells.Systems
                     }
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                Debug.LogWarning($"JSON 파싱 실패: {e.Message}");
+                // JSON 파싱 실패
                 result.status = "error";
             }
 

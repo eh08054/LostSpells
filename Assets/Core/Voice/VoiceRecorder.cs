@@ -43,6 +43,21 @@ namespace LostSpells.Systems
         private AudioClip loopingClip;
         private string microphoneDevice;
 
+        /// <summary>
+        /// 현재 녹음 중인 AudioClip (외부에서 피치 분석 등에 사용)
+        /// </summary>
+        public AudioClip LoopingClip => loopingClip;
+
+        /// <summary>
+        /// 현재 사용 중인 마이크 장치 이름
+        /// </summary>
+        public string MicrophoneDevice => microphoneDevice;
+
+        /// <summary>
+        /// 마이크가 준비되었는지 여부
+        /// </summary>
+        public bool IsMicrophoneReady => isMicrophoneReady;
+
         // 녹음 상태
         private bool isRecording = false;
         private int recordStartPosition = 0;
@@ -232,21 +247,51 @@ namespace LostSpells.Systems
         }
 
         /// <summary>
-        /// 마이크 초기화 및 연속 녹음 시작
+        /// 마이크 초기화 및 연속 녹음 시작 (자동 재시도 포함)
         /// </summary>
         private void InitializeMicrophone()
         {
-            if (Microphone.devices.Length == 0)
+            StartCoroutine(InitializeMicrophoneWithRetry());
+        }
+
+        /// <summary>
+        /// 마이크 초기화 (실패 시 자동 재시도)
+        /// </summary>
+        private IEnumerator InitializeMicrophoneWithRetry()
+        {
+            int maxRetries = 10;
+            float retryInterval = 0.5f;
+
+            for (int attempt = 0; attempt < maxRetries; attempt++)
             {
-                Debug.LogWarning("[VoiceRecorder] 마이크를 찾을 수 없습니다!");
-                return;
+                // 이미 준비됐으면 종료
+                if (isMicrophoneReady)
+                {
+                    yield break;
+                }
+
+                // 마이크 장치 확인
+                if (Microphone.devices.Length == 0)
+                {
+                    yield return new WaitForSecondsRealtime(retryInterval);
+                    continue;
+                }
+
+                int index = Mathf.Clamp(microphoneIndex, 0, Microphone.devices.Length - 1);
+                microphoneDevice = Microphone.devices[index];
+
+                // 마이크 시작 시도
+                yield return StartContinuousRecording();
+
+                // 성공했는지 확인
+                if (isMicrophoneReady)
+                {
+                    yield break;
+                }
+
+                // 실패 시 잠시 대기 후 재시도
+                yield return new WaitForSecondsRealtime(retryInterval);
             }
-
-            int index = Mathf.Clamp(microphoneIndex, 0, Microphone.devices.Length - 1);
-            microphoneDevice = Microphone.devices[index];
-
-            // 마이크를 루프 모드로 시작 (항상 켜둠)
-            StartCoroutine(StartContinuousRecording());
         }
 
         /// <summary>
@@ -257,17 +302,51 @@ namespace LostSpells.Systems
             // 다음 프레임에서 마이크 시작 (초기화 부하 분산)
             yield return null;
 
+            // 마이크 장치 유효성 확인 및 재설정
+            if (Microphone.devices.Length == 0)
+            {
+                yield break;
+            }
+
+            // 마이크 장치 재확인 (옵션에서 돌아올 때 장치가 변경되었을 수 있음)
+            if (string.IsNullOrEmpty(microphoneDevice) || !System.Array.Exists(Microphone.devices, d => d == microphoneDevice))
+            {
+                int index = Mathf.Clamp(microphoneIndex, 0, Microphone.devices.Length - 1);
+                microphoneDevice = Microphone.devices[index];
+            }
+
+            // 이미 녹음 중이면 먼저 정지
+            if (Microphone.IsRecording(microphoneDevice))
+            {
+                Microphone.End(microphoneDevice);
+                yield return null;
+            }
+
             // 루프 모드로 마이크 시작 - 최대 녹음 시간만큼의 순환 버퍼
             loopingClip = Microphone.Start(microphoneDevice, true, maxRecordingLength, sampleRate);
 
-            // 마이크가 실제로 시작될 때까지 대기
+            // 마이크 시작 실패 시 종료
+            if (loopingClip == null)
+            {
+                yield break;
+            }
+
+            // 마이크가 실제로 시작될 때까지 대기 (타임아웃 2초)
+            float timeout = 2f;
+            float elapsed = 0f;
             while (Microphone.GetPosition(microphoneDevice) <= 0)
             {
+                elapsed += Time.unscaledDeltaTime;
+                if (elapsed >= timeout)
+                {
+                    // 타임아웃 - 마이크 정지 후 종료
+                    Microphone.End(microphoneDevice);
+                    yield break;
+                }
                 yield return null;
             }
 
             isMicrophoneReady = true;
-            // Debug.Log("[VoiceRecorder] 마이크 연속 녹음 시작됨");
         }
 
         /// <summary>
@@ -283,7 +362,7 @@ namespace LostSpells.Systems
 
             if (!isMicrophoneReady)
             {
-                Debug.LogWarning("[VoiceRecorder] StartRecording 실패: 마이크가 준비되지 않음");
+                // Debug.LogWarning("[VoiceRecorder] StartRecording 실패: 마이크가 준비되지 않음");
                 return;
             }
 
@@ -305,7 +384,7 @@ namespace LostSpells.Systems
 
             if (!isMicrophoneReady)
             {
-                Debug.LogWarning("[VoiceRecorder] StopRecording 경고: 마이크가 준비되지 않음");
+                // Debug.LogWarning("[VoiceRecorder] StopRecording 경고: 마이크가 준비되지 않음");
             }
 
             isRecording = false;
@@ -323,7 +402,7 @@ namespace LostSpells.Systems
         {
             if (loopingClip == null)
             {
-                Debug.LogError("[VoiceRecorder] loopingClip이 null입니다!");
+                // Debug.LogError("[VoiceRecorder] loopingClip이 null입니다!");
                 return;
             }
 
@@ -333,7 +412,7 @@ namespace LostSpells.Systems
             // 위치 값 유효성 검사 및 보정
             if (totalSamples <= 0 || channels <= 0)
             {
-                Debug.LogError($"[VoiceRecorder] 잘못된 클립 정보: totalSamples={totalSamples}, channels={channels}");
+                // Debug.LogError($"[VoiceRecorder] 잘못된 클립 정보: totalSamples={totalSamples}, channels={channels}");
                 return;
             }
 
@@ -359,14 +438,14 @@ namespace LostSpells.Systems
 
             if (sampleCount <= 0)
             {
-                Debug.LogWarning("[VoiceRecorder] 녹음된 샘플이 없습니다.");
+                // Debug.LogWarning("[VoiceRecorder] 녹음된 샘플이 없습니다.");
                 return;
             }
 
             // 최대 샘플 수 제한 (버퍼 크기를 초과하지 않도록)
             if (sampleCount > totalSamples)
             {
-                Debug.LogWarning($"[VoiceRecorder] 샘플 수가 버퍼 크기를 초과: {sampleCount} > {totalSamples}, 제한 적용");
+                // Debug.LogWarning($"[VoiceRecorder] 샘플 수가 버퍼 크기를 초과: {sampleCount} > {totalSamples}, 제한 적용");
                 sampleCount = totalSamples;
             }
 
@@ -394,7 +473,7 @@ namespace LostSpells.Systems
                     }
                     else
                     {
-                        Debug.LogError($"[VoiceRecorder] 배열 범위 초과: sourceIndex={sourceIndex}, copyLength={copyLength}, allSamples.Length={allSamples.Length}");
+                        // Debug.LogError($"[VoiceRecorder] 배열 범위 초과: sourceIndex={sourceIndex}, copyLength={copyLength}, allSamples.Length={allSamples.Length}");
                         return;
                     }
                 }
@@ -415,7 +494,7 @@ namespace LostSpells.Systems
                     }
                     else
                     {
-                        Debug.LogError($"[VoiceRecorder] 순환 구간 배열 범위 초과");
+                        // Debug.LogError($"[VoiceRecorder] 순환 구간 배열 범위 초과");
                         return;
                     }
                 }
@@ -431,9 +510,9 @@ namespace LostSpells.Systems
 
                 // Debug.Log($"[VoiceRecorder] AudioClip 생성 완료: {recordedClip.samples} samples, {recordedClip.channels} channels, {recordedClip.frequency}Hz");
             }
-            catch (System.Exception e)
+            catch (System.Exception)
             {
-                Debug.LogError($"[VoiceRecorder] ExtractRecordedAudio 예외 발생: {e.Message}");
+                // 예외 무시
             }
         }
 
@@ -609,14 +688,11 @@ namespace LostSpells.Systems
         }
 
         /// <summary>
-        /// 연속 모드 일시정지 (다른 컴포넌트가 마이크 사용 시)
+        /// 마이크 일시정지 (다른 컴포넌트가 마이크 사용 시)
+        /// 모든 모드에서 동작 - 피치 테스트와 음성 인식을 독립적으로 사용하기 위함
         /// </summary>
         public void PauseContinuousMode()
         {
-            if (!enableContinuousMode) return;
-
-            // Debug.Log("[VoiceRecorder] 연속 모드 일시정지");
-
             // 마이크 정지
             if (!string.IsNullOrEmpty(microphoneDevice) && Microphone.IsRecording(microphoneDevice))
             {
@@ -631,14 +707,11 @@ namespace LostSpells.Systems
         }
 
         /// <summary>
-        /// 연속 모드 재개
+        /// 마이크 재개
+        /// 모든 모드에서 동작 - 피치 테스트와 음성 인식을 독립적으로 사용하기 위함
         /// </summary>
         public void ResumeContinuousMode()
         {
-            if (!enableContinuousMode) return;
-
-            // Debug.Log("[VoiceRecorder] 연속 모드 재개");
-
             // 마이크 재시작
             StartCoroutine(StartContinuousRecording());
         }

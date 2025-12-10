@@ -633,7 +633,7 @@ namespace LostSpells.UI
             bool success = playerComponent.CastSkillByData(skill);
             if (success)
             {
-                Debug.Log($"[InGameUI] 스킬 발사: {skill.GetLocalizedName()}");
+                // Debug.Log($"[InGameUI] 스킬 발사: {skill.GetLocalizedName()}");
             }
         }
 
@@ -1093,6 +1093,14 @@ namespace LostSpells.UI
         public bool IsOptionsPopupVisible()
         {
             return optionsPopup != null && optionsPopup.style.display == DisplayStyle.Flex;
+        }
+
+        /// <summary>
+        /// InGameOptionsPanelController 반환 (음성 명령용)
+        /// </summary>
+        public InGameOptionsPanelController GetOptionsPanelController()
+        {
+            return optionsPanelController;
         }
 
         /// <summary>

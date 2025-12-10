@@ -458,7 +458,6 @@ namespace LostSpells.UI
         {
             if (saveData == null)
             {
-                Debug.LogError("SaveData is null. Cannot load key bindings.");
                 return;
             }
 
@@ -637,14 +636,108 @@ namespace LostSpells.UI
             LoadSettings();
 
             // 초기 패널 설정 (Audio 패널 표시)
+            // 서버 체크와 피치 모니터링은 ShowPanel에서 게임 탭일 때만 시작됨
             ShowPanel(audioPanel);
-
-            // 서버 상태 체크 시작 (1초마다 반복)
-            serverStatusCheckCoroutine = coroutineRunner.StartCoroutine(CheckServerStatusLoop());
-
-            // 실시간 피치 모니터링 시작
-            StartRealtimePitchMonitoring();
         }
+
+        /// <summary>
+        /// 패널이 숨겨질 때 호출 (서버 체크 루프 등 정리)
+        /// </summary>
+        public void OnPanelHidden()
+        {
+            // 게임 탭 기능 정리 (서버 체크, 피치 모니터링, 테스트 모드)
+            StopGameTabFeatures();
+        }
+
+        #region Voice Command Tab/Section Control
+
+        /// <summary>
+        /// 오디오 탭 열기 (음성 명령용)
+        /// </summary>
+        public void ShowAudioTab()
+        {
+            ShowPanel(audioPanel);
+        }
+
+        /// <summary>
+        /// 그래픽 탭 열기 (음성 명령용)
+        /// </summary>
+        public void ShowGraphicsTab()
+        {
+            ShowPanel(graphicsPanel);
+        }
+
+        /// <summary>
+        /// 언어 탭 열기 (음성 명령용)
+        /// </summary>
+        public void ShowLanguageTab()
+        {
+            ShowPanel(languagePanel);
+        }
+
+        /// <summary>
+        /// 게임 탭 열기 (음성 명령용)
+        /// </summary>
+        public void ShowGameTab()
+        {
+            ShowPanel(gamePanel);
+        }
+
+        /// <summary>
+        /// 현재 활성 탭 이름 반환
+        /// </summary>
+        public string GetCurrentTabName()
+        {
+            if (currentPanel == audioPanel) return "Audio";
+            if (currentPanel == graphicsPanel) return "Graphics";
+            if (currentPanel == languagePanel) return "Language";
+            if (currentPanel == gamePanel) return "Game";
+            return "Unknown";
+        }
+
+        /// <summary>
+        /// 음성인식 섹션 펼치기 (음성 명령용)
+        /// </summary>
+        public void ExpandVoiceRecognitionSection()
+        {
+            // 게임 탭이 아니면 먼저 게임 탭으로 전환
+            if (currentPanel != gamePanel)
+            {
+                ShowPanel(gamePanel);
+            }
+            voiceRecognitionSection?.Expand();
+        }
+
+        /// <summary>
+        /// 음성인식 섹션 접기 (음성 명령용)
+        /// </summary>
+        public void CollapseVoiceRecognitionSection()
+        {
+            voiceRecognitionSection?.Collapse();
+        }
+
+        /// <summary>
+        /// 키 설정 섹션 펼치기 (음성 명령용)
+        /// </summary>
+        public void ExpandKeyBindingSection()
+        {
+            // 게임 탭이 아니면 먼저 게임 탭으로 전환
+            if (currentPanel != gamePanel)
+            {
+                ShowPanel(gamePanel);
+            }
+            keyBindingSection?.Expand();
+        }
+
+        /// <summary>
+        /// 키 설정 섹션 접기 (음성 명령용)
+        /// </summary>
+        public void CollapseKeyBindingSection()
+        {
+            keyBindingSection?.Collapse();
+        }
+
+        #endregion
 
         /// <summary>
         /// 특정 패널만 표시하고 나머지는 숨김
@@ -652,6 +745,12 @@ namespace LostSpells.UI
         private void ShowPanel(VisualElement panelToShow)
         {
             if (panelToShow == null) return;
+
+            // 이전 패널이 게임 탭이었으면 서버 체크와 피치 모니터링 중지
+            if (currentPanel == gamePanel && panelToShow != gamePanel)
+            {
+                StopGameTabFeatures();
+            }
 
             // 모든 카테고리 버튼에서 selected 클래스 제거
             audioButton?.RemoveFromClassList("selected");
@@ -677,10 +776,52 @@ namespace LostSpells.UI
             else if (panelToShow == languagePanel)
                 languageButton?.AddToClassList("selected");
             else if (panelToShow == gamePanel)
+            {
                 gameButton?.AddToClassList("selected");
+                // 게임 탭일 때만 서버 체크와 피치 모니터링 시작
+                StartGameTabFeatures();
+            }
 
             // 패널 제목 업데이트
             UpdateCurrentPanelTitle();
+        }
+
+        /// <summary>
+        /// 게임 탭 기능 시작 (서버 체크, 피치 모니터링)
+        /// </summary>
+        private void StartGameTabFeatures()
+        {
+            // 서버 상태 체크 시작 (3초마다)
+            if (serverStatusCheckCoroutine != null && coroutineRunner != null)
+            {
+                coroutineRunner.StopCoroutine(serverStatusCheckCoroutine);
+            }
+            serverStatusCheckCoroutine = coroutineRunner.StartCoroutine(CheckServerStatusLoop());
+
+            // 실시간 피치 모니터링 시작
+            StartRealtimePitchMonitoring();
+        }
+
+        /// <summary>
+        /// 게임 탭 기능 중지 (서버 체크, 피치 모니터링)
+        /// </summary>
+        private void StopGameTabFeatures()
+        {
+            // 서버 상태 체크 중지
+            if (serverStatusCheckCoroutine != null && coroutineRunner != null)
+            {
+                coroutineRunner.StopCoroutine(serverStatusCheckCoroutine);
+                serverStatusCheckCoroutine = null;
+            }
+
+            // 실시간 피치 모니터링 중지
+            StopRealtimePitchMonitoring();
+
+            // 테스트 모드 종료
+            if (isTestMode)
+            {
+                StopTestMode();
+            }
         }
 
         /// <summary>
@@ -1113,8 +1254,6 @@ namespace LostSpells.UI
                 {
                     pitchAnalyzer.SetBoundaryFrequencies(currentMinFrequency, currentMaxFrequency);
                 }
-
-                Debug.Log($"[OptionsPanelController] Pitch boundaries set: {currentMinFrequency:F2} Hz ~ {currentMaxFrequency:F2} Hz");
             }
 
             isDraggingMinMarker = false;
@@ -1142,6 +1281,7 @@ namespace LostSpells.UI
 
         /// <summary>
         /// 실시간 피치 모니터링 시작 (패널 열릴 때 자동 시작)
+        /// VoiceRecorder의 마이크를 공유하여 음성인식과 동시에 동작
         /// </summary>
         private void StartRealtimePitchMonitoring()
         {
@@ -1149,10 +1289,24 @@ namespace LostSpells.UI
 
             isRealtimeMonitoring = true;
 
-            // VoiceRecorder의 연속 모드 일시정지 (마이크 충돌 방지)
-            if (VoiceRecognitionManager.Instance != null && VoiceRecognitionManager.Instance.voiceRecorder != null)
+            // VoiceRecorder의 마이크를 공유 (일시정지하지 않음!)
+            // 이렇게 하면 피치 모니터링과 음성인식이 동시에 동작
+            var voiceRecorder = VoiceRecognitionManager.Instance?.voiceRecorder;
+            if (voiceRecorder == null || !voiceRecorder.IsMicrophoneReady)
             {
-                VoiceRecognitionManager.Instance.voiceRecorder.PauseContinuousMode();
+                // VoiceRecorder가 없거나 준비되지 않은 경우 대기
+                coroutineRunner.StartCoroutine(WaitForVoiceRecorderAndStart());
+                return;
+            }
+
+            // VoiceRecorder의 마이크 정보 사용
+            micDevice = voiceRecorder.MicrophoneDevice;
+            realtimeClip = voiceRecorder.LoopingClip;
+
+            if (realtimeClip == null)
+            {
+                isRealtimeMonitoring = false;
+                return;
             }
 
             // PitchAnalyzer 찾기 또는 생성
@@ -1164,16 +1318,6 @@ namespace LostSpells.UI
             }
             pitchAnalyzer.SetBoundaryFrequencies(currentMinFrequency, currentMaxFrequency);
 
-            // 마이크 장치 설정
-            micDevice = null;
-            if (saveData != null && !string.IsNullOrEmpty(saveData.microphoneDeviceId) && saveData.microphoneDeviceId != "Default")
-            {
-                micDevice = saveData.microphoneDeviceId;
-            }
-
-            // 마이크 시작 (실시간 모니터링용)
-            realtimeClip = Microphone.Start(micDevice, true, 10, 44100); // 10초 순환 버퍼
-
             // 실시간 인디케이터 표시
             if (pitchRealtimeIndicator != null)
             {
@@ -1182,8 +1326,50 @@ namespace LostSpells.UI
 
             // 실시간 피치 모니터링 코루틴 시작
             coroutineRunner.StartCoroutine(RealtimePitchCoroutine());
+        }
 
-            Debug.Log("[OptionsPanelController] 실시간 피치 모니터링 시작");
+        /// <summary>
+        /// VoiceRecorder가 준비될 때까지 대기 후 피치 모니터링 시작
+        /// </summary>
+        private IEnumerator WaitForVoiceRecorderAndStart()
+        {
+            float timeout = 3f;
+            float elapsed = 0f;
+
+            while (elapsed < timeout)
+            {
+                var voiceRecorder = VoiceRecognitionManager.Instance?.voiceRecorder;
+                if (voiceRecorder != null && voiceRecorder.IsMicrophoneReady && voiceRecorder.LoopingClip != null)
+                {
+                    micDevice = voiceRecorder.MicrophoneDevice;
+                    realtimeClip = voiceRecorder.LoopingClip;
+
+                    // PitchAnalyzer 설정
+                    pitchAnalyzer = Object.FindObjectOfType<PitchAnalyzer>();
+                    if (pitchAnalyzer == null)
+                    {
+                        var go = new GameObject("PitchAnalyzer_Options");
+                        pitchAnalyzer = go.AddComponent<PitchAnalyzer>();
+                    }
+                    pitchAnalyzer.SetBoundaryFrequencies(currentMinFrequency, currentMaxFrequency);
+
+                    // 실시간 인디케이터 표시
+                    if (pitchRealtimeIndicator != null)
+                    {
+                        pitchRealtimeIndicator.style.display = DisplayStyle.Flex;
+                    }
+
+                    // 실시간 피치 모니터링 코루틴 시작
+                    coroutineRunner.StartCoroutine(RealtimePitchCoroutine());
+                    yield break;
+                }
+
+                elapsed += Time.unscaledDeltaTime;
+                yield return null;
+            }
+
+            // 타임아웃 - 피치 모니터링 비활성화
+            isRealtimeMonitoring = false;
         }
 
         /// <summary>
@@ -1195,8 +1381,8 @@ namespace LostSpells.UI
 
             isRealtimeMonitoring = false;
 
-            // 마이크 정지
-            Microphone.End(micDevice);
+            // VoiceRecorder의 마이크를 공유하므로 여기서 마이크를 정지하지 않음!
+            // Microphone.End(micDevice); <- 삭제
 
             // 실시간 인디케이터 숨기기
             if (pitchRealtimeIndicator != null)
@@ -1204,13 +1390,8 @@ namespace LostSpells.UI
                 pitchRealtimeIndicator.style.display = DisplayStyle.None;
             }
 
-            // VoiceRecorder의 연속 모드 재개
-            if (VoiceRecognitionManager.Instance != null && VoiceRecognitionManager.Instance.voiceRecorder != null)
-            {
-                VoiceRecognitionManager.Instance.voiceRecorder.ResumeContinuousMode();
-            }
-
-            Debug.Log("[OptionsPanelController] 실시간 피치 모니터링 종료");
+            // VoiceRecorder의 마이크를 공유하므로 재개 호출 불필요
+            // VoiceRecorder는 계속 동작 중
         }
 
         /// <summary>
@@ -1255,8 +1436,9 @@ namespace LostSpells.UI
                 }
                 rms /= samples.Length;
 
-                // 피치 검출
-                float frequency = pitchAnalyzer.DetectPitchRealtime(samples, 44100);
+                // 피치 검출 (VoiceRecorder의 샘플레이트 사용)
+                int sampleRate = realtimeClip.frequency;
+                float frequency = pitchAnalyzer.DetectPitchRealtime(samples, sampleRate);
 
                 // 실시간 인디케이터 위치 업데이트 (빨간색 선) - 항상 동작
                 if (frequency > 0)
@@ -1321,8 +1503,6 @@ namespace LostSpells.UI
                     silenceTimer = 0f;
                     recordingBuffer.Clear();
                     voiceStartPosition = currentPosition;
-
-                    Debug.Log($"[OptionsPanelController] 음성 감지 시작 (RMS: {rms:F4})");
                 }
             }
             else
@@ -1363,16 +1543,12 @@ namespace LostSpells.UI
                 isKeyRecording = true;
                 recordingBuffer.Clear();
                 voiceStartPosition = currentPosition;
-
-                Debug.Log("[OptionsPanelController] 키 트리거 녹음 시작");
             }
             else if (Keyboard.current[voiceRecordKey].wasReleasedThisFrame && isKeyRecording)
             {
                 // 녹음 종료
                 isKeyRecording = false;
                 ProcessRecordedVoice(voiceStartPosition, currentPosition);
-
-                Debug.Log("[OptionsPanelController] 키 트리거 녹음 종료");
             }
         }
 
@@ -1413,11 +1589,11 @@ namespace LostSpells.UI
                 sampleCount = (totalSamples - startPosition) + endPosition;
             }
 
-            float recordingLength = (float)sampleCount / 44100;
+            int clipSampleRate = realtimeClip.frequency;
+            float recordingLength = (float)sampleCount / clipSampleRate;
 
             if (recordingLength < MIN_RECORDING_LENGTH)
             {
-                Debug.Log($"[OptionsPanelController] 녹음이 너무 짧음: {recordingLength:F2}초");
                 return;
             }
 
@@ -1437,8 +1613,8 @@ namespace LostSpells.UI
                 System.Array.Copy(allSamples, 0, recordedSamples, firstPart, endPosition);
             }
 
-            // AudioClip 생성
-            AudioClip recordedClip = AudioClip.Create("RecordedVoice", sampleCount, 1, 44100, false);
+            // AudioClip 생성 (VoiceRecorder와 동일한 샘플레이트 사용)
+            AudioClip recordedClip = AudioClip.Create("RecordedVoice", sampleCount, 1, clipSampleRate, false);
             recordedClip.SetData(recordedSamples, 0);
 
             // 분석 및 서버 전송
@@ -1462,7 +1638,6 @@ namespace LostSpells.UI
             if (pitchResult != null)
             {
                 isInMediumRange = (pitchResult.DominantCategory == PitchCategory.Medium);
-                Debug.Log($"[OptionsPanelController] 피치 분석 결과: {pitchResult.DominantCategory} (중간음 범위: {isInMediumRange})");
             }
 
             // 서버로 음성 인식 요청
@@ -1534,8 +1709,6 @@ namespace LostSpells.UI
                 pitchTestResultLabel.text = "";
             }
 
-            var voiceInputMode = VoiceRecognitionManager.Instance?.GetVoiceInputMode() ?? VoiceInputMode.KeyTriggered;
-            Debug.Log($"[OptionsPanelController] 테스트 모드 시작 (모드: {voiceInputMode})");
         }
 
         /// <summary>
@@ -1562,8 +1735,6 @@ namespace LostSpells.UI
             {
                 pitchTestResultLabel.text = "";
             }
-
-            Debug.Log("[OptionsPanelController] 테스트 모드 종료");
         }
 
         /// <summary>
@@ -1626,7 +1797,6 @@ namespace LostSpells.UI
             // 인식 실패 시 표시하지 않음
             if (string.IsNullOrEmpty(recognizedText))
             {
-                Debug.Log("[OptionsPanelController] 인식 실패 - 결과 표시 안함");
                 return;
             }
 
@@ -1641,8 +1811,6 @@ namespace LostSpells.UI
 
             // 결과 표시 시간 기록 (5초간 유지)
             resultDisplayTime = Time.realtimeSinceStartup;
-
-            Debug.Log($"[OptionsPanelController] 테스트 결과: {recognizedText}({categoryStr})");
         }
 
         /// <summary>
@@ -1705,14 +1873,14 @@ namespace LostSpells.UI
         #region Server Status
 
         /// <summary>
-        /// 1초마다 서버 상태를 체크하는 루프 코루틴
+        /// 3초마다 서버 상태를 체크하는 루프 코루틴
         /// </summary>
         private IEnumerator CheckServerStatusLoop()
         {
             while (true)
             {
                 yield return CheckServerStatus();
-                yield return new WaitForSecondsRealtime(1f);
+                yield return new WaitForSecondsRealtime(3f);
             }
         }
 

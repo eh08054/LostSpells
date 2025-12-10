@@ -337,6 +337,94 @@ namespace LostSpells.UI
             ShowPanel(audioPanel);
         }
 
+        #region Voice Command Tab/Section Control
+
+        /// <summary>
+        /// 오디오 탭 열기 (음성 명령용)
+        /// </summary>
+        public void ShowAudioTab()
+        {
+            ShowPanel(audioPanel);
+        }
+
+        /// <summary>
+        /// 그래픽 탭 열기 (음성 명령용)
+        /// </summary>
+        public void ShowGraphicsTab()
+        {
+            ShowPanel(graphicsPanel);
+        }
+
+        /// <summary>
+        /// 언어 탭 열기 (음성 명령용)
+        /// </summary>
+        public void ShowLanguageTab()
+        {
+            ShowPanel(languagePanel);
+        }
+
+        /// <summary>
+        /// 게임 탭 열기 (음성 명령용)
+        /// </summary>
+        public void ShowGameTab()
+        {
+            ShowPanel(gamePanel);
+        }
+
+        /// <summary>
+        /// 현재 활성 탭 이름 반환
+        /// </summary>
+        public string GetCurrentTabName()
+        {
+            if (currentPanel == audioPanel) return "Audio";
+            if (currentPanel == graphicsPanel) return "Graphics";
+            if (currentPanel == languagePanel) return "Language";
+            if (currentPanel == gamePanel) return "Game";
+            return "Unknown";
+        }
+
+        /// <summary>
+        /// 음성인식 섹션 펼치기 (음성 명령용)
+        /// </summary>
+        public void ExpandVoiceRecognitionSection()
+        {
+            if (currentPanel != gamePanel)
+            {
+                ShowPanel(gamePanel);
+            }
+            voiceRecognitionSection?.Expand();
+        }
+
+        /// <summary>
+        /// 음성인식 섹션 접기 (음성 명령용)
+        /// </summary>
+        public void CollapseVoiceRecognitionSection()
+        {
+            voiceRecognitionSection?.Collapse();
+        }
+
+        /// <summary>
+        /// 키 설정 섹션 펼치기 (음성 명령용)
+        /// </summary>
+        public void ExpandKeyBindingSection()
+        {
+            if (currentPanel != gamePanel)
+            {
+                ShowPanel(gamePanel);
+            }
+            keyBindingSection?.Expand();
+        }
+
+        /// <summary>
+        /// 키 설정 섹션 접기 (음성 명령용)
+        /// </summary>
+        public void CollapseKeyBindingSection()
+        {
+            keyBindingSection?.Collapse();
+        }
+
+        #endregion
+
         private void ShowPanel(VisualElement panelToShow)
         {
             if (panelToShow == null) return;
