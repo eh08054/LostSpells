@@ -42,6 +42,9 @@ namespace LostSpells.Components
         [SerializeField] private Transform healthBarBackground;
         [SerializeField] private Transform healthBarFill;
 
+        [Header("Voice Recognition")]
+        [SerializeField] private ParticleSystem voiceRecognitionParticle; // 음성인식 중 표시할 파티클
+
         private Rigidbody2D rb;
         private Collider2D playerCollider;
         private bool isGrounded = false; // 땅에 닿아있는지 여부
@@ -96,6 +99,19 @@ namespace LostSpells.Components
 
             // 스킬 데이터 초기화 (Awake에서 초기화하여 다른 컴포넌트가 Start에서 접근 가능하도록)
             InitializeDefaultSkills();
+
+            // 음성인식 파티클 자동 찾기 (Inspector에서 설정하지 않은 경우)
+            if (voiceRecognitionParticle == null)
+            {
+                voiceRecognitionParticle = GetComponentInChildren<ParticleSystem>(true);
+            }
+
+            // 음성인식 파티클 즉시 비활성화 (Awake에서 처리하여 시작 시 보이지 않도록)
+            if (voiceRecognitionParticle != null)
+            {
+                voiceRecognitionParticle.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                voiceRecognitionParticle.gameObject.SetActive(false);
+            }
         }
 
         private void Start()
@@ -509,6 +525,44 @@ namespace LostSpells.Components
         public string GetPlayerName()
         {
             return playerName;
+        }
+
+        // ========== 음성인식 파티클 ==========
+
+        /// <summary>
+        /// 음성인식 파티클 표시 (음성 녹음 시작 시 호출)
+        /// </summary>
+        public void ShowVoiceRecognitionParticle()
+        {
+            Debug.Log($"[PlayerComponent] ShowVoiceRecognitionParticle 호출됨, particle: {(voiceRecognitionParticle != null ? voiceRecognitionParticle.name : "null")}");
+            if (voiceRecognitionParticle != null)
+            {
+                // 랜덤 색상 선택 (빨간색, 파란색, 회색)
+                Color[] colors = new Color[] { Color.red, Color.blue, Color.gray };
+                Color randomColor = colors[Random.Range(0, colors.Length)];
+
+                // 파티클 시스템의 시작 색상 설정
+                var main = voiceRecognitionParticle.main;
+                main.startColor = randomColor;
+
+                voiceRecognitionParticle.gameObject.SetActive(true);
+                voiceRecognitionParticle.Clear(true); // 이전 파티클 클리어
+                voiceRecognitionParticle.Play(true);  // 자식 파티클도 함께 재생
+                Debug.Log($"[PlayerComponent] 파티클 재생 시작, isPlaying: {voiceRecognitionParticle.isPlaying}, color: {randomColor}");
+            }
+        }
+
+        /// <summary>
+        /// 음성인식 파티클 숨김 (음성인식 완료 시 호출)
+        /// </summary>
+        public void HideVoiceRecognitionParticle()
+        {
+            Debug.Log($"[PlayerComponent] HideVoiceRecognitionParticle 호출됨");
+            if (voiceRecognitionParticle != null)
+            {
+                voiceRecognitionParticle.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                voiceRecognitionParticle.gameObject.SetActive(false);
+            }
         }
 
         // ========== 스킬 시스템 ==========

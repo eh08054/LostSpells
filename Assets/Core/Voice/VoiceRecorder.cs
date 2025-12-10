@@ -76,7 +76,7 @@ namespace LostSpells.Systems
                 // 음성 대기 중 - RMS가 임계값을 넘으면 녹음 시작
                 if (currentRMS > voiceThreshold)
                 {
-                    Debug.Log($"[VoiceRecorder] 음성 감지됨 (RMS: {currentRMS:F4})");
+                    // Debug.Log($"[VoiceRecorder] 음성 감지됨 (RMS: {currentRMS:F4})");
                     isVoiceDetected = true;
                     silenceTimer = 0f;
                     recordingTimer = 0f;
@@ -110,7 +110,7 @@ namespace LostSpells.Systems
                     {
                         // 녹음 종료
                         float recordingLength = GetCurrentRecordingLength();
-                        Debug.Log($"[VoiceRecorder] 무음 감지, 녹음 종료 (길이: {recordingLength:F2}초)");
+                        // Debug.Log($"[VoiceRecorder] 무음 감지, 녹음 종료 (길이: {recordingLength:F2}초)");
 
                         if (recordingLength >= minRecordingLength)
                         {
@@ -118,7 +118,7 @@ namespace LostSpells.Systems
                         }
                         else
                         {
-                            Debug.Log($"[VoiceRecorder] 녹음이 너무 짧음 ({recordingLength:F2}초 < {minRecordingLength}초), 무시");
+                            // Debug.Log($"[VoiceRecorder] 녹음이 너무 짧음 ({recordingLength:F2}초 < {minRecordingLength}초), 무시");
                             // 리셋
                             isRecording = false;
                             isVoiceDetected = false;
@@ -277,7 +277,7 @@ namespace LostSpells.Systems
         {
             if (isRecording)
             {
-                Debug.Log("[VoiceRecorder] StartRecording 무시: 이미 녹음 중");
+                // Debug.Log("[VoiceRecorder] StartRecording 무시: 이미 녹음 중");
                 return;
             }
 
@@ -289,7 +289,7 @@ namespace LostSpells.Systems
 
             isRecording = true;
             recordStartPosition = Microphone.GetPosition(microphoneDevice);
-            Debug.Log($"[VoiceRecorder] 녹음 시작됨 (position: {recordStartPosition})");
+            // Debug.Log($"[VoiceRecorder] 녹음 시작됨 (position: {recordStartPosition})");
         }
 
         /// <summary>
@@ -299,7 +299,7 @@ namespace LostSpells.Systems
         {
             if (!isRecording)
             {
-                Debug.Log("[VoiceRecorder] StopRecording 무시: 녹음 중이 아님");
+                // Debug.Log("[VoiceRecorder] StopRecording 무시: 녹음 중이 아님");
                 return;
             }
 
@@ -310,7 +310,7 @@ namespace LostSpells.Systems
 
             isRecording = false;
             recordEndPosition = Microphone.GetPosition(microphoneDevice);
-            Debug.Log($"[VoiceRecorder] 녹음 중지됨 (start: {recordStartPosition}, end: {recordEndPosition})");
+            // Debug.Log($"[VoiceRecorder] 녹음 중지됨 (start: {recordStartPosition}, end: {recordEndPosition})");
 
             // 녹음된 구간 추출
             ExtractRecordedAudio();
@@ -330,18 +330,31 @@ namespace LostSpells.Systems
             int totalSamples = loopingClip.samples;
             int channels = loopingClip.channels;
 
-            // Debug.Log($"[VoiceRecorder] ExtractRecordedAudio: start={recordStartPosition}, end={recordEndPosition}, totalSamples={totalSamples}, channels={channels}");
+            // 위치 값 유효성 검사 및 보정
+            if (totalSamples <= 0 || channels <= 0)
+            {
+                Debug.LogError($"[VoiceRecorder] 잘못된 클립 정보: totalSamples={totalSamples}, channels={channels}");
+                return;
+            }
+
+            // 위치를 유효한 범위로 보정
+            int startPos = recordStartPosition % totalSamples;
+            int endPos = recordEndPosition % totalSamples;
+            if (startPos < 0) startPos += totalSamples;
+            if (endPos < 0) endPos += totalSamples;
+
+            // Debug.Log($"[VoiceRecorder] ExtractRecordedAudio: start={startPos}, end={endPos}, totalSamples={totalSamples}, channels={channels}");
 
             // 샘플 수 계산 (순환 버퍼 고려)
             int sampleCount;
-            if (recordEndPosition >= recordStartPosition)
+            if (endPos >= startPos)
             {
-                sampleCount = recordEndPosition - recordStartPosition;
+                sampleCount = endPos - startPos;
             }
             else
             {
                 // 버퍼가 한 바퀴 돌았을 경우
-                sampleCount = (totalSamples - recordStartPosition) + recordEndPosition;
+                sampleCount = (totalSamples - startPos) + endPos;
             }
 
             if (sampleCount <= 0)
@@ -350,38 +363,78 @@ namespace LostSpells.Systems
                 return;
             }
 
+            // 최대 샘플 수 제한 (버퍼 크기를 초과하지 않도록)
+            if (sampleCount > totalSamples)
+            {
+                Debug.LogWarning($"[VoiceRecorder] 샘플 수가 버퍼 크기를 초과: {sampleCount} > {totalSamples}, 제한 적용");
+                sampleCount = totalSamples;
+            }
+
             // Debug.Log($"[VoiceRecorder] 추출할 샘플 수: {sampleCount} ({(float)sampleCount / sampleRate:F2}초)");
 
-            // 전체 버퍼 데이터 가져오기
-            float[] allSamples = new float[totalSamples * channels];
-            loopingClip.GetData(allSamples, 0);
-
-            // 녹음 구간 추출
-            float[] recordedSamples = new float[sampleCount * channels];
-
-            if (recordEndPosition >= recordStartPosition)
+            try
             {
-                // 연속 구간
-                System.Array.Copy(allSamples, recordStartPosition * channels, recordedSamples, 0, sampleCount * channels);
+                // 전체 버퍼 데이터 가져오기
+                float[] allSamples = new float[totalSamples * channels];
+                loopingClip.GetData(allSamples, 0);
+
+                // 녹음 구간 추출
+                float[] recordedSamples = new float[sampleCount * channels];
+
+                if (endPos >= startPos)
+                {
+                    // 연속 구간
+                    int copyLength = sampleCount * channels;
+                    int sourceIndex = startPos * channels;
+
+                    // 범위 검사
+                    if (sourceIndex + copyLength <= allSamples.Length && copyLength <= recordedSamples.Length)
+                    {
+                        System.Array.Copy(allSamples, sourceIndex, recordedSamples, 0, copyLength);
+                    }
+                    else
+                    {
+                        Debug.LogError($"[VoiceRecorder] 배열 범위 초과: sourceIndex={sourceIndex}, copyLength={copyLength}, allSamples.Length={allSamples.Length}");
+                        return;
+                    }
+                }
+                else
+                {
+                    // 순환된 구간 (끝 + 시작)
+                    int firstPart = totalSamples - startPos;
+                    int firstCopyLength = firstPart * channels;
+                    int secondCopyLength = endPos * channels;
+
+                    // 범위 검사
+                    if (startPos * channels + firstCopyLength <= allSamples.Length &&
+                        firstCopyLength + secondCopyLength <= recordedSamples.Length &&
+                        secondCopyLength <= allSamples.Length)
+                    {
+                        System.Array.Copy(allSamples, startPos * channels, recordedSamples, 0, firstCopyLength);
+                        System.Array.Copy(allSamples, 0, recordedSamples, firstCopyLength, secondCopyLength);
+                    }
+                    else
+                    {
+                        Debug.LogError($"[VoiceRecorder] 순환 구간 배열 범위 초과");
+                        return;
+                    }
+                }
+
+                // 새 AudioClip 생성
+                if (recordedClip != null)
+                {
+                    Destroy(recordedClip);
+                }
+
+                recordedClip = AudioClip.Create("RecordedAudio", sampleCount, channels, sampleRate, false);
+                recordedClip.SetData(recordedSamples, 0);
+
+                // Debug.Log($"[VoiceRecorder] AudioClip 생성 완료: {recordedClip.samples} samples, {recordedClip.channels} channels, {recordedClip.frequency}Hz");
             }
-            else
+            catch (System.Exception e)
             {
-                // 순환된 구간 (끝 + 시작)
-                int firstPart = totalSamples - recordStartPosition;
-                System.Array.Copy(allSamples, recordStartPosition * channels, recordedSamples, 0, firstPart * channels);
-                System.Array.Copy(allSamples, 0, recordedSamples, firstPart * channels, recordEndPosition * channels);
+                Debug.LogError($"[VoiceRecorder] ExtractRecordedAudio 예외 발생: {e.Message}");
             }
-
-            // 새 AudioClip 생성
-            if (recordedClip != null)
-            {
-                Destroy(recordedClip);
-            }
-
-            recordedClip = AudioClip.Create("RecordedAudio", sampleCount, channels, sampleRate, false);
-            recordedClip.SetData(recordedSamples, 0);
-
-            // Debug.Log($"[VoiceRecorder] AudioClip 생성 완료: {recordedClip.samples} samples, {recordedClip.channels} channels, {recordedClip.frequency}Hz");
         }
 
         /// <summary>
@@ -540,7 +593,7 @@ namespace LostSpells.Systems
         /// </summary>
         public void ResetRecordingState()
         {
-            Debug.Log("[VoiceRecorder] 녹음 상태 리셋");
+            // Debug.Log("[VoiceRecorder] 녹음 상태 리셋");
 
             isRecording = false;
             isVoiceDetected = false;
@@ -550,7 +603,7 @@ namespace LostSpells.Systems
             // 마이크가 준비되지 않았으면 재시작
             if (!isMicrophoneReady && Microphone.devices.Length > 0)
             {
-                Debug.Log("[VoiceRecorder] 마이크 재시작 시도");
+                // Debug.Log("[VoiceRecorder] 마이크 재시작 시도");
                 StartCoroutine(StartContinuousRecording());
             }
         }
@@ -562,7 +615,7 @@ namespace LostSpells.Systems
         {
             if (!enableContinuousMode) return;
 
-            Debug.Log("[VoiceRecorder] 연속 모드 일시정지");
+            // Debug.Log("[VoiceRecorder] 연속 모드 일시정지");
 
             // 마이크 정지
             if (!string.IsNullOrEmpty(microphoneDevice) && Microphone.IsRecording(microphoneDevice))
@@ -584,7 +637,7 @@ namespace LostSpells.Systems
         {
             if (!enableContinuousMode) return;
 
-            Debug.Log("[VoiceRecorder] 연속 모드 재개");
+            // Debug.Log("[VoiceRecorder] 연속 모드 재개");
 
             // 마이크 재시작
             StartCoroutine(StartContinuousRecording());

@@ -181,7 +181,7 @@ namespace LostSpells.Components
                 }
             }
 
-            Debug.Log($"[EnemyComponent] {enemyName}: hasSpeedParameter = {hasSpeedParameter}, hasWalkParameter = {hasWalkParameter}");
+            // Debug.Log($"[EnemyComponent] {enemyName}: hasSpeedParameter = {hasSpeedParameter}, hasWalkParameter = {hasWalkParameter}");
         }
 
         private void FixedUpdate()

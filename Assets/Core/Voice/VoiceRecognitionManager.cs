@@ -294,13 +294,13 @@ namespace LostSpells.Systems
                     // 음성 녹음 키를 누르면 녹음 시작
                     if (Keyboard.current[voiceRecordKey].wasPressedThisFrame)
                     {
-                        Debug.Log($"[VoiceRecognition] 음성 녹음 키 눌림 (TimeScale: {Time.timeScale})");
+                        // Debug.Log($"[VoiceRecognition] 음성 녹음 키 눌림 (TimeScale: {Time.timeScale})");
                         StartVoiceRecording();
                     }
                     // 음성 녹음 키를 떼면 녹음 중지
                     else if (Keyboard.current[voiceRecordKey].wasReleasedThisFrame)
                     {
-                        Debug.Log($"[VoiceRecognition] 음성 녹음 키 뗌 (TimeScale: {Time.timeScale})");
+                        // Debug.Log($"[VoiceRecognition] 음성 녹음 키 뗌 (TimeScale: {Time.timeScale})");
                         StopVoiceRecording();
                     }
                 }
@@ -376,17 +376,17 @@ namespace LostSpells.Systems
         /// </summary>
         private void StartVoiceRecording()
         {
-            Debug.Log($"[VoiceRecognition] StartVoiceRecording 호출됨 (isRecording: {isRecording})");
+            // Debug.Log($"[VoiceRecognition] StartVoiceRecording 호출됨 (isRecording: {isRecording})");
 
             if (isRecording)
             {
-                Debug.Log("[VoiceRecognition] StartVoiceRecording 무시: 이미 녹음 중");
+                // Debug.Log("[VoiceRecognition] StartVoiceRecording 무시: 이미 녹음 중");
                 return;
             }
 
             isRecording = true;
             recordingStartTime = Time.unscaledTime; // 일시정지 중에도 동작하도록
-            Debug.Log($"[VoiceRecognition] 녹음 시작 시간: {recordingStartTime}");
+            // Debug.Log($"[VoiceRecognition] 녹음 시작 시간: {recordingStartTime}");
 
             // 새로운 인식 시작 시 이전 정확도 초기화
             if (inGameUI != null)
@@ -395,6 +395,17 @@ namespace LostSpells.Systems
             }
 
             voiceRecorder.StartRecording();
+
+            // 음성인식 파티클 표시
+            Debug.Log($"[VoiceRecognition] 파티클 표시 시도, playerComponent: {(playerComponent != null ? playerComponent.name : "null")}");
+            if (playerComponent != null)
+            {
+                playerComponent.ShowVoiceRecognitionParticle();
+            }
+            else
+            {
+                Debug.LogWarning("[VoiceRecognition] playerComponent가 null입니다! 파티클을 표시할 수 없습니다.");
+            }
 
             string recordingText = LocalizationManager.Instance.GetText("voice_recording");
             UpdateVoiceRecognitionDisplay(recordingText);
@@ -415,6 +426,13 @@ namespace LostSpells.Systems
             {
                 isRecording = false;
                 voiceRecorder.StopRecording();
+
+                // 녹음 시간 부족: 파티클 숨김
+                if (playerComponent != null)
+                {
+                    playerComponent.HideVoiceRecognitionParticle();
+                }
+
                 string tooShortText = LocalizationManager.Instance.GetText("voice_too_short");
                 UpdateVoiceRecognitionDisplay(tooShortText);
                 StartCoroutine(ClearVoiceRecognitionDisplayAfterDelay(1f));
@@ -442,6 +460,12 @@ namespace LostSpells.Systems
 
             if (audioData == null)
             {
+                // 오디오 데이터 없음: 파티클 숨김
+                if (playerComponent != null)
+                {
+                    playerComponent.HideVoiceRecognitionParticle();
+                }
+
                 string failedText = LocalizationManager.Instance.GetText("voice_failed");
                 UpdateVoiceRecognitionDisplay(failedText);
                 yield return new WaitForSecondsRealtime(2f); // 일시정지 중에도 동작
@@ -464,6 +488,12 @@ namespace LostSpells.Systems
         {
             if (result == null)
             {
+                // 실패: 파티클 숨김
+                if (playerComponent != null)
+                {
+                    playerComponent.HideVoiceRecognitionParticle();
+                }
+
                 // 실패: "서버 연결 실패" 표시
                 Debug.LogWarning("[VoiceRecognition] 서버 응답 null - 서버 연결 실패");
                 UpdateVoiceRecognitionDisplay("서버 연결 실패");
@@ -472,7 +502,7 @@ namespace LostSpells.Systems
             }
 
             string recognizedText = result.recognized_text;
-            Debug.Log($"[VoiceRecognition] 서버 응답: text='{recognizedText}', best_match.skill='{result.best_match?.skill}', score={result.best_match?.score}");
+            // Debug.Log($"[VoiceRecognition] 서버 응답: text='{recognizedText}', best_match.skill='{result.best_match?.skill}', score={result.best_match?.score}");
 
             // 스킬이 1개뿐이면 무조건 그 스킬 선택
             if (activeSkills != null && activeSkills.Count == 1)
@@ -522,6 +552,12 @@ namespace LostSpells.Systems
             }
             else
             {
+                // 매칭 실패: 파티클 숨김
+                if (playerComponent != null)
+                {
+                    playerComponent.HideVoiceRecognitionParticle();
+                }
+
                 // 매칭 실패: 정확도를 0%로 유지 (ClearSkillAccuracy는 StartVoiceRecording에서 이미 호출됨)
                 // 인식 실패 메시지 표시
                 if (string.IsNullOrEmpty(recognizedText))
@@ -648,6 +684,12 @@ namespace LostSpells.Systems
         {
             // Debug.Log($"[VoiceRecognition] ExecuteSkill 호출됨: {skillName}");
 
+            // 음성인식 파티클 숨김 (스킬 발동 전)
+            if (playerComponent != null)
+            {
+                playerComponent.HideVoiceRecognitionParticle();
+            }
+
             // 시스템 명령 처리 (SYSTEM:OpenSettings 형식)
             if (skillName.StartsWith("SYSTEM:"))
             {
@@ -717,23 +759,23 @@ namespace LostSpells.Systems
         /// </summary>
         private void ExecuteSystemCommand(string command)
         {
-            Debug.Log($"[VoiceRecognition] 시스템 명령 실행 시도: {command}");
+            // Debug.Log($"[VoiceRecognition] 시스템 명령 실행 시도: {command}");
 
             // 현재 게임 컨텍스트 확인
             GameContext currentContext = GetCurrentGameContext();
-            Debug.Log($"[VoiceRecognition] 현재 컨텍스트: {currentContext}");
+            // Debug.Log($"[VoiceRecognition] 현재 컨텍스트: {currentContext}");
 
             // 컨텍스트에서 허용되지 않는 명령인지 확인
             if (!IsCommandAllowedInContext(command, currentContext))
             {
                 string hint = GetContextHintMessage(command, currentContext);
-                Debug.LogWarning($"[VoiceRecognition] 현재 컨텍스트({currentContext})에서 '{command}' 명령 불가: {hint}");
+                // Debug.LogWarning($"[VoiceRecognition] 현재 컨텍스트({currentContext})에서 '{command}' 명령 불가: {hint}");
                 UpdateVoiceRecognitionDisplay(hint);
                 StartCoroutine(ClearVoiceRecognitionDisplayAfterDelay(3f));
                 return;
             }
 
-            Debug.Log($"[VoiceRecognition] 명령 실행 허용됨: {command}");
+            // Debug.Log($"[VoiceRecognition] 명령 실행 허용됨: {command}");
 
             switch (command)
             {
@@ -969,22 +1011,22 @@ namespace LostSpells.Systems
         /// </summary>
         private void NavigateMenuPanel(string panelName)
         {
-            Debug.Log($"[VoiceRecognition] NavigateMenuPanel 호출됨: {panelName}");
+            // Debug.Log($"[VoiceRecognition] NavigateMenuPanel 호출됨: {panelName}");
 
             // 현재 씬 확인
             var currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
-            Debug.Log($"[VoiceRecognition] 현재 씬: {currentScene}");
+            // Debug.Log($"[VoiceRecognition] 현재 씬: {currentScene}");
 
             if (currentScene != "Menu")
             {
-                Debug.LogWarning($"[VoiceRecognition] Menu 씬이 아닙니다. 현재: {currentScene}");
+                // Debug.LogWarning($"[VoiceRecognition] Menu 씬이 아닙니다. 현재: {currentScene}");
                 return;
             }
 
             var menuManager = FindFirstObjectByType<LostSpells.UI.MenuManager>();
             if (menuManager != null)
             {
-                Debug.Log($"[VoiceRecognition] MenuManager 찾음, 패널 전환 시도: {panelName}");
+                // Debug.Log($"[VoiceRecognition] MenuManager 찾음, 패널 전환 시도: {panelName}");
                 switch (panelName)
                 {
                     case "GameModeSelection":
@@ -1000,7 +1042,7 @@ namespace LostSpells.Systems
                         menuManager.ShowPanel(LostSpells.UI.MenuManager.MenuPanel.MainMenu);
                         break;
                 }
-                Debug.Log($"[VoiceRecognition] 메뉴 패널 이동 완료: {panelName}");
+                // Debug.Log($"[VoiceRecognition] 메뉴 패널 이동 완료: {panelName}");
             }
             else
             {
@@ -1142,7 +1184,7 @@ namespace LostSpells.Systems
             if (isRecording)
             {
                 isRecording = false;
-                Debug.Log("[VoiceRecognition] 모드 변경으로 녹음 상태 리셋");
+                // Debug.Log("[VoiceRecognition] 모드 변경으로 녹음 상태 리셋");
             }
 
             inputMode = mode;
@@ -1154,7 +1196,7 @@ namespace LostSpells.Systems
                 voiceRecorder.enableContinuousMode = (mode == VoiceInputMode.Continuous);
             }
 
-            Debug.Log($"[VoiceRecognition] 음성 입력 모드 변경: {mode}");
+            // Debug.Log($"[VoiceRecognition] 음성 입력 모드 변경: {mode}");
         }
 
         /// <summary>
@@ -1181,11 +1223,17 @@ namespace LostSpells.Systems
                 inGameUI.ClearSkillAccuracy();
             }
 
+            // 음성인식 파티클 표시
+            if (playerComponent != null)
+            {
+                playerComponent.ShowVoiceRecognitionParticle();
+            }
+
             string listeningText = LocalizationManager.Instance.GetText("voice_listening");
             if (string.IsNullOrEmpty(listeningText)) listeningText = "듣는 중...";
             UpdateVoiceRecognitionDisplay(listeningText);
 
-            Debug.Log("[VoiceRecognition] 연속 모드: 음성 감지됨");
+            // Debug.Log("[VoiceRecognition] 연속 모드: 음성 감지됨");
         }
 
         /// <summary>
@@ -1201,7 +1249,7 @@ namespace LostSpells.Systems
             if (string.IsNullOrEmpty(processingText)) processingText = "처리 중...";
             UpdateVoiceRecognitionDisplay(processingText);
 
-            Debug.Log("[VoiceRecognition] 연속 모드: 녹음 완료, 서버로 전송");
+            // Debug.Log("[VoiceRecognition] 연속 모드: 녹음 완료, 서버로 전송");
 
             // 피치 분석 (인게임에서만 활성화)
             var currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
