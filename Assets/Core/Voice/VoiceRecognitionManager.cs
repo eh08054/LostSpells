@@ -1138,11 +1138,19 @@ namespace LostSpells.Systems
         /// </summary>
         public void SetVoiceInputMode(VoiceInputMode mode)
         {
+            // 현재 녹음 중이면 상태 리셋
+            if (isRecording)
+            {
+                isRecording = false;
+                Debug.Log("[VoiceRecognition] 모드 변경으로 녹음 상태 리셋");
+            }
+
             inputMode = mode;
 
-            // VoiceRecorder의 연속 모드 설정
+            // VoiceRecorder의 연속 모드 설정 및 상태 리셋
             if (voiceRecorder != null)
             {
+                voiceRecorder.ResetRecordingState();
                 voiceRecorder.enableContinuousMode = (mode == VoiceInputMode.Continuous);
             }
 

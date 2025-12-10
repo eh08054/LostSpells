@@ -123,6 +123,7 @@ namespace LostSpells.UI
         // 서버 체크
         private const string SERVER_URL = "http://localhost:8000";
         private MonoBehaviour coroutineRunner;
+        private Coroutine serverStatusCheckCoroutine;
 
         // 키 바인딩 상태
         private bool isWaitingForKey = false;
@@ -638,8 +639,8 @@ namespace LostSpells.UI
             // 초기 패널 설정 (Audio 패널 표시)
             ShowPanel(audioPanel);
 
-            // 서버 상태 체크 시작
-            coroutineRunner.StartCoroutine(CheckServerStatus());
+            // 서버 상태 체크 시작 (1초마다 반복)
+            serverStatusCheckCoroutine = coroutineRunner.StartCoroutine(CheckServerStatusLoop());
 
             // 실시간 피치 모니터링 시작
             StartRealtimePitchMonitoring();
@@ -1703,6 +1704,21 @@ namespace LostSpells.UI
 
         #region Server Status
 
+        /// <summary>
+        /// 1초마다 서버 상태를 체크하는 루프 코루틴
+        /// </summary>
+        private IEnumerator CheckServerStatusLoop()
+        {
+            while (true)
+            {
+                yield return CheckServerStatus();
+                yield return new WaitForSecondsRealtime(1f);
+            }
+        }
+
+        /// <summary>
+        /// 서버 연결 상태를 한 번 체크
+        /// </summary>
         private IEnumerator CheckServerStatus()
         {
             using (UnityWebRequest request = UnityWebRequest.Get($"{SERVER_URL}/"))
@@ -1735,6 +1751,13 @@ namespace LostSpells.UI
             if (isTestMode)
             {
                 StopTestMode();
+            }
+
+            // 서버 상태 체크 코루틴 중지
+            if (serverStatusCheckCoroutine != null && coroutineRunner != null)
+            {
+                coroutineRunner.StopCoroutine(serverStatusCheckCoroutine);
+                serverStatusCheckCoroutine = null;
             }
 
             // 실시간 피치 모니터링 중지

@@ -37,6 +37,7 @@ namespace LostSpells.Components
         private Rigidbody2D rb;
         private float lastAttackTime = 0f; // 마지막 공격 시간
         private bool hasSpeedParameter = false; // Animator에 Speed 파라미터 존재 여부
+        private bool hasWalkParameter = false; // Animator에 Walk 파라미터 존재 여부
 
         private void Awake()
         {
@@ -134,18 +135,53 @@ namespace LostSpells.Components
             // 체력바 초기화
             UpdateHealthBar();
 
-            // Animator Speed 파라미터 존재 확인
-            if (animator != null && animator.runtimeAnimatorController != null)
+            // Animator 자동 찾기 (설정되지 않은 경우)
+            if (animator == null)
             {
-                foreach (var param in animator.parameters)
+                animator = GetComponent<Animator>();
+                if (animator == null)
                 {
-                    if (param.name == "Speed" && param.type == AnimatorControllerParameterType.Float)
-                    {
-                        hasSpeedParameter = true;
-                        break;
-                    }
+                    animator = GetComponentInChildren<Animator>();
                 }
             }
+
+            // Animator Speed 파라미터 존재 확인
+            CheckAnimatorParameters();
+        }
+
+        /// <summary>
+        /// Animator 파라미터 확인
+        /// </summary>
+        private void CheckAnimatorParameters()
+        {
+            hasSpeedParameter = false;
+            hasWalkParameter = false;
+
+            if (animator == null)
+            {
+                Debug.LogWarning($"[EnemyComponent] {enemyName}: Animator가 없습니다!");
+                return;
+            }
+
+            if (animator.runtimeAnimatorController == null)
+            {
+                Debug.LogWarning($"[EnemyComponent] {enemyName}: Animator Controller가 설정되지 않았습니다!");
+                return;
+            }
+
+            foreach (var param in animator.parameters)
+            {
+                if (param.name == "Speed" && param.type == AnimatorControllerParameterType.Float)
+                {
+                    hasSpeedParameter = true;
+                }
+                if (param.name == "Walk" && param.type == AnimatorControllerParameterType.Bool)
+                {
+                    hasWalkParameter = true;
+                }
+            }
+
+            Debug.Log($"[EnemyComponent] {enemyName}: hasSpeedParameter = {hasSpeedParameter}, hasWalkParameter = {hasWalkParameter}");
         }
 
         private void FixedUpdate()
@@ -248,11 +284,18 @@ namespace LostSpells.Components
                 spriteRenderer.flipX = velocity.x < 0;
             }
 
-            // 애니메이터 Speed 파라미터 업데이트
+            // 애니메이터 파라미터 업데이트
+            float speed = Mathf.Abs(velocity.x);
+            bool isWalking = speed > 0.1f;
+
             if (hasSpeedParameter)
             {
-                float speed = Mathf.Abs(velocity.x);
                 animator.SetFloat("Speed", speed);
+            }
+
+            if (hasWalkParameter)
+            {
+                animator.SetBool("Walk", isWalking);
             }
         }
 
@@ -376,7 +419,7 @@ namespace LostSpells.Components
         /// </summary>
         private void Die()
         {
-            // Death 애니메이션 재생
+            // Death 애니메이션 재생 (Animator Controller의 Die 파라미터 사용)
             if (animator != null && animator.runtimeAnimatorController != null)
             {
                 animator.SetBool("Die", true);

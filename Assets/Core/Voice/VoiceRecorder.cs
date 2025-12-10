@@ -140,12 +140,17 @@ namespace LostSpells.Systems
         /// </summary>
         private float CalculateCurrentRMS()
         {
+            // 마이크 및 클립 유효성 철저히 검사
             if (loopingClip == null || !isMicrophoneReady) return 0f;
-
-            // 마이크가 실제로 녹음 중인지 확인
+            if (string.IsNullOrEmpty(microphoneDevice)) return 0f;
             if (!Microphone.IsRecording(microphoneDevice)) return 0f;
 
+            // 클립이 유효한지 확인
+            if (loopingClip.samples <= 0 || loopingClip.channels <= 0) return 0f;
+
             int currentPosition = Microphone.GetPosition(microphoneDevice);
+            if (currentPosition < 0) return 0f;
+
             int samplesToAnalyze = 1024; // ~64ms at 16kHz
 
             if (currentPosition < samplesToAnalyze) return 0f;
@@ -153,6 +158,9 @@ namespace LostSpells.Systems
             // 오프셋이 유효한 범위인지 확인
             int offset = currentPosition - samplesToAnalyze;
             if (offset < 0) return 0f;
+
+            // 오프셋 + 분석할 샘플 수가 클립 범위 내인지 확인
+            if (offset + samplesToAnalyze > loopingClip.samples) return 0f;
 
             try
             {
@@ -525,6 +533,26 @@ namespace LostSpells.Systems
             // Debug.Log($"[VoiceRecorder] TrimSilence: {totalSamples} -> {trimmedFrames} frames");
 
             return trimmedClip;
+        }
+
+        /// <summary>
+        /// 녹음 상태 리셋 (모드 변경 시 호출)
+        /// </summary>
+        public void ResetRecordingState()
+        {
+            Debug.Log("[VoiceRecorder] 녹음 상태 리셋");
+
+            isRecording = false;
+            isVoiceDetected = false;
+            silenceTimer = 0f;
+            recordingTimer = 0f;
+
+            // 마이크가 준비되지 않았으면 재시작
+            if (!isMicrophoneReady && Microphone.devices.Length > 0)
+            {
+                Debug.Log("[VoiceRecorder] 마이크 재시작 시도");
+                StartCoroutine(StartContinuousRecording());
+            }
         }
 
         /// <summary>
