@@ -17,7 +17,7 @@ namespace LostSpells.Components
         [SerializeField] private string enemyName = "Enemy";
         [SerializeField] private int maxHealth = 50;
         [SerializeField] private int currentHealth;
-        [SerializeField] private float moveSpeed = 2f;
+        [SerializeField] private float moveSpeed = 1f;
         [SerializeField] private float stoppingDistance = 1.5f; // 플레이어와 유지할 거리
         [SerializeField] private int attackDamage = 10; // 공격 데미지
         [SerializeField] private float attackCooldown = 1f; // 공격 쿨다운 (초)
@@ -38,6 +38,10 @@ namespace LostSpells.Components
         private float lastAttackTime = 0f; // 마지막 공격 시간
         private bool hasSpeedParameter = false; // Animator에 Speed 파라미터 존재 여부
         private bool hasWalkParameter = false; // Animator에 Walk 파라미터 존재 여부
+        private bool hasIdleParameter = false; // Animator에 Idle 파라미터 존재 여부
+        private bool hasRunParameter = false; // Animator에 Run 파라미터 존재 여부
+        private bool hasAttackParameter = false; // Animator에 Attack 파라미터 존재 여부
+        private bool hasActionParameter = false; // Animator에 Action 파라미터 존재 여부
 
         private void Awake()
         {
@@ -93,10 +97,7 @@ namespace LostSpells.Components
             {
                 player = playerObj.transform;
             }
-            else
-            {
-                Debug.LogWarning($"{enemyName}: 플레이어를 찾을 수 없습니다! Player Tag를 확인하세요.");
-            }
+            // 플레이어를 찾지 못하면 왼쪽으로 이동
 
             // 이름 설정
             if (nameText != null)
@@ -156,16 +157,13 @@ namespace LostSpells.Components
         {
             hasSpeedParameter = false;
             hasWalkParameter = false;
+            hasIdleParameter = false;
+            hasRunParameter = false;
+            hasAttackParameter = false;
+            hasActionParameter = false;
 
-            if (animator == null)
+            if (animator == null || animator.runtimeAnimatorController == null)
             {
-                Debug.LogWarning($"[EnemyComponent] {enemyName}: Animator가 없습니다!");
-                return;
-            }
-
-            if (animator.runtimeAnimatorController == null)
-            {
-                Debug.LogWarning($"[EnemyComponent] {enemyName}: Animator Controller가 설정되지 않았습니다!");
                 return;
             }
 
@@ -179,9 +177,23 @@ namespace LostSpells.Components
                 {
                     hasWalkParameter = true;
                 }
+                if (param.name == "Idle" && param.type == AnimatorControllerParameterType.Bool)
+                {
+                    hasIdleParameter = true;
+                }
+                if (param.name == "Run" && param.type == AnimatorControllerParameterType.Bool)
+                {
+                    hasRunParameter = true;
+                }
+                if (param.name == "Attack" && param.type == AnimatorControllerParameterType.Trigger)
+                {
+                    hasAttackParameter = true;
+                }
+                if (param.name == "Action" && param.type == AnimatorControllerParameterType.Bool)
+                {
+                    hasActionParameter = true;
+                }
             }
-
-            // Debug.Log($"[EnemyComponent] {enemyName}: hasSpeedParameter = {hasSpeedParameter}, hasWalkParameter = {hasWalkParameter}");
         }
 
         private void FixedUpdate()
@@ -238,10 +250,10 @@ namespace LostSpells.Components
                     }
 
                     // 현재 움직이고 있는지 확인
-                    bool isMoving = Mathf.Abs(rb.linearVelocity.x) > 0.1f;
+                    bool isCurrentlyMoving = Mathf.Abs(rb.linearVelocity.x) > 0.1f;
 
                     // 움직이고 있으면 stopDistance로, 멈춰있으면 resumeDistance로 판단
-                    float thresholdDistance = isMoving ? stopDistance : resumeDistance;
+                    float thresholdDistance = isCurrentlyMoving ? stopDistance : resumeDistance;
 
                     // 가장 가까운 적까지의 거리가 임계값보다 작으면 멈춤
                     if (closestEnemyDistance < thresholdDistance)
@@ -286,17 +298,33 @@ namespace LostSpells.Components
 
             // 애니메이터 파라미터 업데이트
             float speed = Mathf.Abs(velocity.x);
-            bool isWalking = speed > 0.1f;
+            bool isMoving = speed > 0.1f;
 
             if (hasSpeedParameter)
             {
                 animator.SetFloat("Speed", speed);
             }
 
+            // Idle: 멈춰있을 때
+            if (hasIdleParameter)
+            {
+                animator.SetBool("Idle", !isMoving);
+            }
+
+            // Run만 사용 (Walk와 Run 둘 다 true면 상태가 계속 전환되어 애니메이션이 안됨)
+            if (hasRunParameter)
+            {
+                animator.SetBool("Run", isMoving);
+            }
+
+            // Walk는 false로 유지 (Run만 사용)
             if (hasWalkParameter)
             {
-                animator.SetBool("Walk", isWalking);
+                animator.SetBool("Walk", false);
             }
+
+            // Action 파라미터는 SoloState가 관리 (Attack 시작: true, 끝: false)
+
         }
 
         /// <summary>
@@ -327,11 +355,7 @@ namespace LostSpells.Components
                     spriteRenderer.sprite = sprite;
                 }
             }
-            else
-            {
-                // sprite가 null이면 경고 - 프리팹 기본값이 사용됨
-                Debug.LogWarning($"[EnemyComponent] {name}: No sprite provided! Using prefab default.");
-            }
+            // sprite가 null이면 프리팹 기본값이 사용됨
 
             if (nameText != null)
             {
@@ -366,13 +390,19 @@ namespace LostSpells.Components
                 PlayerComponent playerComponent = player.GetComponent<PlayerComponent>();
                 if (playerComponent != null)
                 {
-                    // 넉백 방향 계산 (플레이어 - 적)
-                    Vector2 knockbackDirection = (player.position - transform.position).normalized;
-                    // Y축 성분을 추가해서 위로 띄움
-                    knockbackDirection = new Vector2(knockbackDirection.x, 1f).normalized;
+                    // 공격 애니메이션이 있을 때만 데미지 적용
+                    if (hasAttackParameter)
+                    {
+                        animator.SetTrigger("Attack");
 
-                    playerComponent.TakeDamage(attackDamage, knockbackDirection);
-                    lastAttackTime = Time.time;
+                        // 넉백 방향 계산 (플레이어 - 적)
+                        Vector2 knockbackDirection = (player.position - transform.position).normalized;
+                        // Y축 성분을 추가해서 위로 띄움
+                        knockbackDirection = new Vector2(knockbackDirection.x, 1f).normalized;
+
+                        playerComponent.TakeDamage(attackDamage, knockbackDirection);
+                        lastAttackTime = Time.time;
+                    }
                 }
             }
         }

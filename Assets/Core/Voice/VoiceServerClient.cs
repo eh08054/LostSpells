@@ -81,25 +81,25 @@ namespace LostSpells.Systems
         /// <summary>
         /// 스킬 목록을 서버에 설정
         /// 새 서버는 /recognize 요청 시 스킬을 함께 전달하므로, 여기서는 키워드만 저장
+        /// 주의: 항상 DataManager의 기본 스킬 이름(미사일, 방패 등)을 사용
         /// </summary>
         public IEnumerator SetSkills(List<SkillData> skillList)
         {
-            // 스킬에서 음성 키워드만 추출 (현재 언어에 맞게)
+            // DataManager에서 기본 스킬 목록 가져오기 (UI의 속성별 스킬이 아닌 원본 스킬)
+            var baseSkills = DataManager.Instance.GetAllSkillData();
+
             currentSkillKeywords.Clear();
-            foreach (var skill in skillList)
+            foreach (var skill in baseSkills)
             {
-                // 현재 언어에 맞는 스킬 이름을 키워드로 사용
-                string keyword = GetVoiceKeywordForCurrentLanguage(skill);
-                if (!string.IsNullOrEmpty(keyword))
+                // voiceKeyword 사용 (기본 스킬 이름: 미사일, 방패, 베기 등)
+                string keyword = !string.IsNullOrEmpty(skill.voiceKeyword) ? skill.voiceKeyword : skill.skillName;
+                if (!string.IsNullOrEmpty(keyword) && !currentSkillKeywords.Contains(keyword))
                 {
                     currentSkillKeywords.Add(keyword);
                 }
             }
 
-            // if (currentSkillKeywords.Count == 0)
-            // {
-            //     Debug.LogWarning("음성 키워드가 설정된 스킬이 없습니다.");
-            // }
+            Debug.Log($"[VoiceServerClient] SetSkills: {currentSkillKeywords.Count}개 스킬 설정됨 - {string.Join(", ", currentSkillKeywords)}");
 
             yield break;
         }
@@ -142,10 +142,13 @@ namespace LostSpells.Systems
         /// </summary>
         public IEnumerator RecognizeSkill(byte[] audioData, string context, string contextKeywords, Action<RecognitionResult> callback)
         {
+            string skillsString = string.Join(",", currentSkillKeywords);
+            Debug.Log($"[VoiceServerClient] RecognizeSkill 전송: skills={skillsString}, context={context}");
+
             WWWForm form = new WWWForm();
             form.AddBinaryData("audio", audioData, "recording.wav", "audio/wav");
             form.AddField("language", currentLanguage);
-            form.AddField("skills", string.Join(",", currentSkillKeywords)); // 스킬 키워드 전달
+            form.AddField("skills", skillsString); // 스킬 키워드 전달
             form.AddField("context", context); // 현재 게임 컨텍스트
             form.AddField("context_keywords", contextKeywords); // 컨텍스트별 키워드
 

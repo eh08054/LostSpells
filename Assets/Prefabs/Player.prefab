@@ -1153,6 +1153,7 @@ MonoBehaviour:
   nameText: {fileID: 3788504399655995073}
   healthBarBackground: {fileID: 469563423178325268}
   healthBarFill: {fileID: 7702448157041398181}
+  voiceRecognitionParticle: {fileID: 0}
 --- !u!95 &1234567890123456789
 Animator:
   serializedVersion: 7

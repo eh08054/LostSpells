@@ -1,7 +1,18 @@
 using System;
+using System.Collections.Generic;
 
 namespace LostSpells.Data
 {
+    /// <summary>
+    /// 속성별 스킬 변형 데이터
+    /// </summary>
+    [Serializable]
+    public class ElementVariant
+    {
+        public string name;
+        public string effectPrefab;
+    }
+
     /// <summary>
     /// 스킬 데이터 (JSON 직렬화 가능)
     /// </summary>
@@ -33,8 +44,18 @@ namespace LostSpells.Data
         public string iconPath;
         public string effectPrefabPath;
 
-        // 음성 인식용 키워드 (예: "파이어볼", "힐", "텔레포트")
+        // 음성 인식용 키워드 (예: "미사일", "방패", "베기")
         public string voiceKeyword;
+
+        // 음성 인식용 별칭 (예: ["구슬", "매직 미사일"])
+        public string[] voiceAliases;
+
+        // 일반 스킬 여부 (피치 기반 속성 적용 대상)
+        public bool isGenericSkill = false;
+
+        // 속성별 스킬 변형 (일반 스킬인 경우)
+        // 키: "Fire", "Ice", "Electric", "Earth", "Holy", "Void"
+        public Dictionary<string, ElementVariant> elementVariants;
 
         /// <summary>
         /// 현재 언어에 맞는 스킬 이름 반환

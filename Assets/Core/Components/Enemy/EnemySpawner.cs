@@ -89,14 +89,14 @@ namespace LostSpells.Systems
                         {
                             enemyPrefabName = "BlueDragonEnemy",
                             spawnSide = SpawnSide.Right,
-                            count = 2,
+                            count = 1,
                             spawnInterval = 1.5f
                         },
                         new EnemySpawnInfo
                         {
                             enemyPrefabName = "GreenDragonEnemy",
                             spawnSide = SpawnSide.Left,
-                            count = 2,
+                            count = 1,
                             spawnInterval = 1.5f
                         }
                     }
@@ -110,15 +110,15 @@ namespace LostSpells.Systems
                         new EnemySpawnInfo
                         {
                             enemyPrefabName = "BlueRexEnemy",
-                            spawnSide = SpawnSide.Both,
-                            count = 3,
+                            spawnSide = SpawnSide.Right,
+                            count = 1,
                             spawnInterval = 1f
                         },
                         new EnemySpawnInfo
                         {
                             enemyPrefabName = "BlueDragonEnemy",
-                            spawnSide = SpawnSide.Right,
-                            count = 2,
+                            spawnSide = SpawnSide.Left,
+                            count = 1,
                             spawnInterval = 1f
                         }
                     }
@@ -133,14 +133,14 @@ namespace LostSpells.Systems
                         {
                             enemyPrefabName = "GreenDragonEnemy",
                             spawnSide = SpawnSide.Right,
-                            count = 3,
+                            count = 1,
                             spawnInterval = 1f
                         },
                         new EnemySpawnInfo
                         {
                             enemyPrefabName = "BlueRexEnemy",
                             spawnSide = SpawnSide.Left,
-                            count = 2,
+                            count = 1,
                             spawnInterval = 1.5f
                         }
                     }

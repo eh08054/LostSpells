@@ -87,6 +87,10 @@ namespace LostSpells.UI
         // 음성인식 결과 표시
         private Label voiceRecognitionText;
 
+        // 음성인식 상태 패널 (화면 하단)
+        private VisualElement voiceStatusPanel;
+        private Label voiceStatusText;
+
         // 플레이어 상태창
         private Label playerLevelLabel;
         private VisualElement expBar;
@@ -99,20 +103,22 @@ namespace LostSpells.UI
         private VisualElement leftSidebar;
         private VisualElement rightSidebar;
 
-        // 스킬창 관련
+        // 스킬창 관련 (피치 기반)
         private VisualElement skillPanel;
         private Button allSkillButton;
-        private Button attackSkillButton;
-        private Button defenseSkillButton;
+        private Button lowPitchSkillButton;
+        private Button midPitchSkillButton;
+        private Button highPitchSkillButton;
         private ScrollView allSkillScrollView;
-        private ScrollView attackSkillScrollView;
-        private ScrollView defenseSkillScrollView;
+        private ScrollView lowPitchSkillScrollView;
+        private ScrollView midPitchSkillScrollView;
+        private ScrollView highPitchSkillScrollView;
         private VisualElement allSkillList;
-        private VisualElement attackSkillList;
-        private VisualElement defenseSkillList;
+        private VisualElement lowPitchSkillList;
+        private VisualElement midPitchSkillList;
+        private VisualElement highPitchSkillList;
 
-        private SkillType? currentSkillCategory = null; // null이면 All 탭
-        private Dictionary<string, float> skillAccuracyMap = new Dictionary<string, float>();
+        private PitchCategory? currentPitchCategory = null; // null이면 All 탭
 
         private PlayerSaveData saveData;
         private EnemySpawner enemySpawner;
@@ -238,6 +244,10 @@ namespace LostSpells.UI
             // 음성인식 결과 표시
             voiceRecognitionText = root.Q<Label>("VoiceRecognitionText");
 
+            // 음성인식 상태 패널 (화면 하단)
+            voiceStatusPanel = root.Q<VisualElement>("VoiceStatusPanel");
+            voiceStatusText = root.Q<Label>("VoiceStatusText");
+
             // 플레이어 상태창 UI 요소
             playerLevelLabel = root.Q<Label>("PlayerLevel");
             expBar = root.Q<VisualElement>("ExpBar");
@@ -250,21 +260,24 @@ namespace LostSpells.UI
             leftSidebar = root.Q<VisualElement>("LeftSidebar");
             rightSidebar = root.Q<VisualElement>("RightSidebar");
 
-            // 스킬창 UI 요소
+            // 스킬창 UI 요소 (피치 기반)
             skillPanel = root.Q<VisualElement>("SkillPanel");
             allSkillButton = root.Q<Button>("AllSkillButton");
-            attackSkillButton = root.Q<Button>("AttackSkillButton");
-            defenseSkillButton = root.Q<Button>("DefenseSkillButton");
+            lowPitchSkillButton = root.Q<Button>("LowPitchSkillButton");
+            midPitchSkillButton = root.Q<Button>("MidPitchSkillButton");
+            highPitchSkillButton = root.Q<Button>("HighPitchSkillButton");
 
             // ScrollView 요소 (표시/숨김 제어용)
             allSkillScrollView = root.Q<ScrollView>("AllSkillScrollView");
-            attackSkillScrollView = root.Q<ScrollView>("AttackSkillScrollView");
-            defenseSkillScrollView = root.Q<ScrollView>("DefenseSkillScrollView");
+            lowPitchSkillScrollView = root.Q<ScrollView>("LowPitchSkillScrollView");
+            midPitchSkillScrollView = root.Q<ScrollView>("MidPitchSkillScrollView");
+            highPitchSkillScrollView = root.Q<ScrollView>("HighPitchSkillScrollView");
 
             // 내부 스킬 리스트 (스킬 아이템 추가용)
             allSkillList = root.Q<VisualElement>("AllSkillList");
-            attackSkillList = root.Q<VisualElement>("AttackSkillList");
-            defenseSkillList = root.Q<VisualElement>("DefenseSkillList");
+            lowPitchSkillList = root.Q<VisualElement>("LowPitchSkillList");
+            midPitchSkillList = root.Q<VisualElement>("MidPitchSkillList");
+            highPitchSkillList = root.Q<VisualElement>("HighPitchSkillList");
 
             // 스킬창 UI 요소들의 키보드 네비게이션 비활성화 (A/D 키가 캐릭터 이동만 담당하도록)
             DisableKeyboardNavigation();
@@ -323,10 +336,10 @@ namespace LostSpells.UI
             optionsPopup = root.Q<VisualElement>("OptionsPopup");
             optionsCloseButton = root.Q<Button>("OptionsCloseButton");
 
-            // 옵션 패널 컨트롤러 초기화
+            // 옵션 패널 컨트롤러 초기화 (coroutineRunner로 this 전달)
             if (optionsPopup != null)
             {
-                optionsPanelController = new InGameOptionsPanelController(root, optionsPopup);
+                optionsPanelController = new InGameOptionsPanelController(root, optionsPopup, this);
             }
 
             // 이벤트 등록
@@ -386,15 +399,18 @@ namespace LostSpells.UI
             if (optionsCloseButton != null)
                 optionsCloseButton.clicked += OnOptionsCloseButtonClicked;
 
-            // 스킬 카테고리 버튼 이벤트
+            // 스킬 카테고리 버튼 이벤트 (피치 기반)
             if (allSkillButton != null)
-                allSkillButton.clicked += () => SwitchSkillCategory(null); // null = All
+                allSkillButton.clicked += () => SwitchPitchCategory(null); // null = All
 
-            if (attackSkillButton != null)
-                attackSkillButton.clicked += () => SwitchSkillCategory(SkillType.Attack);
+            if (lowPitchSkillButton != null)
+                lowPitchSkillButton.clicked += () => SwitchPitchCategory(PitchCategory.Low);
 
-            if (defenseSkillButton != null)
-                defenseSkillButton.clicked += () => SwitchSkillCategory(SkillType.Defense);
+            if (midPitchSkillButton != null)
+                midPitchSkillButton.clicked += () => SwitchPitchCategory(PitchCategory.Medium);
+
+            if (highPitchSkillButton != null)
+                highPitchSkillButton.clicked += () => SwitchPitchCategory(PitchCategory.High);
 
             // 저장 데이터 가져오기
             saveData = SaveManager.Instance.GetCurrentSaveData();
@@ -427,13 +443,16 @@ namespace LostSpells.UI
                 mainMenuButton.clicked -= OnMainMenuButtonClicked;
 
             if (allSkillButton != null)
-                allSkillButton.clicked -= () => SwitchSkillCategory(null);
+                allSkillButton.clicked -= () => SwitchPitchCategory(null);
 
-            if (attackSkillButton != null)
-                attackSkillButton.clicked -= () => SwitchSkillCategory(SkillType.Attack);
+            if (lowPitchSkillButton != null)
+                lowPitchSkillButton.clicked -= () => SwitchPitchCategory(PitchCategory.Low);
 
-            if (defenseSkillButton != null)
-                defenseSkillButton.clicked -= () => SwitchSkillCategory(SkillType.Defense);
+            if (midPitchSkillButton != null)
+                midPitchSkillButton.clicked -= () => SwitchPitchCategory(PitchCategory.Medium);
+
+            if (highPitchSkillButton != null)
+                highPitchSkillButton.clicked -= () => SwitchPitchCategory(PitchCategory.High);
 
             // Localization 이벤트 해제
             UnregisterLocalizationEvents();
@@ -459,37 +478,19 @@ namespace LostSpells.UI
             }
         }
 
+        // 현재 활성화된 피치별 속성 (태그 표시용)
+        private HashSet<string> activePitchElements = new HashSet<string>();
+
         /// <summary>
-        /// 스킬 목록 로드 (PlayerComponent의 스킬 사용)
+        /// 스킬 목록 로드 (피치 기반 필터링)
         /// </summary>
         private void LoadSkills()
         {
-            List<SkillData> allSkills = new List<SkillData>();
-
-            // PlayerComponent에서 스킬 가져오기
-            if (playerComponent != null)
+            // DataManager에서 통합된 스킬 데이터 가져오기
+            List<SkillData> allSkills = DataManager.Instance.GetAllSkillData();
+            if (allSkills == null)
             {
-                var playerSkills = playerComponent.GetAllSkills();
-                if (playerSkills != null)
-                {
-                    foreach (var skill in playerSkills)
-                    {
-                        if (skill != null)
-                        {
-                            allSkills.Add(skill);
-                        }
-                    }
-                }
-            }
-
-            // PlayerComponent에 스킬이 없으면 DataManager에서 가져오기
-            if (allSkills.Count == 0)
-            {
-                var dataManagerSkills = DataManager.Instance.GetAllSkillData();
-                if (dataManagerSkills != null)
-                {
-                    allSkills = dataManagerSkills;
-                }
+                allSkills = new List<SkillData>();
             }
 
             if (allSkills.Count == 0)
@@ -498,25 +499,165 @@ namespace LostSpells.UI
                 return;
             }
 
-            // 카테고리별로 스킬 분류
-            var attackSkills = allSkills.Where(s => s.skillType == SkillType.Attack).ToList();
-            var defenseSkills = allSkills.Where(s => s.skillType == SkillType.Defense).ToList();
+            // 피치별 속성 가져오기
+            string lowElement = saveData?.lowPitchElement ?? "Fire";
+            string midElement = saveData?.midPitchElement ?? "Ice";
+            string highElement = saveData?.highPitchElement ?? "Electric";
 
-            // All 리스트 채우기 (카테고리별로 그룹화)
-            PopulateAllSkillList(allSkillList, attackSkills, defenseSkills);
+            // 활성화된 속성 목록 업데이트 (태그 표시용)
+            activePitchElements.Clear();
+            activePitchElements.Add(lowElement);
+            activePitchElements.Add(midElement);
+            activePitchElements.Add(highElement);
 
-            // 각 카테고리별 리스트 채우기
-            PopulateSkillList(attackSkillList, attackSkills);
-            PopulateSkillList(defenseSkillList, defenseSkills);
+            // 피치별로 사용 가능한 스킬 필터링
+            var lowPitchSkills = GetSkillsForElement(allSkills, lowElement);
+            var midPitchSkills = GetSkillsForElement(allSkills, midElement);
+            var highPitchSkills = GetSkillsForElement(allSkills, highElement);
+
+            // 전체 탭: 활성 피치 속성 중 하나라도 있는 스킬 (중복 없이)
+            var allAvailableSkills = GetSkillsForActiveElements(allSkills);
+            PopulateAllSkillList(allSkillList, allAvailableSkills);
+
+            // 각 피치별 리스트 채우기
+            PopulateSkillListWithElement(lowPitchSkillList, lowPitchSkills, lowElement);
+            PopulateSkillListWithElement(midPitchSkillList, midPitchSkills, midElement);
+            PopulateSkillListWithElement(highPitchSkillList, highPitchSkills, highElement);
+
+            // 탭 버튼에 속성 색상 적용
+            UpdatePitchTabColors(lowElement, midElement, highElement);
 
             // 초기 카테고리 표시 (All 탭)
-            SwitchSkillCategory(currentSkillCategory);
+            SwitchPitchCategory(currentPitchCategory);
         }
 
         /// <summary>
-        /// 스킬 리스트 UI 생성
+        /// 피치 탭 버튼에 속성별 색상 적용
         /// </summary>
-        private void PopulateSkillList(VisualElement container, List<SkillData> skills)
+        private void UpdatePitchTabColors(string lowElement, string midElement, string highElement)
+        {
+            // 모든 속성 클래스 제거 후 재적용
+            string[] elementClasses = { "element-fire", "element-ice", "element-electric", "element-earth", "element-holy", "element-void" };
+
+            // 저(Low) 탭
+            if (lowPitchSkillButton != null)
+            {
+                foreach (var cls in elementClasses)
+                    lowPitchSkillButton.RemoveFromClassList(cls);
+                lowPitchSkillButton.AddToClassList($"element-{lowElement.ToLower()}");
+            }
+
+            // 중(Mid) 탭
+            if (midPitchSkillButton != null)
+            {
+                foreach (var cls in elementClasses)
+                    midPitchSkillButton.RemoveFromClassList(cls);
+                midPitchSkillButton.AddToClassList($"element-{midElement.ToLower()}");
+            }
+
+            // 고(High) 탭
+            if (highPitchSkillButton != null)
+            {
+                foreach (var cls in elementClasses)
+                    highPitchSkillButton.RemoveFromClassList(cls);
+                highPitchSkillButton.AddToClassList($"element-{highElement.ToLower()}");
+            }
+        }
+
+        /// <summary>
+        /// 활성화된 피치 속성 중 하나라도 있는 스킬 필터링 (중복 없이)
+        /// </summary>
+        private List<SkillData> GetSkillsForActiveElements(List<SkillData> allSkills)
+        {
+            var result = new List<SkillData>();
+
+            foreach (var skill in allSkills)
+            {
+                // 제네릭 스킬인 경우 활성 속성 중 하나라도 있는지 확인
+                if (skill.isGenericSkill && skill.elementVariants != null)
+                {
+                    foreach (var activeElem in activePitchElements)
+                    {
+                        if (skill.elementVariants.ContainsKey(activeElem))
+                        {
+                            result.Add(skill);
+                            break; // 하나만 있어도 추가 (중복 방지)
+                        }
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// 특정 속성에 대해 사용 가능한 스킬 필터링
+        /// </summary>
+        private List<SkillData> GetSkillsForElement(List<SkillData> allSkills, string element)
+        {
+            var result = new List<SkillData>();
+
+            foreach (var skill in allSkills)
+            {
+                // 일반 스킬이 아니면 무조건 포함 (속성 무관)
+                if (!skill.isGenericSkill)
+                {
+                    result.Add(skill);
+                    continue;
+                }
+
+                // 일반 스킬인 경우 해당 속성의 변형이 있는지 확인
+                if (skill.elementVariants != null && skill.elementVariants.ContainsKey(element))
+                {
+                    result.Add(skill);
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// 속성의 현지화된 이름 반환
+        /// </summary>
+        private string GetElementLocalizedName(string element)
+        {
+            var loc = LocalizationManager.Instance;
+            switch (element)
+            {
+                case "Fire": return loc.GetText("element_fire");
+                case "Ice": return loc.GetText("element_ice");
+                case "Electric": return loc.GetText("element_electric");
+                case "Earth": return loc.GetText("element_earth");
+                case "Holy": return loc.GetText("element_holy");
+                case "Void": return loc.GetText("element_void");
+                default: return element;
+            }
+        }
+
+        /// <summary>
+        /// 속성의 짧은 이름 반환 (태그 표시용)
+        /// </summary>
+        private string GetElementShortName(string element)
+        {
+            var loc = LocalizationManager.Instance;
+            bool isKorean = loc.CurrentLanguage == LostSpells.Systems.Language.Korean;
+
+            switch (element)
+            {
+                case "Fire": return isKorean ? "화" : "F";
+                case "Ice": return isKorean ? "빙" : "I";
+                case "Electric": return isKorean ? "뇌" : "E";
+                case "Earth": return isKorean ? "지" : "G";
+                case "Holy": return isKorean ? "성" : "H";
+                case "Void": return isKorean ? "암" : "V";
+                default: return element.Substring(0, 1);
+            }
+        }
+
+        /// <summary>
+        /// All 탭 UI 생성 (단순 목록)
+        /// </summary>
+        private void PopulateAllSkillList(VisualElement container, List<SkillData> skills)
         {
             if (container == null) return;
 
@@ -524,116 +665,163 @@ namespace LostSpells.UI
 
             foreach (var skill in skills)
             {
-                // 스킬 아이템 컨테이너
-                var skillItem = new VisualElement();
-                skillItem.AddToClassList("skill-item");
-
-                // 스킬명 (현재 언어에 맞게)
-                var skillName = new Label(skill.GetLocalizedName());
-                skillName.AddToClassList("skill-name");
-
-                // 정확도 (기본값 0%, 나중에 음성인식 결과로 업데이트)
-                var accuracy = new Label("0%");
-                accuracy.AddToClassList("skill-accuracy");
-                accuracy.name = $"Accuracy_{skill.voiceKeyword}";
-
-                skillItem.Add(skillName);
-                skillItem.Add(accuracy);
-                container.Add(skillItem);
-
-                // 클릭 이벤트 추가 - 스킬 발사
-                var capturedSkill = skill; // 클로저를 위한 지역 변수 캡처
-                skillItem.RegisterCallback<ClickEvent>(evt => OnSkillItemClicked(capturedSkill));
-
-                // 정확도 맵 초기화
-                if (!string.IsNullOrEmpty(skill.voiceKeyword))
-                {
-                    skillAccuracyMap[skill.voiceKeyword] = 0f;
-                }
+                AddSkillItemForAllTab(container, skill);
             }
         }
 
         /// <summary>
-        /// All 탭 UI 생성 (카테고리별로 그룹화)
+        /// 피치별 스킬 리스트 UI 생성 (속성 정보 포함)
         /// </summary>
-        private void PopulateAllSkillList(VisualElement container, List<SkillData> attackSkills, List<SkillData> defenseSkills)
+        private void PopulateSkillListWithElement(VisualElement container, List<SkillData> skills, string element)
         {
             if (container == null) return;
 
             container.Clear();
 
-            // Attack 섹션
-            if (attackSkills.Count > 0)
+            foreach (var skill in skills)
             {
-                var attackHeader = new Label(LocalizationManager.Instance.GetText("skill_category_attack"));
-                attackHeader.AddToClassList("skill-category-header");
-                container.Add(attackHeader);
-
-                foreach (var skill in attackSkills)
-                {
-                    AddSkillItem(container, skill);
-                }
-            }
-
-            // Defense 섹션
-            if (defenseSkills.Count > 0)
-            {
-                var defenseHeader = new Label(LocalizationManager.Instance.GetText("skill_category_defense"));
-                defenseHeader.AddToClassList("skill-category-header");
-                container.Add(defenseHeader);
-
-                foreach (var skill in defenseSkills)
-                {
-                    AddSkillItem(container, skill);
-                }
+                AddSkillItemWithElement(container, skill, element);
             }
         }
 
         /// <summary>
-        /// 스킬 아이템 추가 (공통 로직)
+        /// 전체 탭용 스킬 아이템 추가 (활성 피치 속성만 태그로 표시)
         /// </summary>
-        private void AddSkillItem(VisualElement container, SkillData skill)
+        private void AddSkillItemForAllTab(VisualElement container, SkillData skill)
         {
             var skillItem = new VisualElement();
             skillItem.AddToClassList("skill-item");
 
-            var skillName = new Label(skill.GetLocalizedName());
+            string displayName = skill.GetLocalizedName();
+            var skillName = new Label(displayName);
             skillName.AddToClassList("skill-name");
 
-            var accuracy = new Label("0%");
-            accuracy.AddToClassList("skill-accuracy");
-            accuracy.name = $"Accuracy_{skill.voiceKeyword}";
+            // 속성 태그 컨테이너 (활성화된 피치 속성만 표시)
+            var elementsContainer = new VisualElement();
+            elementsContainer.AddToClassList("skill-elements");
+
+            if (skill.isGenericSkill && skill.elementVariants != null)
+            {
+                // 활성화된 피치 속성 중 이 스킬이 가진 속성만 표시
+                string[] elementOrder = { "Fire", "Ice", "Electric", "Earth", "Holy", "Void" };
+                foreach (var elem in elementOrder)
+                {
+                    if (activePitchElements.Contains(elem) && skill.elementVariants.ContainsKey(elem))
+                    {
+                        var tag = new Label(GetElementShortName(elem));
+                        tag.AddToClassList("element-tag");
+                        tag.AddToClassList($"element-tag-{elem.ToLower()}");
+                        elementsContainer.Add(tag);
+                    }
+                }
+            }
 
             skillItem.Add(skillName);
-            skillItem.Add(accuracy);
+            skillItem.Add(elementsContainer);
             container.Add(skillItem);
 
-            // 클릭 이벤트 추가 - 스킬 발사
-            var capturedSkill = skill; // 클로저를 위한 지역 변수 캡처
-            skillItem.RegisterCallback<ClickEvent>(evt => OnSkillItemClicked(capturedSkill));
-
-            if (!string.IsNullOrEmpty(skill.voiceKeyword))
-            {
-                skillAccuracyMap[skill.voiceKeyword] = 0f;
-            }
+            // 클릭 이벤트 - 전체 탭에서는 랜덤으로 활성 속성 선택
+            var capturedSkill = skill;
+            skillItem.RegisterCallback<ClickEvent>(evt => {
+                string randomElement = GetRandomActiveElementForSkill(capturedSkill);
+                OnSkillItemClickedWithElement(capturedSkill, randomElement);
+            });
         }
 
         /// <summary>
-        /// 스킬 아이템 클릭 시 스킬 발사
+        /// 스킬에 대해 랜덤으로 활성 피치 속성 반환 (전체 탭용)
         /// </summary>
-        private void OnSkillItemClicked(SkillData skill)
+        private string GetRandomActiveElementForSkill(SkillData skill)
         {
+            if (skill.isGenericSkill && skill.elementVariants != null)
+            {
+                // 이 스킬이 가진 활성 속성 목록 수집
+                var availableElements = new List<string>();
+                foreach (var activeElem in activePitchElements)
+                {
+                    if (skill.elementVariants.ContainsKey(activeElem))
+                    {
+                        availableElements.Add(activeElem);
+                    }
+                }
+
+                // 랜덤 선택
+                if (availableElements.Count > 0)
+                {
+                    int randomIndex = UnityEngine.Random.Range(0, availableElements.Count);
+                    return availableElements[randomIndex];
+                }
+            }
+            return "Fire"; // 기본값
+        }
+
+        /// <summary>
+        /// 피치별 탭용 스킬 아이템 추가 (해당 속성 태그만 표시)
+        /// </summary>
+        private void AddSkillItemWithElement(VisualElement container, SkillData skill, string element)
+        {
+            var skillItem = new VisualElement();
+            skillItem.AddToClassList("skill-item");
+
+            string displayName = skill.GetLocalizedName();
+            var skillName = new Label(displayName);
+            skillName.AddToClassList("skill-name");
+
+            // 속성 태그 컨테이너 (해당 피치의 속성만 표시)
+            var elementsContainer = new VisualElement();
+            elementsContainer.AddToClassList("skill-elements");
+
+            if (skill.isGenericSkill && skill.elementVariants != null && skill.elementVariants.ContainsKey(element))
+            {
+                var tag = new Label(GetElementShortName(element));
+                tag.AddToClassList("element-tag");
+                tag.AddToClassList($"element-tag-{element.ToLower()}");
+                elementsContainer.Add(tag);
+            }
+
+            skillItem.Add(skillName);
+            skillItem.Add(elementsContainer);
+            container.Add(skillItem);
+
+            // 클릭 이벤트 추가 - 스킬 발사 (속성 정보 포함)
+            var capturedSkill = skill;
+            var capturedElement = element;
+            skillItem.RegisterCallback<ClickEvent>(evt => OnSkillItemClickedWithElement(capturedSkill, capturedElement));
+        }
+
+        /// <summary>
+        /// 스킬 아이템 클릭 시 스킬 발사 (속성 정보 포함)
+        /// </summary>
+        private void OnSkillItemClickedWithElement(SkillData skill, string element)
+        {
+            Debug.Log($"[InGameUI] 스킬 클릭: {skill?.skillId}, 속성: {element}");
+
             if (playerComponent == null)
             {
                 Debug.LogWarning("[InGameUI] PlayerComponent를 찾을 수 없습니다!");
-                return;
+                // playerComponent 다시 찾기 시도
+                playerComponent = FindFirstObjectByType<LostSpells.Components.PlayerComponent>();
+                if (playerComponent == null)
+                {
+                    Debug.LogError("[InGameUI] PlayerComponent를 찾을 수 없습니다! (재시도 실패)");
+                    return;
+                }
             }
 
-            // 플레이어 스킬 시전
-            bool success = playerComponent.CastSkillByData(skill);
-            if (success)
+            // 일반 스킬인 경우 속성 변형으로 발사
+            if (skill.isGenericSkill && skill.elementVariants != null && skill.elementVariants.ContainsKey(element))
             {
-                // Debug.Log($"[InGameUI] 스킬 발사: {skill.GetLocalizedName()}");
+                var variant = skill.elementVariants[element];
+                Debug.Log($"[InGameUI] 속성 변형 스킬 발사: {variant.name}, 프리팹: {variant.effectPrefab}");
+                bool success = playerComponent.CastSkillByDataWithVariant(skill, variant);
+                Debug.Log($"[InGameUI] 스킬 발사 결과: {success}");
+            }
+            else
+            {
+                // 일반 스킬이 아니면 기본 발사
+                Debug.Log($"[InGameUI] 기본 스킬 발사: {skill.skillId}");
+                bool success = playerComponent.CastSkillByData(skill);
+                Debug.Log($"[InGameUI] 기본 스킬 발사 결과: {success}");
             }
         }
 
@@ -658,19 +846,21 @@ namespace LostSpells.UI
         }
 
         /// <summary>
-        /// 스킬 카테고리 전환
+        /// 피치 카테고리 전환
         /// </summary>
-        private void SwitchSkillCategory(SkillType? category)
+        private void SwitchPitchCategory(PitchCategory? category)
         {
-            currentSkillCategory = category;
+            currentPitchCategory = category;
 
             // 모든 ScrollView 숨기기
             if (allSkillScrollView != null)
                 allSkillScrollView.style.display = DisplayStyle.None;
-            if (attackSkillScrollView != null)
-                attackSkillScrollView.style.display = DisplayStyle.None;
-            if (defenseSkillScrollView != null)
-                defenseSkillScrollView.style.display = DisplayStyle.None;
+            if (lowPitchSkillScrollView != null)
+                lowPitchSkillScrollView.style.display = DisplayStyle.None;
+            if (midPitchSkillScrollView != null)
+                midPitchSkillScrollView.style.display = DisplayStyle.None;
+            if (highPitchSkillScrollView != null)
+                highPitchSkillScrollView.style.display = DisplayStyle.None;
 
             // 선택된 카테고리만 표시
             if (category == null)
@@ -683,19 +873,42 @@ namespace LostSpells.UI
             {
                 switch (category.Value)
                 {
-                    case SkillType.Attack:
-                        if (attackSkillScrollView != null)
-                            attackSkillScrollView.style.display = DisplayStyle.Flex;
+                    case PitchCategory.Low:
+                        if (lowPitchSkillScrollView != null)
+                            lowPitchSkillScrollView.style.display = DisplayStyle.Flex;
                         break;
-                    case SkillType.Defense:
-                        if (defenseSkillScrollView != null)
-                            defenseSkillScrollView.style.display = DisplayStyle.Flex;
+                    case PitchCategory.Medium:
+                        if (midPitchSkillScrollView != null)
+                            midPitchSkillScrollView.style.display = DisplayStyle.Flex;
+                        break;
+                    case PitchCategory.High:
+                        if (highPitchSkillScrollView != null)
+                            highPitchSkillScrollView.style.display = DisplayStyle.Flex;
                         break;
                 }
             }
 
             // 음성인식 매니저에 현재 카테고리 스킬 전달
             UpdateVoiceRecognitionSkills();
+
+            // 음성인식 매니저에 고정 속성 모드 설정
+            UpdateVoiceRecognitionFixedElement(category);
+        }
+
+        /// <summary>
+        /// 음성인식 매니저에 고정 속성 모드 설정
+        /// </summary>
+        private void UpdateVoiceRecognitionFixedElement(PitchCategory? category)
+        {
+            if (voiceRecognitionManager == null) return;
+
+            string element = null;
+            if (category != null)
+            {
+                element = GetElementForCurrentPitchCategory();
+            }
+
+            voiceRecognitionManager.SetFixedElement(category, element);
         }
 
         /// <summary>
@@ -752,105 +965,31 @@ namespace LostSpells.UI
             if (allSkills.Count == 0) return new List<SkillData>();
 
             // All 탭 (null)이면 모든 스킬 반환
-            if (currentSkillCategory == null)
+            if (currentPitchCategory == null)
                 return allSkills;
 
-            return allSkills.Where(s => s.skillType == currentSkillCategory.Value).ToList();
+            // 피치별 속성 가져와서 해당 속성의 스킬만 반환
+            string element = GetElementForCurrentPitchCategory();
+            return GetSkillsForElement(allSkills, element);
         }
 
         /// <summary>
-        /// 모든 스킬 정확도 초기화 (새로운 음성 인식 시작 시)
+        /// 현재 피치 카테고리에 해당하는 속성 반환
         /// </summary>
-        public void ClearSkillAccuracy()
+        private string GetElementForCurrentPitchCategory()
         {
-            // 맵 초기화
-            skillAccuracyMap.Clear();
+            if (currentPitchCategory == null) return "Fire";
 
-            // 모든 ScrollView의 라벨을 0%로 초기화
-            ClearAccuracyLabelsInScrollView(allSkillScrollView);
-            ClearAccuracyLabelsInScrollView(attackSkillScrollView);
-            ClearAccuracyLabelsInScrollView(defenseSkillScrollView);
-        }
-
-        /// <summary>
-        /// 특정 ScrollView의 모든 정확도 라벨을 0%로 초기화
-        /// </summary>
-        private void ClearAccuracyLabelsInScrollView(ScrollView scrollView)
-        {
-            if (scrollView == null) return;
-
-            var allLabels = scrollView.Query<Label>().Where(label => label.name != null && label.name.StartsWith("Accuracy_")).ToList();
-            foreach (var label in allLabels)
+            switch (currentPitchCategory.Value)
             {
-                label.text = "0%";
-                label.style.color = Color.white;
-            }
-        }
-
-        /// <summary>
-        /// 음성인식 정확도 업데이트 (VoiceRecognitionManager에서 호출)
-        /// </summary>
-        public void UpdateSkillAccuracy(Dictionary<string, float> accuracyScores)
-        {
-            foreach (var kvp in accuracyScores)
-            {
-                string keyword = kvp.Key;
-                float score = kvp.Value;
-
-                // 정확도 맵 업데이트
-                skillAccuracyMap[keyword] = score;
-            }
-
-            // 현재 표시 중인 ScrollView에서만 UI 업데이트
-            ScrollView currentScrollView = GetCurrentScrollView();
-            if (currentScrollView != null)
-            {
-                UpdateAccuracyLabelsInScrollView(currentScrollView, accuracyScores);
-            }
-        }
-
-        /// <summary>
-        /// 현재 활성화된 ScrollView 가져오기
-        /// </summary>
-        private ScrollView GetCurrentScrollView()
-        {
-            if (currentSkillCategory == null && allSkillScrollView != null && allSkillScrollView.style.display == DisplayStyle.Flex)
-                return allSkillScrollView;
-
-            if (currentSkillCategory == SkillType.Attack && attackSkillScrollView != null && attackSkillScrollView.style.display == DisplayStyle.Flex)
-                return attackSkillScrollView;
-
-            if (currentSkillCategory == SkillType.Defense && defenseSkillScrollView != null && defenseSkillScrollView.style.display == DisplayStyle.Flex)
-                return defenseSkillScrollView;
-
-            return null;
-        }
-
-        /// <summary>
-        /// 특정 ScrollView 내의 정확도 라벨 업데이트
-        /// </summary>
-        private void UpdateAccuracyLabelsInScrollView(ScrollView scrollView, Dictionary<string, float> accuracyScores)
-        {
-            foreach (var kvp in accuracyScores)
-            {
-                string keyword = kvp.Key;
-                float score = kvp.Value;
-
-                // 해당 ScrollView 내에서 라벨 찾기
-                var accuracyLabel = scrollView.Q<Label>($"Accuracy_{keyword}");
-                if (accuracyLabel != null)
-                {
-                    int percentage = Mathf.RoundToInt(score * 100f);
-                    accuracyLabel.text = $"{percentage}%";
-
-                    // 색상 변경 (높을수록 녹색)
-                    if (score >= 0.7f)
-                        accuracyLabel.style.color = Color.green;
-                    else if (score >= 0.4f)
-                        accuracyLabel.style.color = Color.yellow;
-                    else
-                        accuracyLabel.style.color = Color.white;
-                }
+                case PitchCategory.Low:
+                    return saveData?.lowPitchElement ?? "Fire";
+                case PitchCategory.Medium:
+                    return saveData?.midPitchElement ?? "Ice";
+                case PitchCategory.High:
+                    return saveData?.highPitchElement ?? "Electric";
+                default:
+                    return "Fire";
             }
         }
 
@@ -862,6 +1001,35 @@ namespace LostSpells.UI
             if (voiceRecognitionText != null)
             {
                 voiceRecognitionText.text = message;
+            }
+        }
+
+        /// <summary>
+        /// 음성인식 상태 패널 업데이트 (인식된 텍스트와 실행된 명령어 표시)
+        /// </summary>
+        public void UpdateVoiceStatusPanel(string recognizedText, string executedCommand)
+        {
+            bool hasContent = !string.IsNullOrEmpty(recognizedText) || !string.IsNullOrEmpty(executedCommand);
+
+            if (voiceStatusPanel != null)
+            {
+                voiceStatusPanel.style.display = hasContent ? DisplayStyle.Flex : DisplayStyle.None;
+            }
+
+            if (voiceStatusText != null && hasContent)
+            {
+                if (!string.IsNullOrEmpty(recognizedText) && !string.IsNullOrEmpty(executedCommand))
+                {
+                    voiceStatusText.text = $"\"{recognizedText}\" → {executedCommand}";
+                }
+                else if (!string.IsNullOrEmpty(executedCommand))
+                {
+                    voiceStatusText.text = executedCommand;
+                }
+                else
+                {
+                    voiceStatusText.text = recognizedText;
+                }
             }
         }
 
@@ -1050,6 +1218,7 @@ namespace LostSpells.UI
             if (optionsPopup != null)
             {
                 optionsPopup.style.display = DisplayStyle.None;
+                optionsPanelController?.OnPanelHidden();
             }
         }
 
@@ -1298,15 +1467,18 @@ namespace LostSpells.UI
             if (confirmInsufficientButton != null)
                 confirmInsufficientButton.text = loc.GetText("insufficient_confirm");
 
-            // 스킬 카테고리 버튼 텍스트 업데이트
+            // 스킬 카테고리 버튼 텍스트 업데이트 (피치 기반)
             if (allSkillButton != null)
                 allSkillButton.text = loc.GetText("skill_category_all");
 
-            if (attackSkillButton != null)
-                attackSkillButton.text = loc.GetText("skill_category_attack");
+            if (lowPitchSkillButton != null)
+                lowPitchSkillButton.text = loc.GetText("pitch_low");
 
-            if (defenseSkillButton != null)
-                defenseSkillButton.text = loc.GetText("skill_category_defense");
+            if (midPitchSkillButton != null)
+                midPitchSkillButton.text = loc.GetText("pitch_mid");
+
+            if (highPitchSkillButton != null)
+                highPitchSkillButton.text = loc.GetText("pitch_high");
 
             // 챕터 및 웨이브 정보 업데이트
             UpdateChapterInfo();
@@ -1619,7 +1791,29 @@ namespace LostSpells.UI
         /// </summary>
         private void PopulateStoreProducts()
         {
-            // 다이아몬드 상품 (테스트용 - 실제로는 다이아로 부활석 구매)
+            // 다이아몬드 상품 (실제 돈으로 구매 - 테스트용으로 바로 지급)
+            var diamondItems = new List<(int quantity, int price)>
+            {
+                (1, 1100),
+                (5, 5000),
+                (10, 9000),
+                (25, 20000),
+                (50, 35000),
+                (100, 60000)
+            };
+
+            // 다이아몬드 상품 카드 생성
+            if (storeDiamondGrid != null)
+            {
+                storeDiamondGrid.Clear();
+                foreach (var item in diamondItems)
+                {
+                    var card = CreateDiamondProductCard(item.quantity, item.price);
+                    storeDiamondGrid.Add(card);
+                }
+            }
+
+            // 부활석 상품 (다이아몬드로 구매)
             var reviveStoneItems = new List<(int quantity, int price)>
             {
                 (1, 1),
@@ -1640,6 +1834,60 @@ namespace LostSpells.UI
                     storeReviveStoneGrid.Add(card);
                 }
             }
+        }
+
+        /// <summary>
+        /// 다이아몬드 상품 카드 생성 (실제 돈 결제용)
+        /// </summary>
+        private VisualElement CreateDiamondProductCard(int quantity, int price)
+        {
+            var card = new VisualElement();
+            card.AddToClassList("product-card");
+
+            // 아이템 정보 행
+            var infoRow = new VisualElement();
+            infoRow.AddToClassList("product-info-row");
+
+            var icon = new VisualElement();
+            icon.AddToClassList("product-icon-large");
+            icon.AddToClassList("diamond-icon-product");
+            infoRow.Add(icon);
+
+            var multiplication = new Label("X");
+            multiplication.AddToClassList("multiplication-sign");
+            infoRow.Add(multiplication);
+
+            var quantityLabel = new Label($"{quantity:N0}");
+            quantityLabel.AddToClassList("product-quantity");
+            infoRow.Add(quantityLabel);
+
+            card.Add(infoRow);
+
+            // 가격 (실제 돈)
+            var priceLabel = new Label($"₩{price:N0}");
+            priceLabel.AddToClassList("product-price");
+            card.Add(priceLabel);
+
+            // 구매 버튼
+            var buyButton = new Button();
+            buyButton.text = "BUY";
+            buyButton.AddToClassList("buy-button");
+            int capturedQuantity = quantity;
+            buyButton.clicked += () => OnDiamondBuyButtonClicked(capturedQuantity);
+            card.Add(buyButton);
+
+            return card;
+        }
+
+        /// <summary>
+        /// 다이아몬드 구매 버튼 클릭 (테스트용 - 바로 지급)
+        /// </summary>
+        private void OnDiamondBuyButtonClicked(int quantity)
+        {
+            // TODO: 실제 결제 로직 구현 (IAP)
+            // 현재는 테스트로 바로 다이아몬드 지급
+            SaveManager.Instance.AddDiamonds(quantity);
+            UpdateStoreCurrencyDisplay();
         }
 
         /// <summary>
@@ -1748,13 +1996,15 @@ namespace LostSpells.UI
         {
             // 스킬 카테고리 버튼들의 포커스 비활성화
             if (allSkillButton != null) allSkillButton.focusable = false;
-            if (attackSkillButton != null) attackSkillButton.focusable = false;
-            if (defenseSkillButton != null) defenseSkillButton.focusable = false;
+            if (lowPitchSkillButton != null) lowPitchSkillButton.focusable = false;
+            if (midPitchSkillButton != null) midPitchSkillButton.focusable = false;
+            if (highPitchSkillButton != null) highPitchSkillButton.focusable = false;
 
             // ScrollView들의 포커스 비활성화
             if (allSkillScrollView != null) allSkillScrollView.focusable = false;
-            if (attackSkillScrollView != null) attackSkillScrollView.focusable = false;
-            if (defenseSkillScrollView != null) defenseSkillScrollView.focusable = false;
+            if (lowPitchSkillScrollView != null) lowPitchSkillScrollView.focusable = false;
+            if (midPitchSkillScrollView != null) midPitchSkillScrollView.focusable = false;
+            if (highPitchSkillScrollView != null) highPitchSkillScrollView.focusable = false;
 
             // 스킬 카테고리 스크롤뷰 포커스 비활성화
             var skillCategoryScrollView = uiDocument.rootVisualElement.Q<ScrollView>("SkillCategoryScrollView");

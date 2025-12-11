@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Newtonsoft.Json;
 
 namespace LostSpells.Data
 {
@@ -169,6 +170,7 @@ namespace LostSpells.Data
 
         /// <summary>
         /// 스킬 데이터 JSON 로드
+        /// Newtonsoft.Json을 사용하여 Dictionary 필드도 올바르게 역직렬화
         /// </summary>
         private void LoadSkillData()
         {
@@ -179,7 +181,8 @@ namespace LostSpells.Data
             TextAsset jsonFile = Resources.Load<TextAsset>("GameData/Skills");
             if (jsonFile != null)
             {
-                SkillDataList wrapper = JsonUtility.FromJson<SkillDataList>(jsonFile.text);
+                // Newtonsoft.Json을 사용하여 Dictionary 필드도 올바르게 역직렬화
+                SkillDataList wrapper = JsonConvert.DeserializeObject<SkillDataList>(jsonFile.text);
                 if (wrapper != null && wrapper.skills != null)
                 {
                     skillDataList = wrapper.skills;
@@ -188,6 +191,11 @@ namespace LostSpells.Data
                         if (!string.IsNullOrEmpty(skill.skillId))
                         {
                             skillDataDict[skill.skillId] = skill;
+                            // 디버그: elementVariants 로드 확인
+                            if (skill.isGenericSkill && skill.elementVariants != null)
+                            {
+                                Debug.Log($"[DataManager] 스킬 '{skill.skillId}' elementVariants 로드됨: {skill.elementVariants.Count}개 속성");
+                            }
                         }
                     }
                 }

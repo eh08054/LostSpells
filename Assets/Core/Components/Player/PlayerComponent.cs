@@ -54,8 +54,6 @@ namespace LostSpells.Components
         // 음성 명령 이동
         private int voiceMovementDirection = 0; // -1: 왼쪽, 0: 정지, 1: 오른쪽
         private bool voiceJumpRequested = false;
-        private bool stopAfterLanding = false; // 착지 후 이동 멈춤 플래그
-        private bool wasGrounded = true; // 이전 프레임 착지 상태
 
         private void Awake()
         {
@@ -233,10 +231,14 @@ namespace LostSpells.Components
                 if (Keyboard.current[moveLeftKey].isPressed)
                 {
                     horizontal = -1f;
+                    // 키보드 이동 시 음성 이동 취소
+                    voiceMovementDirection = 0;
                 }
                 else if (Keyboard.current[moveRightKey].isPressed)
                 {
                     horizontal = 1f;
+                    // 키보드 이동 시 음성 이동 취소
+                    voiceMovementDirection = 0;
                 }
 
                 // 점프 (땅에 있을 때만)
@@ -248,14 +250,6 @@ namespace LostSpells.Components
                 }
             }
 
-            // 착지 감지 (공중에서 땅으로)
-            if (!wasGrounded && isGrounded && stopAfterLanding)
-            {
-                // 점프 후 착지 - 이동 멈춤
-                voiceMovementDirection = 0;
-                stopAfterLanding = false;
-            }
-
             // 음성 명령 이동 (키보드 입력이 없을 때만 적용)
             if (horizontal == 0f && voiceMovementDirection != 0)
             {
@@ -265,20 +259,11 @@ namespace LostSpells.Components
             // 음성 명령 점프
             if (voiceJumpRequested && isGrounded)
             {
-                // 이동 중 점프면 착지 후 멈춤 플래그 설정
-                if (voiceMovementDirection != 0)
-                {
-                    stopAfterLanding = true;
-                }
-
                 Vector2 velocity = rb.linearVelocity;
                 velocity.y = jumpForce;
                 rb.linearVelocity = velocity;
                 voiceJumpRequested = false;
             }
-
-            // 착지 상태 저장 (다음 프레임 비교용)
-            wasGrounded = isGrounded;
 
             // Rigidbody2D로 좌우 이동 (Y축 속도는 유지하여 중력 영향 받도록)
             Vector2 velocity2 = rb.linearVelocity;
@@ -500,19 +485,7 @@ namespace LostSpells.Components
             #endif
         }
 
-        /// <summary>
-        /// 적과 접촉 시 데미지 (트리거 충돌 - 물리적 충돌 없이 통과)
-        /// </summary>
-        private void OnTriggerEnter2D(Collider2D other)
-        {
-            // 적과 접촉했는지 확인
-            EnemyComponent enemy = other.GetComponent<EnemyComponent>();
-            if (enemy != null)
-            {
-                // 데미지 받기 (물리적 충돌 없음)
-                TakeDamage(10); // 적과 접촉 시 10 데미지
-            }
-        }
+        // 적과의 접촉 데미지는 EnemyComponent.TryAttackPlayer()에서 공격 애니메이션과 함께 처리
 
         /// <summary>
         /// 바닥에 닿으면 넉백 상태 해제 및 착지 체크
@@ -572,21 +545,56 @@ namespace LostSpells.Components
         /// </summary>
         public void ShowVoiceRecognitionParticle()
         {
-            // Debug.Log($"[PlayerComponent] ShowVoiceRecognitionParticle 호출됨, particle: {(voiceRecognitionParticle != null ? voiceRecognitionParticle.name : "null")}");
+            // VoiceRecognitionManager에서 고정 속성 확인
+            var vrm = LostSpells.Systems.VoiceRecognitionManager.Instance;
+            string initialElement = (vrm != null && vrm.IsFixedElementMode()) ? vrm.GetCurrentElement() : "Ice";
+            ShowVoiceRecognitionParticle(initialElement);
+        }
+
+        /// <summary>
+        /// 음성인식 파티클 표시 (초기 속성 색상 지정)
+        /// </summary>
+        public void ShowVoiceRecognitionParticle(string initialElement)
+        {
             if (voiceRecognitionParticle != null)
             {
-                // 랜덤 색상 선택 (빨간색, 파란색, 회색)
-                Color[] colors = new Color[] { Color.red, Color.blue, Color.gray };
-                Color randomColor = colors[Random.Range(0, colors.Length)];
-
-                // 파티클 시스템의 시작 색상 설정
+                // 초기 색상 설정
                 var main = voiceRecognitionParticle.main;
-                main.startColor = randomColor;
+                main.startColor = GetPitchElementColor(initialElement);
 
                 voiceRecognitionParticle.gameObject.SetActive(true);
                 voiceRecognitionParticle.Clear(true); // 이전 파티클 클리어
                 voiceRecognitionParticle.Play(true);  // 자식 파티클도 함께 재생
-                // Debug.Log($"[PlayerComponent] 파티클 재생 시작, isPlaying: {voiceRecognitionParticle.isPlaying}, color: {randomColor}");
+            }
+        }
+
+        /// <summary>
+        /// 피치 카테고리에 따라 파티클 색상 업데이트 (실시간 피치 시각화)
+        /// </summary>
+        public void UpdateVoiceParticleByPitch(LostSpells.Systems.PitchCategory pitchCategory, string element)
+        {
+            if (voiceRecognitionParticle != null && voiceRecognitionParticle.isPlaying)
+            {
+                Color pitchColor = GetPitchElementColor(element);
+                var main = voiceRecognitionParticle.main;
+                main.startColor = pitchColor;
+            }
+        }
+
+        /// <summary>
+        /// 속성에 해당하는 색상 반환
+        /// </summary>
+        private Color GetPitchElementColor(string element)
+        {
+            switch (element)
+            {
+                case "Fire": return new Color(1f, 0.3f, 0f);       // 주황-빨강
+                case "Ice": return new Color(0.3f, 0.7f, 1f);      // 하늘색
+                case "Electric": return new Color(1f, 1f, 0.3f);   // 노란색
+                case "Earth": return new Color(0.6f, 0.4f, 0.2f);  // 갈색
+                case "Holy": return new Color(1f, 1f, 0.9f);       // 흰색
+                case "Void": return new Color(0.5f, 0.2f, 0.7f);   // 보라색
+                default: return Color.white;
             }
         }
 
@@ -1453,6 +1461,127 @@ namespace LostSpells.Components
 
             Debug.LogWarning($"[PlayerComponent] 스킬을 찾을 수 없음: {skillId}");
             return false;
+        }
+
+        /// <summary>
+        /// 스킬 데이터와 속성 변형으로 스킬 시전 (피치 기반 속성 시스템용)
+        /// </summary>
+        public bool CastSkillByDataWithVariant(LostSpells.Data.SkillData skill, LostSpells.Data.ElementVariant variant)
+        {
+            if (skill == null || variant == null)
+            {
+                Debug.LogWarning("[PlayerComponent] 스킬 또는 변형이 null입니다.");
+                return false;
+            }
+
+            // 마나 체크
+            if (currentMana < skill.manaCost)
+            {
+                Debug.LogWarning($"[PlayerComponent] 마나 부족! 현재: {currentMana}, 필요: {skill.manaCost}");
+                return false;
+            }
+
+            // 마나 소모
+            currentMana -= (int)skill.manaCost;
+
+            // 속성 변형의 이펙트 프리팹으로 투사체 발사
+            FireProjectileWithVariant(skill, variant);
+            return true;
+        }
+
+        /// <summary>
+        /// 속성 변형을 적용한 투사체 발사
+        /// </summary>
+        private void FireProjectileWithVariant(LostSpells.Data.SkillData skill, LostSpells.Data.ElementVariant variant)
+        {
+            // 발사 위치 결정 (플레이어 위치 + 약간 앞으로)
+            Vector3 offset = spriteRenderer.flipX ? Vector3.left * 0.5f : Vector3.right * 0.5f;
+            Vector3 spawnPosition = transform.position + offset + Vector3.up * 0.3f;
+
+            // 발사 방향 결정 (플레이어가 보는 방향)
+            Vector3 direction = spriteRenderer.flipX ? Vector3.left : Vector3.right;
+
+            // VFX 스프라이트 로드 (스프라이트 시트에서 모든 프레임 로드)
+            string vfxPath = variant.effectPrefab;
+            Sprite[] vfxSprites = null;
+            if (!string.IsNullOrEmpty(vfxPath))
+            {
+                // VFX 경로에서 스프라이트 로드 시도
+                vfxSprites = UnityEngine.Resources.LoadAll<Sprite>(vfxPath);
+                if (vfxSprites == null || vfxSprites.Length == 0)
+                {
+                    // 기본 이펙트 경로에서 시도
+                    vfxSprites = UnityEngine.Resources.LoadAll<Sprite>(skill.effectPrefabPath);
+                }
+            }
+
+            // 투사체 생성
+            GameObject projectile = new GameObject($"Skill_{skill.skillId}_{variant.name}");
+            projectile.transform.position = spawnPosition;
+
+            // SpriteRenderer 추가
+            SpriteRenderer sr = projectile.AddComponent<SpriteRenderer>();
+            sr.sortingOrder = 100;
+
+            // VFX 스프라이트가 있으면 사용, 없으면 폴백 스프라이트 사용
+            if (vfxSprites != null && vfxSprites.Length > 0)
+            {
+                sr.sprite = vfxSprites[0]; // 첫 번째 프레임으로 시작
+                projectile.transform.localScale = Vector3.one * 1.5f; // 스프라이트 크기 조정
+
+                // 애니메이션 컴포넌트 추가 (여러 프레임이 있을 경우)
+                if (vfxSprites.Length > 1)
+                {
+                    SpriteAnimator animator = projectile.AddComponent<SpriteAnimator>();
+                    animator.Initialize(vfxSprites, 12f); // 12 FPS 애니메이션
+                }
+            }
+            else
+            {
+                // 폴백: 프로시저럴 스프라이트
+                Color skillColor = GetSkillColor(skill.skillId);
+                sr.sprite = CreateSkillSprite(skill.skillId, skillColor);
+                projectile.transform.localScale = Vector3.one * 0.7f;
+
+                // TrailRenderer 추가 (폴백 시에만)
+                TrailRenderer trail = projectile.AddComponent<TrailRenderer>();
+                trail.time = 0.3f;
+                trail.startWidth = 0.5f;
+                trail.endWidth = 0.1f;
+                trail.material = new Material(Shader.Find("Sprites/Default"));
+                trail.startColor = skillColor;
+                trail.endColor = new Color(skillColor.r, skillColor.g, skillColor.b, 0f);
+                trail.sortingOrder = 100;
+            }
+
+            // 왼쪽을 향하면 뒤집기
+            if (spriteRenderer.flipX)
+            {
+                sr.flipX = true;
+            }
+
+            // 충돌체 추가
+            CircleCollider2D collider = projectile.AddComponent<CircleCollider2D>();
+            collider.radius = 0.3f;
+            collider.isTrigger = true;
+
+            // Rigidbody2D 추가
+            Rigidbody2D rb2d = projectile.AddComponent<Rigidbody2D>();
+            rb2d.bodyType = RigidbodyType2D.Kinematic;
+            rb2d.gravityScale = 0f;
+
+            // SkillProjectile 컴포넌트 추가 및 초기화
+            SkillProjectile projectileScript = projectile.AddComponent<SkillProjectile>();
+            projectileScript.Initialize(
+                (int)skill.damage,
+                skill.projectileSpeed > 0 ? skill.projectileSpeed : 10f,
+                skill.projectileLifetime > 0 ? skill.projectileLifetime : 3f,
+                direction,
+                null, // 충돌 VFX는 나중에 추가
+                skill.pierceCount // 관통 횟수
+            );
+
+            Debug.Log($"[PlayerComponent] 속성 스킬 발사: {variant.name} (데미지: {skill.damage})");
         }
     }
 }

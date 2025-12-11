@@ -75,9 +75,24 @@ namespace LostSpells.Systems
         private float recordingStartTime = 0f;
         private string originalPlayerName = "Wizard"; // PlayerComponent의 기본 이름과 동일하게 설정
 
+        // 피치 기반 속성 시스템
+        private PitchCategory lastDetectedPitchCategory = PitchCategory.Medium;
+
+        // 고정 속성 모드 (특정 탭 선택 시)
+        private bool useFixedElement = false;
+        private string fixedElement = null;
+        private PitchCategory? fixedPitchCategory = null;
+
+        // 일반 스킬 목록 (피치 기반 속성 적용 대상)
+        private static readonly System.Collections.Generic.HashSet<string> genericSkillIds = new System.Collections.Generic.HashSet<string>
+        {
+            "missile", "shield", "slash", "explosion", "vortex"
+        };
+
         // 현재 활성화된 스킬 목록 (InGameUI에서 설정)
         private System.Collections.Generic.List<SkillData> activeSkills = new System.Collections.Generic.List<SkillData>();
         private LostSpells.UI.InGameUI inGameUI;
+        private LostSpells.UI.MenuManager menuManager;
 
         private void Awake()
         {
@@ -158,6 +173,97 @@ namespace LostSpells.Systems
         }
 
         /// <summary>
+        /// 피치 카테고리에 해당하는 속성 가져오기
+        /// </summary>
+        private string GetElementForPitchCategory(PitchCategory category)
+        {
+            var saveData = SaveManager.Instance?.GetCurrentSaveData();
+            if (saveData == null)
+            {
+                // 기본값
+                switch (category)
+                {
+                    case PitchCategory.Low: return "Fire";
+                    case PitchCategory.Medium: return "Ice";
+                    case PitchCategory.High: return "Electric";
+                    default: return "Fire";
+                }
+            }
+
+            switch (category)
+            {
+                case PitchCategory.Low:
+                    return !string.IsNullOrEmpty(saveData.lowPitchElement) ? saveData.lowPitchElement : "Fire";
+                case PitchCategory.Medium:
+                    return !string.IsNullOrEmpty(saveData.midPitchElement) ? saveData.midPitchElement : "Ice";
+                case PitchCategory.High:
+                    return !string.IsNullOrEmpty(saveData.highPitchElement) ? saveData.highPitchElement : "Electric";
+                default:
+                    return "Fire";
+            }
+        }
+
+        /// <summary>
+        /// 고정 속성 모드 설정 (특정 탭 선택 시)
+        /// pitchCategory가 null이면 전체 탭 (실시간 피치 감지)
+        /// </summary>
+        public void SetFixedElement(PitchCategory? pitchCategory, string element)
+        {
+            fixedPitchCategory = pitchCategory;
+
+            if (pitchCategory == null)
+            {
+                // 전체 탭: 실시간 피치 감지 모드
+                useFixedElement = false;
+                fixedElement = null;
+                Debug.Log("[VoiceRecognition] 전체 탭 선택: 실시간 피치 감지 모드");
+            }
+            else
+            {
+                // 특정 탭: 고정 속성 모드
+                useFixedElement = true;
+                fixedElement = element;
+                Debug.Log($"[VoiceRecognition] 고정 속성 모드: {element} (피치: {pitchCategory})");
+            }
+        }
+
+        /// <summary>
+        /// 현재 사용할 속성 반환 (고정 모드면 고정 속성, 아니면 피치 기반)
+        /// </summary>
+        public string GetCurrentElement()
+        {
+            if (useFixedElement && !string.IsNullOrEmpty(fixedElement))
+            {
+                return fixedElement;
+            }
+            return GetElementForPitchCategory(lastDetectedPitchCategory);
+        }
+
+        /// <summary>
+        /// 현재 고정 속성 모드인지 반환
+        /// </summary>
+        public bool IsFixedElementMode()
+        {
+            return useFixedElement;
+        }
+
+        /// <summary>
+        /// 일반 스킬을 속성별 스킬로 변환
+        /// </summary>
+        private string GetElementSkillName(SkillData skill, string element)
+        {
+            if (skill == null || skill.elementVariants == null) return null;
+
+            if (skill.elementVariants.ContainsKey(element))
+            {
+                var variant = skill.elementVariants[element];
+                return variant.name;
+            }
+
+            return null;
+        }
+
+        /// <summary>
         /// 씬이 로드될 때마다 참조 갱신
         /// </summary>
         private void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
@@ -182,6 +288,9 @@ namespace LostSpells.Systems
 
             // InGameUI 찾기 (없으면 null)
             inGameUI = FindFirstObjectByType<LostSpells.UI.InGameUI>();
+
+            // MenuManager 찾기 (없으면 null)
+            menuManager = FindFirstObjectByType<LostSpells.UI.MenuManager>();
 
             // 스킬 초기화
             InitializeSkills();
@@ -281,6 +390,10 @@ namespace LostSpells.Systems
             }
         }
 
+        // 실시간 피치 분석 간격 (프레임마다 분석하면 부하가 크므로)
+        private float pitchAnalysisInterval = 0.1f; // 100ms마다
+        private float lastPitchAnalysisTime = 0f;
+
         private void Update()
         {
             // 키 트리거 모드에서만 키 입력 처리
@@ -312,6 +425,59 @@ namespace LostSpells.Systems
                 }
             }
             // 연속 모드는 VoiceRecorder의 이벤트로 처리됨
+
+            // 실시간 피치 분석 및 시각화 (녹음 중일 때만)
+            if (isRecording && enablePitchAnalysis && pitchAnalyzer != null && playerComponent != null)
+            {
+                var currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+                if (currentScene == "InGame" && Time.unscaledTime - lastPitchAnalysisTime >= pitchAnalysisInterval)
+                {
+                    lastPitchAnalysisTime = Time.unscaledTime;
+                    UpdateRealtimePitchVisualization();
+                }
+            }
+        }
+
+        /// <summary>
+        /// 실시간 피치 시각화 업데이트
+        /// </summary>
+        private void UpdateRealtimePitchVisualization()
+        {
+            if (voiceRecorder == null || pitchAnalyzer == null) return;
+
+            // 고정 속성 모드일 때는 고정 색상 유지
+            if (useFixedElement && !string.IsNullOrEmpty(fixedElement))
+            {
+                if (playerComponent != null)
+                {
+                    playerComponent.UpdateVoiceParticleByPitch(
+                        fixedPitchCategory ?? PitchCategory.Medium,
+                        fixedElement
+                    );
+                }
+                return;
+            }
+
+            // 현재 오디오 샘플 가져오기
+            float[] samples = voiceRecorder.GetCurrentAudioSamples(2048);
+            if (samples == null) return;
+
+            // 피치 감지
+            float frequency = pitchAnalyzer.DetectPitchRealtime(samples, 16000);
+            if (frequency <= 0) return;
+
+            // 피치 카테고리 결정
+            PitchCategory category = pitchAnalyzer.GetCategory(frequency);
+            lastDetectedPitchCategory = category;
+
+            // 피치 카테고리에 해당하는 속성 가져오기
+            string element = GetElementForPitchCategory(category);
+
+            // 파티클 색상 업데이트
+            if (playerComponent != null)
+            {
+                playerComponent.UpdateVoiceParticleByPitch(category, element);
+            }
         }
 
         /// <summary>
@@ -388,12 +554,6 @@ namespace LostSpells.Systems
             recordingStartTime = Time.unscaledTime; // 일시정지 중에도 동작하도록
             // Debug.Log($"[VoiceRecognition] 녹음 시작 시간: {recordingStartTime}");
 
-            // 새로운 인식 시작 시 이전 정확도 초기화
-            if (inGameUI != null)
-            {
-                inGameUI.ClearSkillAccuracy();
-            }
-
             voiceRecorder.StartRecording();
 
             // 음성인식 파티클 표시
@@ -465,6 +625,22 @@ namespace LostSpells.Systems
         /// </summary>
         private IEnumerator SendAudioToServer()
         {
+            // 피치 분석 (녹음된 오디오로 분석)
+            var currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+            if (enablePitchAnalysis && currentScene == "InGame" && pitchAnalyzer != null)
+            {
+                AudioClip recordedClip = voiceRecorder.GetRecordedClip();
+                if (recordedClip != null)
+                {
+                    var pitchResult = pitchAnalyzer.AnalyzeClip(recordedClip);
+                    if (pitchResult != null)
+                    {
+                        lastDetectedPitchCategory = pitchResult.DominantCategory;
+                        Debug.Log($"[VoiceRecognition] 피치 분석 결과: {lastDetectedPitchCategory} (Low:{pitchResult.LowCount}, Mid:{pitchResult.MediumCount}, High:{pitchResult.HighCount})");
+                    }
+                }
+            }
+
             // 녹음된 오디오를 바이트 배열로 변환
             byte[] audioData = voiceRecorder.GetRecordingAsBytes();
 
@@ -513,6 +689,10 @@ namespace LostSpells.Systems
                     UpdateVoiceRecognitionDisplay("서버 연결 실패");
                     StartCoroutine(ClearVoiceRecognitionDisplayAfterDelay(3f));
                 }
+
+                // 하단 상태 패널에도 실패 표시
+                UpdateVoiceStatusPanelUI("", "서버 연결 실패");
+                StartCoroutine(ClearVoiceStatusPanelAfterDelay(3f));
                 return;
             }
 
@@ -533,16 +713,14 @@ namespace LostSpells.Systems
                 {
                     UpdateVoiceRecognitionDisplay($"인식: {skillDisplayName} (100%)");
                 }
+
+                // 화면 하단 상태 패널 업데이트
+                UpdateVoiceStatusPanelUI(recognizedText, skillDisplayName);
+
                 ExecuteSkill(onlySkill);
 
-                if (inGameUI != null)
-                {
-                    var accuracyScores = new System.Collections.Generic.Dictionary<string, float>();
-                    accuracyScores[onlySkill] = 1.0f;
-                    inGameUI.UpdateSkillAccuracy(accuracyScores);
-                }
-
                 StartCoroutine(ClearVoiceRecognitionDisplayAfterDelay(3f));
+                StartCoroutine(ClearVoiceStatusPanelAfterDelay(3f));
                 return;
             }
 
@@ -562,21 +740,11 @@ namespace LostSpells.Systems
                     UpdateVoiceRecognitionDisplay($"인식: {skillDisplayName} ({scorePercent}%)");
                 }
 
+                // 화면 하단 상태 패널 업데이트
+                UpdateVoiceStatusPanelUI(recognizedText, skillDisplayName);
+
                 // 스킬 실행
                 ExecuteSkill(result.best_match.skill);
-
-                // 매칭 성공 시 정확도 정보를 InGameUI에 전달
-                if (inGameUI != null)
-                {
-                    // skill_scores가 null이면 best_match만으로 Dictionary 생성
-                    var accuracyScores = result.skill_scores;
-                    if (accuracyScores == null || accuracyScores.Count == 0)
-                    {
-                        accuracyScores = new System.Collections.Generic.Dictionary<string, float>();
-                        accuracyScores[result.best_match.skill] = result.best_match.score;
-                    }
-                    inGameUI.UpdateSkillAccuracy(accuracyScores);
-                }
             }
             else
             {
@@ -598,9 +766,13 @@ namespace LostSpells.Systems
                         UpdateVoiceRecognitionDisplay($"인식 실패: {recognizedText}");
                     }
                 }
+
+                // 실패 시에도 하단 패널에 표시
+                UpdateVoiceStatusPanelUI(recognizedText, "인식 실패");
             }
 
             StartCoroutine(ClearVoiceRecognitionDisplayAfterDelay(3f));
+            StartCoroutine(ClearVoiceStatusPanelAfterDelay(3f));
         }
 
         /// <summary>
@@ -723,6 +895,30 @@ namespace LostSpells.Systems
         }
 
         /// <summary>
+        /// 음성인식 상태 패널 업데이트 (화면 하단 - 인식 텍스트와 명령어 표시)
+        /// </summary>
+        private void UpdateVoiceStatusPanelUI(string recognizedText, string executedCommand)
+        {
+            if (inGameUI != null)
+            {
+                inGameUI.UpdateVoiceStatusPanel(recognizedText, executedCommand);
+            }
+            if (menuManager != null)
+            {
+                menuManager.UpdateVoiceStatusPanel(recognizedText, executedCommand);
+            }
+        }
+
+        /// <summary>
+        /// 음성인식 상태 패널 지우기 (일정 시간 후)
+        /// </summary>
+        private IEnumerator ClearVoiceStatusPanelAfterDelay(float delay)
+        {
+            yield return new WaitForSecondsRealtime(delay);
+            UpdateVoiceStatusPanelUI("", "");
+        }
+
+        /// <summary>
         /// 인식된 스킬 또는 시스템 명령 실행
         /// </summary>
         private void ExecuteSkill(string skillName)
@@ -758,7 +954,7 @@ namespace LostSpells.Systems
         }
 
         /// <summary>
-        /// 스킬 이름으로 스킬 실행 (스킬창 클릭과 동일한 방식)
+        /// 스킬 이름으로 스킬 실행 (음성인식: 전체 스킬에서 검색하여 현재 피치 속성 적용)
         /// </summary>
         private void ExecuteSkillByName(string skillName)
         {
@@ -767,35 +963,84 @@ namespace LostSpells.Systems
                 return;
             }
 
-            // activeSkills에서 매칭되는 스킬 찾기 (스킬창에 표시된 스킬과 동일)
-            if (activeSkills != null && activeSkills.Count > 0)
+            // 음성인식은 항상 전체 스킬에서 검색 (전체 탭처럼 동작)
+            // DataManager에서 모든 스킬 가져오기
+            var allSkills = DataManager.Instance.GetAllSkillData();
+            if (allSkills == null || allSkills.Count == 0)
             {
-                string skillNameLower = skillName.ToLower().Replace(" ", "");
-                foreach (var skill in activeSkills)
-                {
-                    // 영어 스킬 이름으로 매칭
-                    if (!string.IsNullOrEmpty(skill.skillNameEn))
-                    {
-                        string skillEnLower = skill.skillNameEn.ToLower().Replace(" ", "");
-                        if (skillEnLower.Contains(skillNameLower) || skillNameLower.Contains(skillEnLower))
-                        {
-                            // 스킬창 클릭과 동일한 방식으로 발사
-                            playerComponent.CastSkillByData(skill);
-                            return;
-                        }
-                    }
+                Debug.LogWarning("[VoiceRecognition] 스킬 데이터가 없습니다.");
+                return;
+            }
 
-                    // 한국어 스킬 이름으로 매칭
-                    if (!string.IsNullOrEmpty(skill.skillName) && skill.skillName.Contains(skillName))
+            string skillNameLower = skillName.ToLower().Replace(" ", "");
+            foreach (var skill in allSkills)
+            {
+                // 음성 키워드로 매칭
+                if (!string.IsNullOrEmpty(skill.voiceKeyword))
+                {
+                    string keywordLower = skill.voiceKeyword.ToLower().Replace(" ", "");
+                    if (keywordLower == skillNameLower || skillNameLower.Contains(keywordLower))
                     {
-                        // 스킬창 클릭과 동일한 방식으로 발사
-                        playerComponent.CastSkillByData(skill);
+                        ExecuteMatchedSkill(skill);
                         return;
                     }
+                }
+
+                // 영어 스킬 이름으로 매칭
+                if (!string.IsNullOrEmpty(skill.skillNameEn))
+                {
+                    string skillEnLower = skill.skillNameEn.ToLower().Replace(" ", "");
+                    if (skillEnLower.Contains(skillNameLower) || skillNameLower.Contains(skillEnLower))
+                    {
+                        ExecuteMatchedSkill(skill);
+                        return;
+                    }
+                }
+
+                // 한국어 스킬 이름으로 매칭
+                if (!string.IsNullOrEmpty(skill.skillName) && skill.skillName.Contains(skillName))
+                {
+                    ExecuteMatchedSkill(skill);
+                    return;
                 }
             }
 
             // Debug.LogWarning($"[VoiceRecognition] 스킬을 찾을 수 없음: {skillName}");
+        }
+
+        /// <summary>
+        /// 매칭된 스킬 실행 (피치 기반 또는 고정 속성 적용)
+        /// </summary>
+        private void ExecuteMatchedSkill(SkillData skill)
+        {
+            if (playerComponent == null || skill == null) return;
+
+            // 일반 스킬인 경우 속성 적용
+            if (skill.isGenericSkill && skill.elementVariants != null)
+            {
+                // 현재 속성 가져오기 (고정 모드면 고정 속성, 아니면 피치 기반)
+                string element = GetCurrentElement();
+
+                // 해당 속성의 스킬 변형이 있는지 확인
+                if (skill.elementVariants.ContainsKey(element))
+                {
+                    var variant = skill.elementVariants[element];
+                    string modeStr = useFixedElement ? "고정 속성" : "피치 기반";
+                    Debug.Log($"[VoiceRecognition] {modeStr} 스킬 발동: {variant.name} (속성: {element})");
+
+                    // 속성별 이펙트 프리팹으로 스킬 발동
+                    playerComponent.CastSkillByDataWithVariant(skill, variant);
+                    return;
+                }
+                else
+                {
+                    // 해당 속성에 변형이 없으면 기본 스킬 발동
+                    Debug.Log($"[VoiceRecognition] 속성 {element}에 대한 변형 없음, 기본 스킬 발동: {skill.skillName}");
+                }
+            }
+
+            // 일반 스킬이 아니거나 변형이 없으면 기본 스킬 발동
+            playerComponent.CastSkillByData(skill);
         }
 
         /// <summary>
@@ -1436,12 +1681,6 @@ namespace LostSpells.Systems
 
             isRecording = true;
             recordingStartTime = Time.unscaledTime;
-
-            // 이전 정확도 초기화
-            if (inGameUI != null)
-            {
-                inGameUI.ClearSkillAccuracy();
-            }
 
             // 음성인식 파티클 표시
             if (playerComponent != null)

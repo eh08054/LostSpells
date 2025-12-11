@@ -540,6 +540,36 @@ namespace LostSpells.Systems
         }
 
         /// <summary>
+        /// 실시간 피치 분석을 위한 현재 오디오 샘플 가져오기
+        /// </summary>
+        /// <param name="sampleCount">가져올 샘플 수 (기본 2048)</param>
+        /// <returns>오디오 샘플 배열 또는 null</returns>
+        public float[] GetCurrentAudioSamples(int sampleCount = 2048)
+        {
+            if (loopingClip == null || !isMicrophoneReady) return null;
+            if (string.IsNullOrEmpty(microphoneDevice)) return null;
+            if (!Microphone.IsRecording(microphoneDevice)) return null;
+
+            int currentPosition = Microphone.GetPosition(microphoneDevice);
+            if (currentPosition < sampleCount) return null;
+
+            int offset = currentPosition - sampleCount;
+            if (offset < 0) return null;
+            if (offset + sampleCount > loopingClip.samples) return null;
+
+            try
+            {
+                float[] samples = new float[sampleCount];
+                loopingClip.GetData(samples, offset);
+                return samples;
+            }
+            catch (System.Exception)
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
         /// 녹음 중인지 확인
         /// </summary>
         public bool IsRecording()
@@ -587,14 +617,25 @@ namespace LostSpells.Systems
         }
 
         /// <summary>
-        /// 오디오 클립에서 앞뒤 무음 제거
+        /// 오디오 클립에서 앞뒤 무음 제거 (최소 0.5초 보장)
         /// </summary>
-        private AudioClip TrimSilence(AudioClip clip, float silenceThreshold = 0.01f)
+        private AudioClip TrimSilence(AudioClip clip, float silenceThreshold = 0.005f)
         {
             if (clip == null) return null;
 
             int channels = clip.channels;
             int totalSamples = clip.samples; // 채널당 샘플 수
+            int frequency = clip.frequency;
+
+            // 최소 보장 샘플 수 (0.5초)
+            int minSamples = frequency / 2;
+
+            // 원본이 이미 짧으면 그대로 반환
+            if (totalSamples <= minSamples)
+            {
+                Debug.Log($"[VoiceRecorder] TrimSilence: 원본이 이미 짧음 ({totalSamples} samples), 그대로 반환");
+                return clip;
+            }
 
             // 전체 샘플 데이터 가져오기
             float[] samples = new float[totalSamples * channels];
@@ -643,11 +684,25 @@ namespace LostSpells.Systems
             // 전체가 무음인 경우 원본 반환
             if (startFrame >= endFrame)
             {
+                Debug.Log($"[VoiceRecorder] TrimSilence: 전체 무음으로 판단, 원본 반환");
                 return clip;
             }
 
+            // 패딩 추가 (앞뒤로 0.1초씩)
+            int paddingSamples = frequency / 10;
+            startFrame = Mathf.Max(0, startFrame - paddingSamples);
+            endFrame = Mathf.Min(totalSamples - 1, endFrame + paddingSamples);
+
             // 무음 제거된 샘플 추출
             int trimmedFrames = endFrame - startFrame + 1;
+
+            // 최소 길이 보장
+            if (trimmedFrames < minSamples)
+            {
+                Debug.Log($"[VoiceRecorder] TrimSilence: 트림 후 너무 짧음 ({trimmedFrames} < {minSamples}), 원본 반환");
+                return clip;
+            }
+
             float[] trimmedSamples = new float[trimmedFrames * channels];
             System.Array.Copy(samples, startFrame * channels, trimmedSamples, 0, trimmedFrames * channels);
 
@@ -656,13 +711,13 @@ namespace LostSpells.Systems
                 "TrimmedAudio",
                 trimmedFrames,
                 channels,
-                clip.frequency,
+                frequency,
                 false
             );
 
             trimmedClip.SetData(trimmedSamples, 0);
 
-            // Debug.Log($"[VoiceRecorder] TrimSilence: {totalSamples} -> {trimmedFrames} frames");
+            Debug.Log($"[VoiceRecorder] TrimSilence: {totalSamples} -> {trimmedFrames} frames ({(float)trimmedFrames / frequency:F2}초)");
 
             return trimmedClip;
         }

@@ -56,6 +56,10 @@ namespace LostSpells.UI
         // Store 패널 참조
         private StorePanelController storePanelController;
 
+        // 음성인식 상태 패널
+        private VisualElement voiceStatusPanel;
+        private Label voiceStatusText;
+
         private void Awake()
         {
             uiDocument = GetComponent<UIDocument>();
@@ -74,6 +78,10 @@ namespace LostSpells.UI
             optionsPanel = root.Q<VisualElement>("OptionsPanel");
             storePanel = root.Q<VisualElement>("StorePanel");
             quitConfirmation = root.Q<VisualElement>("QuitConfirmation");
+
+            // 음성인식 상태 패널 찾기
+            voiceStatusPanel = root.Q<VisualElement>("VoiceStatusPanel");
+            voiceStatusText = root.Q<Label>("VoiceStatusText");
 
             // 이벤트 등록
             SetupMainMenuEvents();
@@ -590,6 +598,39 @@ namespace LostSpells.UI
             if (storePanelController != null)
             {
                 storePanelController.UpdateLocalization(loc);
+            }
+        }
+
+        #endregion
+
+        #region Voice Status Panel
+
+        /// <summary>
+        /// 음성인식 상태 패널 업데이트
+        /// </summary>
+        public void UpdateVoiceStatusPanel(string recognizedText, string executedCommand)
+        {
+            bool hasContent = !string.IsNullOrEmpty(recognizedText) || !string.IsNullOrEmpty(executedCommand);
+
+            if (voiceStatusPanel != null)
+            {
+                voiceStatusPanel.style.display = hasContent ? DisplayStyle.Flex : DisplayStyle.None;
+            }
+
+            if (voiceStatusText != null && hasContent)
+            {
+                if (!string.IsNullOrEmpty(recognizedText) && !string.IsNullOrEmpty(executedCommand))
+                {
+                    voiceStatusText.text = $"\"{recognizedText}\" → {executedCommand}";
+                }
+                else if (!string.IsNullOrEmpty(executedCommand))
+                {
+                    voiceStatusText.text = executedCommand;
+                }
+                else
+                {
+                    voiceStatusText.text = recognizedText;
+                }
             }
         }
 

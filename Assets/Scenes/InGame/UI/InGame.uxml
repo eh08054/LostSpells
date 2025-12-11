@@ -95,12 +95,13 @@
                 <ui:VisualElement name="RightSidebar" class="right-sidebar">
                     <!-- 스킬 창 패널 -->
                     <ui:VisualElement name="SkillPanel" class="sidebar-panel">
-                        <!-- 스킬 카테고리 버튼들 (가로 스크롤 가능) -->
+                        <!-- 스킬 카테고리 버튼들 (피치 기반: 전체/저/중/고) -->
                         <ui:ScrollView name="SkillCategoryScrollView" class="skill-category-scroll-view" horizontal-scroller-visibility="Hidden" vertical-scroller-visibility="Hidden" mode="Horizontal">
                             <ui:VisualElement name="SkillCategoryButtons" class="skill-category-buttons">
                                 <ui:Button text="" name="AllSkillButton" class="skill-category-button"/>
-                                <ui:Button text="" name="AttackSkillButton" class="skill-category-button"/>
-                                <ui:Button text="" name="DefenseSkillButton" class="skill-category-button"/>
+                                <ui:Button text="" name="LowPitchSkillButton" class="skill-category-button"/>
+                                <ui:Button text="" name="MidPitchSkillButton" class="skill-category-button"/>
+                                <ui:Button text="" name="HighPitchSkillButton" class="skill-category-button"/>
                             </ui:VisualElement>
                         </ui:ScrollView>
 
@@ -109,23 +110,30 @@
                             <ui:Label text="" name="VoiceRecognitionText" class="voice-recognition-text"/>
                         </ui:VisualElement>
 
-                        <!-- 전체 스킬 목록 (카테고리별로 그룹화) -->
+                        <!-- 전체 스킬 목록 (피치별로 그룹화) -->
                         <ui:ScrollView name="AllSkillScrollView" class="skill-scroll-view" vertical-scroller-visibility="Hidden" horizontal-scroller-visibility="Hidden">
                             <ui:VisualElement name="AllSkillList" class="skill-list">
                                 <!-- 동적으로 생성됨 -->
                             </ui:VisualElement>
                         </ui:ScrollView>
 
-                        <!-- 공격형 스킬 목록 (초기에는 숨김) -->
-                        <ui:ScrollView name="AttackSkillScrollView" class="skill-scroll-view hidden" vertical-scroller-visibility="Hidden" horizontal-scroller-visibility="Hidden">
-                            <ui:VisualElement name="AttackSkillList" class="skill-list">
+                        <!-- 저음 스킬 목록 (초기에는 숨김) -->
+                        <ui:ScrollView name="LowPitchSkillScrollView" class="skill-scroll-view hidden" vertical-scroller-visibility="Hidden" horizontal-scroller-visibility="Hidden">
+                            <ui:VisualElement name="LowPitchSkillList" class="skill-list">
                                 <!-- 동적으로 생성됨 -->
                             </ui:VisualElement>
                         </ui:ScrollView>
 
-                        <!-- 방어형 스킬 목록 (초기에는 숨김) -->
-                        <ui:ScrollView name="DefenseSkillScrollView" class="skill-scroll-view hidden" vertical-scroller-visibility="Hidden" horizontal-scroller-visibility="Hidden">
-                            <ui:VisualElement name="DefenseSkillList" class="skill-list">
+                        <!-- 중음 스킬 목록 (초기에는 숨김) -->
+                        <ui:ScrollView name="MidPitchSkillScrollView" class="skill-scroll-view hidden" vertical-scroller-visibility="Hidden" horizontal-scroller-visibility="Hidden">
+                            <ui:VisualElement name="MidPitchSkillList" class="skill-list">
+                                <!-- 동적으로 생성됨 -->
+                            </ui:VisualElement>
+                        </ui:ScrollView>
+
+                        <!-- 고음 스킬 목록 (초기에는 숨김) -->
+                        <ui:ScrollView name="HighPitchSkillScrollView" class="skill-scroll-view hidden" vertical-scroller-visibility="Hidden" horizontal-scroller-visibility="Hidden">
+                            <ui:VisualElement name="HighPitchSkillList" class="skill-list">
                                 <!-- 동적으로 생성됨 -->
                             </ui:VisualElement>
                         </ui:ScrollView>
@@ -263,6 +271,13 @@
 
             <!-- 공용 옵션 컨텐츠 템플릿 -->
             <ui:Instance template="OptionsContent"/>
+        </ui:VisualElement>
+
+        <!-- 음성인식 상태 패널 (화면 하단 고정) -->
+        <ui:VisualElement name="VoiceStatusPanel" class="voice-status-panel">
+            <ui:VisualElement class="voice-status-content">
+                <ui:Label text="" name="VoiceStatusText" class="voice-status-text"/>
+            </ui:VisualElement>
         </ui:VisualElement>
 
     </ui:VisualElement>

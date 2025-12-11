@@ -15,6 +15,7 @@ namespace LostSpells.UI
     {
         private VisualElement root;
         private VisualElement optionsPopup;
+        private MonoBehaviour coroutineRunner;
 
         // SaveManager 참조
         private SaveManager saveManager;
@@ -52,6 +53,20 @@ namespace LostSpells.UI
         // Voice Recognition 서버 모드 컨트롤
         private CustomDropdown serverModeDropdown;
 
+        // Voice Input Mode 컨트롤
+        private CustomDropdown voiceInputModeDropdown;
+
+        // Pitch Element 드롭다운 컨트롤
+        private CustomDropdown lowPitchElementDropdown;
+        private CustomDropdown midPitchElementDropdown;
+        private CustomDropdown highPitchElementDropdown;
+
+        // 사용 가능한 속성 목록
+        private static readonly List<string> availableElements = new List<string>
+        {
+            "Fire", "Ice", "Electric", "Earth", "Holy", "Void"
+        };
+
         // Game 패널 컨트롤
         private CollapsibleSection keyBindingSection;
         private CollapsibleSection voiceRecognitionSection;
@@ -66,6 +81,7 @@ namespace LostSpells.UI
 
         // 서버 체크
         private const string SERVER_URL = "http://localhost:8000";
+        private Coroutine serverStatusCheckCoroutine;
 
         // 키 바인딩 상태
         private bool isWaitingForKey = false;
@@ -80,10 +96,11 @@ namespace LostSpells.UI
             (2560, 1440, "2560x1440 (QHD)")
         };
 
-        public InGameOptionsPanelController(VisualElement root, VisualElement optionsPopup)
+        public InGameOptionsPanelController(VisualElement root, VisualElement optionsPopup, MonoBehaviour coroutineRunner)
         {
             this.root = root;
             this.optionsPopup = optionsPopup;
+            this.coroutineRunner = coroutineRunner;
 
             // SaveManager 싱글톤 인스턴스 가져오기
             saveManager = SaveManager.Instance;
@@ -135,6 +152,14 @@ namespace LostSpells.UI
 
             // Voice Recognition 서버 모드 컨트롤
             serverModeDropdown = new CustomDropdown(optionsPopup, "ServerModeDropdownContainer", "ServerModeDropdownButton", "ServerModeDropdownLabel", "ServerModeDropdownList");
+
+            // Voice Input Mode 컨트롤
+            voiceInputModeDropdown = new CustomDropdown(optionsPopup, "VoiceInputModeDropdownContainer", "VoiceInputModeDropdownButton", "VoiceInputModeDropdownLabel", "VoiceInputModeDropdownList");
+
+            // Pitch Element 드롭다운 컨트롤
+            lowPitchElementDropdown = new CustomDropdown(optionsPopup, "LowPitchElementDropdownContainer", "LowPitchElementDropdownButton", "LowPitchElementDropdownLabel", "LowPitchElementDropdownList");
+            midPitchElementDropdown = new CustomDropdown(optionsPopup, "MidPitchElementDropdownContainer", "MidPitchElementDropdownButton", "MidPitchElementDropdownLabel", "MidPitchElementDropdownList");
+            highPitchElementDropdown = new CustomDropdown(optionsPopup, "HighPitchElementDropdownContainer", "HighPitchElementDropdownButton", "HighPitchElementDropdownLabel", "HighPitchElementDropdownList");
 
             // Game 패널 컨트롤
             keyBindingSection = new CollapsibleSection(optionsPopup, "KeyBindingsHeader", "KeyBindingsToggleButton", "KeyBindingArea");
@@ -206,6 +231,7 @@ namespace LostSpells.UI
             LoadLanguageSettings();
             LoadVoiceSettings();
             LoadKeyBindings();
+            LoadPitchElementSettings();
         }
 
         private void LoadAudioSettings()
@@ -283,6 +309,43 @@ namespace LostSpells.UI
 
                 serverModeDropdown.SetItems(serverModes, selectedMode, OnServerModeChanged);
             }
+
+            // Voice Input Mode 드롭다운 설정
+            if (voiceInputModeDropdown != null)
+            {
+                List<string> inputModes = new List<string> { "Key Triggered", "Continuous" };
+
+                string selectedInputMode = "Key Triggered";
+                if (!string.IsNullOrEmpty(saveData.voiceInputMode))
+                {
+                    selectedInputMode = saveData.voiceInputMode == "Continuous" ? "Continuous" : "Key Triggered";
+                }
+
+                voiceInputModeDropdown.SetItems(inputModes, selectedInputMode, OnVoiceInputModeChanged);
+
+                // VoiceRecognitionManager에 현재 모드 적용
+                if (VoiceRecognitionManager.Instance != null)
+                {
+                    VoiceInputMode mode = selectedInputMode == "Continuous" ? VoiceInputMode.Continuous : VoiceInputMode.KeyTriggered;
+                    VoiceRecognitionManager.Instance.SetVoiceInputMode(mode);
+                }
+            }
+        }
+
+        private void OnVoiceInputModeChanged(string value)
+        {
+            if (saveData != null)
+            {
+                saveData.voiceInputMode = value == "Continuous" ? "Continuous" : "KeyTriggered";
+
+                // VoiceRecognitionManager에 모드 변경 알림
+                if (VoiceRecognitionManager.Instance != null)
+                {
+                    VoiceInputMode mode = value == "Continuous" ? VoiceInputMode.Continuous : VoiceInputMode.KeyTriggered;
+                    VoiceRecognitionManager.Instance.SetVoiceInputMode(mode);
+                }
+                SaveSettings();
+            }
         }
 
         private void LoadKeyBindings()
@@ -327,6 +390,57 @@ namespace LostSpells.UI
             }
         }
 
+        private void LoadPitchElementSettings()
+        {
+            if (saveData == null) return;
+
+            // 저장된 속성 로드 (없으면 기본값)
+            string lowElement = !string.IsNullOrEmpty(saveData.lowPitchElement) ? saveData.lowPitchElement : "Fire";
+            string midElement = !string.IsNullOrEmpty(saveData.midPitchElement) ? saveData.midPitchElement : "Ice";
+            string highElement = !string.IsNullOrEmpty(saveData.highPitchElement) ? saveData.highPitchElement : "Electric";
+
+            // 드롭다운 설정
+            if (lowPitchElementDropdown != null)
+            {
+                lowPitchElementDropdown.SetItems(availableElements, lowElement, OnLowPitchElementChanged);
+            }
+            if (midPitchElementDropdown != null)
+            {
+                midPitchElementDropdown.SetItems(availableElements, midElement, OnMidPitchElementChanged);
+            }
+            if (highPitchElementDropdown != null)
+            {
+                highPitchElementDropdown.SetItems(availableElements, highElement, OnHighPitchElementChanged);
+            }
+        }
+
+        private void OnLowPitchElementChanged(string value)
+        {
+            if (saveData != null)
+            {
+                saveData.lowPitchElement = value;
+                SaveSettings();
+            }
+        }
+
+        private void OnMidPitchElementChanged(string value)
+        {
+            if (saveData != null)
+            {
+                saveData.midPitchElement = value;
+                SaveSettings();
+            }
+        }
+
+        private void OnHighPitchElementChanged(string value)
+        {
+            if (saveData != null)
+            {
+                saveData.highPitchElement = value;
+                SaveSettings();
+            }
+        }
+
         /// <summary>
         /// 패널이 표시될 때 호출
         /// </summary>
@@ -335,6 +449,68 @@ namespace LostSpells.UI
             LoadSaveData();
             LoadSettings();
             ShowPanel(audioPanel);
+
+            // 서버 상태 체크 시작
+            StartServerStatusCheck();
+        }
+
+        /// <summary>
+        /// 패널이 숨겨질 때 호출
+        /// </summary>
+        public void OnPanelHidden()
+        {
+            // 서버 상태 체크 중지
+            StopServerStatusCheck();
+        }
+
+        private void StartServerStatusCheck()
+        {
+            if (coroutineRunner != null && serverStatusCheckCoroutine == null)
+            {
+                serverStatusCheckCoroutine = coroutineRunner.StartCoroutine(CheckServerStatusLoop());
+            }
+        }
+
+        private void StopServerStatusCheck()
+        {
+            if (coroutineRunner != null && serverStatusCheckCoroutine != null)
+            {
+                coroutineRunner.StopCoroutine(serverStatusCheckCoroutine);
+                serverStatusCheckCoroutine = null;
+            }
+        }
+
+        private IEnumerator CheckServerStatusLoop()
+        {
+            while (true)
+            {
+                yield return CheckServerStatus();
+                yield return new WaitForSecondsRealtime(3f); // 3초마다 체크 (Time.timeScale=0에서도 동작)
+            }
+        }
+
+        private IEnumerator CheckServerStatus()
+        {
+            using (UnityWebRequest request = UnityWebRequest.Get($"{SERVER_URL}/"))
+            {
+                request.timeout = 2;
+                yield return request.SendWebRequest();
+
+                if (serverStatusLabel != null)
+                {
+                    var loc = LocalizationManager.Instance;
+                    if (request.result == UnityWebRequest.Result.Success)
+                    {
+                        serverStatusLabel.text = loc.GetText("options_voice_server_connected");
+                        serverStatusLabel.style.color = new Color(0.2f, 0.8f, 0.2f);
+                    }
+                    else
+                    {
+                        serverStatusLabel.text = loc.GetText("options_voice_server_disconnected");
+                        serverStatusLabel.style.color = new Color(0.8f, 0.2f, 0.2f);
+                    }
+                }
+            }
         }
 
         #region Voice Command Tab/Section Control
@@ -530,6 +706,11 @@ namespace LostSpells.UI
             if (serverModeLabel != null)
                 serverModeLabel.text = loc.GetText("options_voice_server_mode");
 
+            // Voice Recognition - 입력 모드 라벨
+            var voiceInputModeLabel = optionsPopup.Q<Label>("VoiceInputModeLabel");
+            if (voiceInputModeLabel != null)
+                voiceInputModeLabel.text = loc.GetText("options_voice_input_mode");
+
             // 게임 초기화
             var resetGameLabel = optionsPopup.Q<Label>("ResetGameLabel");
             if (resetGameLabel != null)
@@ -696,7 +877,14 @@ namespace LostSpells.UI
                     { "VoiceRecord", "Space" },
                     { "SkillPanel", "Tab" }
                 };
+
+                // 피치 속성 초기화
+                saveData.lowPitchElement = "Fire";
+                saveData.midPitchElement = "Ice";
+                saveData.highPitchElement = "Electric";
+
                 LoadKeyBindings();
+                LoadPitchElementSettings();
                 SaveSettings();
             }
         }
@@ -759,11 +947,17 @@ namespace LostSpells.UI
 
         public void Dispose()
         {
+            StopServerStatusCheck();
+
             microphoneDropdown?.Dispose();
             qualityDropdown?.Dispose();
             screenModeDropdown?.Dispose();
             uiLanguageDropdown?.Dispose();
             serverModeDropdown?.Dispose();
+            voiceInputModeDropdown?.Dispose();
+            lowPitchElementDropdown?.Dispose();
+            midPitchElementDropdown?.Dispose();
+            highPitchElementDropdown?.Dispose();
 
             keyBindingSection?.Dispose();
             voiceRecognitionSection?.Dispose();

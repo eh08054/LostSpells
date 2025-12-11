@@ -57,6 +57,17 @@ namespace LostSpells.UI
         // Voice Input Mode 컨트롤
         private CustomDropdown voiceInputModeDropdown;
 
+        // Pitch Element 드롭다운 컨트롤
+        private CustomDropdown lowPitchElementDropdown;
+        private CustomDropdown midPitchElementDropdown;
+        private CustomDropdown highPitchElementDropdown;
+
+        // 사용 가능한 속성 목록
+        private static readonly List<string> availableElements = new List<string>
+        {
+            "Fire", "Ice", "Electric", "Earth", "Holy", "Void"
+        };
+
         // Game 패널 컨트롤
         private CollapsibleSection keyBindingSection;
         private CollapsibleSection voiceRecognitionSection;
@@ -206,6 +217,11 @@ namespace LostSpells.UI
             // Voice Input Mode 컨트롤
             voiceInputModeDropdown = new CustomDropdown(optionsPanel, "VoiceInputModeDropdownContainer", "VoiceInputModeDropdownButton", "VoiceInputModeDropdownLabel", "VoiceInputModeDropdownList");
 
+            // Pitch Element 드롭다운 컨트롤
+            lowPitchElementDropdown = new CustomDropdown(optionsPanel, "LowPitchElementDropdownContainer", "LowPitchElementDropdownButton", "LowPitchElementDropdownLabel", "LowPitchElementDropdownList");
+            midPitchElementDropdown = new CustomDropdown(optionsPanel, "MidPitchElementDropdownContainer", "MidPitchElementDropdownButton", "MidPitchElementDropdownLabel", "MidPitchElementDropdownList");
+            highPitchElementDropdown = new CustomDropdown(optionsPanel, "HighPitchElementDropdownContainer", "HighPitchElementDropdownButton", "HighPitchElementDropdownLabel", "HighPitchElementDropdownList");
+
             // Game 패널 컨트롤
             keyBindingSection = new CollapsibleSection(optionsPanel, "KeyBindingsHeader", "KeyBindingsToggleButton", "KeyBindingArea");
             voiceRecognitionSection = new CollapsibleSection(optionsPanel, "VoiceRecognitionHeader", "VoiceRecognitionToggleButton", "VoiceRecognitionArea");
@@ -343,6 +359,9 @@ namespace LostSpells.UI
 
             // Pitch 설정 로드
             LoadPitchSettings();
+
+            // Pitch Element 설정 로드
+            LoadPitchElementSettings();
         }
 
         private void LoadAudioSettings()
@@ -523,6 +542,57 @@ namespace LostSpells.UI
             UpdateFrequencyDisplay();
             UpdateGaugeAreas();
             UpdateMarkerPositions();
+        }
+
+        private void LoadPitchElementSettings()
+        {
+            if (saveData == null) return;
+
+            // 저장된 속성 로드 (없으면 기본값)
+            string lowElement = !string.IsNullOrEmpty(saveData.lowPitchElement) ? saveData.lowPitchElement : "Fire";
+            string midElement = !string.IsNullOrEmpty(saveData.midPitchElement) ? saveData.midPitchElement : "Ice";
+            string highElement = !string.IsNullOrEmpty(saveData.highPitchElement) ? saveData.highPitchElement : "Electric";
+
+            // 드롭다운 설정
+            if (lowPitchElementDropdown != null)
+            {
+                lowPitchElementDropdown.SetItems(availableElements, lowElement, OnLowPitchElementChanged);
+            }
+            if (midPitchElementDropdown != null)
+            {
+                midPitchElementDropdown.SetItems(availableElements, midElement, OnMidPitchElementChanged);
+            }
+            if (highPitchElementDropdown != null)
+            {
+                highPitchElementDropdown.SetItems(availableElements, highElement, OnHighPitchElementChanged);
+            }
+        }
+
+        private void OnLowPitchElementChanged(string value)
+        {
+            if (saveData != null)
+            {
+                saveData.lowPitchElement = value;
+                SaveSettings();
+            }
+        }
+
+        private void OnMidPitchElementChanged(string value)
+        {
+            if (saveData != null)
+            {
+                saveData.midPitchElement = value;
+                SaveSettings();
+            }
+        }
+
+        private void OnHighPitchElementChanged(string value)
+        {
+            if (saveData != null)
+            {
+                saveData.highPitchElement = value;
+                SaveSettings();
+            }
         }
 
         private void UpdateFrequencyDisplay()
@@ -1126,8 +1196,14 @@ namespace LostSpells.UI
                 currentMinFrequency = 130.81f;
                 currentMaxFrequency = 261.63f;
 
+                // 피치 속성 초기화
+                saveData.lowPitchElement = "Fire";
+                saveData.midPitchElement = "Ice";
+                saveData.highPitchElement = "Electric";
+
                 LoadKeyBindings();
                 LoadPitchSettings();
+                LoadPitchElementSettings();
                 SaveSettings();
             }
         }
@@ -1938,6 +2014,9 @@ namespace LostSpells.UI
             uiLanguageDropdown?.Dispose();
             serverModeDropdown?.Dispose();
             voiceInputModeDropdown?.Dispose();
+            lowPitchElementDropdown?.Dispose();
+            midPitchElementDropdown?.Dispose();
+            highPitchElementDropdown?.Dispose();
 
             // 접기/펼치기 섹션 정리
             keyBindingSection?.Dispose();

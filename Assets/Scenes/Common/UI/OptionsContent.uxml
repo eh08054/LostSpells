@@ -215,6 +215,47 @@
                                             <ui:Button text="Start Test" name="PitchTestButton" class="pitch-test-button"/>
                                             <ui:Label text="" name="PitchTestResultLabel" class="pitch-test-result-label"/>
                                         </ui:VisualElement>
+
+                                        <!-- 피치-속성 할당 섹션 -->
+                                        <ui:VisualElement class="pitch-element-section">
+                                            <ui:Label text="Pitch Element Assignment" name="PitchElementLabel" class="setting-label pitch-element-title"/>
+
+                                            <!-- 저음 속성 -->
+                                            <ui:VisualElement class="setting-row">
+                                                <ui:Label text="Low Pitch Element" name="LowPitchElementLabel" class="setting-label pitch-element-label"/>
+                                                <ui:VisualElement name="LowPitchElementDropdownContainer" class="custom-dropdown-container">
+                                                    <ui:Button name="LowPitchElementDropdownButton" class="custom-dropdown-button">
+                                                        <ui:Label name="LowPitchElementDropdownLabel" text="Fire" class="custom-dropdown-label"/>
+                                                        <ui:VisualElement class="custom-dropdown-arrow"/>
+                                                    </ui:Button>
+                                                    <ui:VisualElement name="LowPitchElementDropdownList" class="custom-dropdown-list"/>
+                                                </ui:VisualElement>
+                                            </ui:VisualElement>
+
+                                            <!-- 중음 속성 -->
+                                            <ui:VisualElement class="setting-row">
+                                                <ui:Label text="Mid Pitch Element" name="MidPitchElementLabel" class="setting-label pitch-element-label"/>
+                                                <ui:VisualElement name="MidPitchElementDropdownContainer" class="custom-dropdown-container">
+                                                    <ui:Button name="MidPitchElementDropdownButton" class="custom-dropdown-button">
+                                                        <ui:Label name="MidPitchElementDropdownLabel" text="Ice" class="custom-dropdown-label"/>
+                                                        <ui:VisualElement class="custom-dropdown-arrow"/>
+                                                    </ui:Button>
+                                                    <ui:VisualElement name="MidPitchElementDropdownList" class="custom-dropdown-list"/>
+                                                </ui:VisualElement>
+                                            </ui:VisualElement>
+
+                                            <!-- 고음 속성 -->
+                                            <ui:VisualElement class="setting-row">
+                                                <ui:Label text="High Pitch Element" name="HighPitchElementLabel" class="setting-label pitch-element-label"/>
+                                                <ui:VisualElement name="HighPitchElementDropdownContainer" class="custom-dropdown-container">
+                                                    <ui:Button name="HighPitchElementDropdownButton" class="custom-dropdown-button">
+                                                        <ui:Label name="HighPitchElementDropdownLabel" text="Electric" class="custom-dropdown-label"/>
+                                                        <ui:VisualElement class="custom-dropdown-arrow"/>
+                                                    </ui:Button>
+                                                    <ui:VisualElement name="HighPitchElementDropdownList" class="custom-dropdown-list"/>
+                                                </ui:VisualElement>
+                                            </ui:VisualElement>
+                                        </ui:VisualElement>
                                     </ui:VisualElement>
                                 </ui:VisualElement>
                             </ui:VisualElement>

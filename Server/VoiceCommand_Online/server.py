@@ -307,12 +307,63 @@ def build_system_prompt() -> str:
 6. 유사한 표현도 적절히 매핑하세요."""
 
 
+def is_whisper_hallucination(text: str) -> bool:
+    """Whisper 환각(hallucination) 감지
+
+    환각 패턴:
+    - 반복적인 텍스트
+    - 유튜브/트위치 관련 문구
+    - 음악/자막 관련 문구
+    """
+    if not text or len(text.strip()) < 2:
+        return True
+
+    text_lower = text.lower()
+
+    # 유튜브/트위치 환각 패턴
+    hallucination_phrases = [
+        "구독", "좋아요", "알림", "시청", "감사합니다", "시청해 주셔서",
+        "subscribe", "like", "comment", "thank you for watching",
+        "tv", "채널", "영상", "편집", "자막",
+        "music", "♪", "♫", "lyrics",
+        "copyright", "all rights reserved",
+        "subtitles", "captions"
+    ]
+
+    for phrase in hallucination_phrases:
+        if phrase in text_lower:
+            print(f"[Hallucination] 유튜브/미디어 관련 문구 감지: {text}")
+            return True
+
+    # 반복 패턴 감지 (같은 단어가 3번 이상 반복)
+    words = text.replace(",", " ").replace(".", " ").split()
+    if len(words) >= 3:
+        from collections import Counter
+        word_counts = Counter(words)
+        most_common_word, count = word_counts.most_common(1)[0]
+        if count >= 3 and count / len(words) > 0.4:
+            print(f"[Hallucination] 반복 패턴 감지: '{most_common_word}'가 {count}번 반복 ({text})")
+            return True
+
+    # 쉼표로 시작하거나 이상한 패턴
+    if text.startswith(",") or text.startswith("."):
+        print(f"[Hallucination] 비정상 시작 문자: {text}")
+        return True
+
+    return False
+
+
 async def transcribe_audio(audio_path: str, prompt: str = "") -> str:
     """OpenAI Whisper API로 음성 인식
 
     prompt: 예상되는 단어들을 제공하면 인식률이 향상됨
     """
     try:
+        # 오디오 파일 크기 확인
+        import os
+        file_size = os.path.getsize(audio_path)
+        print(f"[Whisper] 오디오 파일 크기: {file_size} bytes")
+
         with open(audio_path, "rb") as audio_file:
             transcript = client.audio.transcriptions.create(
                 model="whisper-1",
@@ -320,7 +371,15 @@ async def transcribe_audio(audio_path: str, prompt: str = "") -> str:
                 language="ko",
                 prompt=prompt if prompt else None
             )
-        return transcript.text.strip()
+        result = transcript.text.strip()
+        print(f"[Whisper] 원본 결과: '{result}' (길이: {len(result)})")
+
+        # 환각 감지
+        if is_whisper_hallucination(result):
+            print(f"[Whisper] 환각으로 판단되어 무시: {result}")
+            return ""
+
+        return result
     except Exception as e:
         print(f"Whisper API 오류: {e}")
         raise e
@@ -443,6 +502,43 @@ def fallback_classify(text: str) -> dict:
         "키설정 접어": "CollapseKeyBinding",
         "키설정 닫아": "CollapseKeyBinding",
         "키바인딩 접어": "CollapseKeyBinding",
+        # 튜토리얼 및 챕터 선택
+        "튜토리얼": "SelectTutorial",
+        "챕터 0": "SelectTutorial",
+        # 챕터명 (7대 죄악)
+        "교만": "SelectChapter1",
+        "탐욕": "SelectChapter2",
+        "색욕": "SelectChapter3",
+        "질투": "SelectChapter4",
+        "폭식": "SelectChapter5",
+        "분노": "SelectChapter6",
+        "나태": "SelectChapter7",
+        # 챕터 번호 (숫자가 큰 것 먼저, 공백 있음/없음 모두)
+        "챕터12": "SelectChapter12",
+        "챕터 12": "SelectChapter12",
+        "챕터11": "SelectChapter11",
+        "챕터 11": "SelectChapter11",
+        "챕터10": "SelectChapter10",
+        "챕터 10": "SelectChapter10",
+        "챕터9": "SelectChapter9",
+        "챕터 9": "SelectChapter9",
+        "챕터8": "SelectChapter8",
+        "챕터 8": "SelectChapter8",
+        "챕터7": "SelectChapter7",
+        "챕터 7": "SelectChapter7",
+        "챕터6": "SelectChapter6",
+        "챕터 6": "SelectChapter6",
+        "챕터5": "SelectChapter5",
+        "챕터 5": "SelectChapter5",
+        "챕터4": "SelectChapter4",
+        "챕터 4": "SelectChapter4",
+        "챕터3": "SelectChapter3",
+        "챕터 3": "SelectChapter3",
+        "챕터2": "SelectChapter2",
+        "챕터 2": "SelectChapter2",
+        "챕터1": "SelectChapter1",
+        "챕터 1": "SelectChapter1",
+        "챕터0": "SelectTutorial",
         # InGame 이동 명령 (긴 것 먼저)
         "왼쪽으로 이동": "MoveLeft",
         "왼쪽 이동": "MoveLeft",
@@ -593,13 +689,42 @@ async def recognize_skill(
         # 3. 임시 파일 삭제
         os.unlink(temp_path)
 
+        # 3-1. 환각 등으로 텍스트가 비어있으면 실패 반환
+        if not transcribed_text:
+            processing_time = time.time() - start_time
+            return {
+                "success": False,
+                "text": "",
+                "matched_skill": None,
+                "confidence": 0.0,
+                "candidates": [],
+                "processing_time": processing_time,
+                "is_system_command": False,
+                "error": "No speech detected or hallucination filtered"
+            }
+
         # 스킬 목록 파싱 (먼저 정의해야 InGame_Playing 최적화에서 사용 가능)
         skill_list = [s.strip() for s in skills.split(",") if s.strip()] if skills else []
 
-        # 4. 인게임 플레이 중에는 시스템 명령 분류 건너뛰기 (속도 최적화)
+        # 4. 인게임 플레이 중에는 이동 명령만 빠르게 확인 후 스킬 매칭
         if context == "InGame_Playing" and skill_list:
-            # 인게임에서는 바로 스킬 매칭 (GPT 분류 건너뛰기)
-            print(f"[/recognize] InGame_Playing: 스킬 매칭만 수행 (시스템 명령 분류 건너뜀)")
+            # 먼저 이동/점프/정지 명령인지 확인 (키워드 매칭)
+            movement_result = fallback_classify(transcribed_text)
+            if movement_result["command"] in ["MoveLeft", "MoveRight", "Jump", "StopMove", "PauseGame", "OpenMenu"]:
+                print(f"[/recognize] InGame_Playing: 이동/시스템 명령 감지: {movement_result}")
+                processing_time = time.time() - start_time
+                return {
+                    "success": True,
+                    "text": transcribed_text,
+                    "matched_skill": f"SYSTEM:{movement_result['command']}",
+                    "confidence": movement_result["confidence"],
+                    "candidates": [{"name": f"SYSTEM:{movement_result['command']}", "confidence": movement_result["confidence"]}],
+                    "processing_time": processing_time,
+                    "is_system_command": True
+                }
+
+            # 이동 명령이 아니면 스킬 매칭 (GPT 분류 건너뛰기)
+            print(f"[/recognize] InGame_Playing: 스킬 매칭만 수행")
             matched_skill, confidence, candidates = fallback_skill_match(transcribed_text, skill_list)
             processing_time = time.time() - start_time
             return {
@@ -612,7 +737,23 @@ async def recognize_skill(
                 "is_system_command": False
             }
 
-        # 4-1. 다른 컨텍스트에서는 시스템 명령인지 확인
+        # 4-1. 메뉴 컨텍스트에서는 키워드 기반 매칭 먼저 시도 (GPT 오분류 방지)
+        if context and context.startswith("Menu_"):
+            keyword_result = fallback_classify(transcribed_text)
+            if keyword_result["command"] != "Unknown" and keyword_result["confidence"] >= 0.7:
+                print(f"[/recognize] {context}: 키워드 매칭 성공: {keyword_result}")
+                processing_time = time.time() - start_time
+                return {
+                    "success": True,
+                    "text": transcribed_text,
+                    "matched_skill": f"SYSTEM:{keyword_result['command']}",
+                    "confidence": keyword_result["confidence"],
+                    "candidates": [{"name": f"SYSTEM:{keyword_result['command']}", "confidence": keyword_result["confidence"]}],
+                    "processing_time": processing_time,
+                    "is_system_command": True
+                }
+
+        # 4-2. 키워드 매칭 실패 시 GPT 분류
         system_result = await classify_intent(transcribed_text)
         print(f"[/recognize] System command check: {system_result}")
 
@@ -709,16 +850,57 @@ async def match_skill_with_llm(text: str, skills: list, language: str) -> tuple:
 
 def fallback_skill_match(text: str, skills: list) -> tuple:
     """단순 키워드 매칭 폴백"""
+    print(f"[fallback_skill_match] Text: '{text}', Skills: {skills}")
     text_lower = text.lower()
     candidates = []
 
+    # 스킬 별칭 (공백 차이, 짧은 형태 등)
+    skill_aliases = {
+        # 매직 미사일
+        "매직미사일": "매직 미사일",
+        "미사일": "매직 미사일",
+        "magic missile": "매직 미사일",
+        # 매직 실드
+        "매직실드": "매직 실드",
+        "실드": "매직 실드",
+        "magic shield": "매직 실드",
+        # 토네이도
+        "회오리": "토네이도",
+        "tornado": "토네이도",
+        # 슬래시
+        "slash": "슬래시",
+        # 익스플로전
+        "폭발": "익스플로전",
+        "explosion": "익스플로전",
+        # 큐어 힐
+        "큐어힐": "큐어 힐",
+        "힐": "큐어 힐",
+        "cure": "큐어 힐",
+    }
+
+    # 별칭으로 먼저 매칭 시도
+    for alias, target_skill in skill_aliases.items():
+        if alias in text_lower:
+            # 대상 스킬이 활성 스킬 목록에 있는지 확인
+            for skill in skills:
+                if skill.lower() == target_skill.lower() or target_skill.lower() in skill.lower():
+                    candidates.append({"name": skill, "confidence": 0.9})
+                    break
+
+    # 직접 매칭
     for skill in skills:
         if skill.lower() in text_lower or text_lower in skill.lower():
-            candidates.append({"name": skill, "confidence": 0.8})
+            # 이미 candidates에 있으면 건너뛰기
+            if not any(c["name"] == skill for c in candidates):
+                candidates.append({"name": skill, "confidence": 0.8})
 
     if candidates:
+        # 가장 높은 confidence 순으로 정렬
+        candidates.sort(key=lambda x: x["confidence"], reverse=True)
+        print(f"[fallback_skill_match] Matched: {candidates[0]['name']} (confidence: {candidates[0]['confidence']})")
         return candidates[0]["name"], candidates[0]["confidence"], candidates
 
+    print(f"[fallback_skill_match] No match found")
     return None, 0.0, []
 
 

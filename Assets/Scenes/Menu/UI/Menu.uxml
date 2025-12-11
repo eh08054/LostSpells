@@ -180,5 +180,12 @@
             </ui:VisualElement>
         </ui:VisualElement>
 
+        <!-- 음성인식 상태 패널 (화면 하단 고정) -->
+        <ui:VisualElement name="VoiceStatusPanel" class="voice-status-panel">
+            <ui:VisualElement class="voice-status-content">
+                <ui:Label text="" name="VoiceStatusText" class="voice-status-text"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
     </ui:VisualElement>
 </ui:UXML>

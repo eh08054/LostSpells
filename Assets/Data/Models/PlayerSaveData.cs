@@ -98,6 +98,12 @@ namespace LostSpells.Data
         public float pitchMinFrequency = 130.81f;
         public float pitchMaxFrequency = 261.63f;
 
+        // 피치-속성 할당 설정
+        // 속성: Fire, Ice, Electric, Earth, Holy, Void
+        public string lowPitchElement = "Fire";
+        public string midPitchElement = "Ice";
+        public string highPitchElement = "Electric";
+
         // 키 바인딩 (액션 이름 -> 키 코드)
         public Dictionary<string, string> keyBindings = new Dictionary<string, string>();
 
@@ -148,6 +154,9 @@ namespace LostSpells.Data
                 voiceInputMode = "KeyTriggered",
                 pitchMinFrequency = 130.81f,
                 pitchMaxFrequency = 261.63f,
+                lowPitchElement = "Fire",
+                midPitchElement = "Ice",
+                highPitchElement = "Electric",
                 keyBindings = new Dictionary<string, string>(),
                 totalPlayTime = 0,
                 totalMonstersKilled = 0,

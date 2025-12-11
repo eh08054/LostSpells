@@ -260,9 +260,10 @@ namespace LostSpells.Systems
 
             // Pitch Test
             AddText("pitch_test_title", "피치 테스트", "Pitch Test");
-            AddText("pitch_low", "저음", "Low");
+            AddText("pitch_low", "저", "Low");
             AddText("pitch_medium", "중음", "Medium");
-            AddText("pitch_high", "고음", "High");
+            AddText("pitch_mid", "중", "Mid");
+            AddText("pitch_high", "고", "High");
             AddText("pitch_min_frequency", "최소 주파수", "Min Frequency");
             AddText("pitch_max_frequency", "최대 주파수", "Max Frequency");
             AddText("pitch_help_text", "흰색 선을 드래그하여 최소/최대 경계를 조정하세요", "Drag the white lines to adjust min/max boundaries");
@@ -270,6 +271,20 @@ namespace LostSpells.Systems
             AddText("pitch_stop_test", "테스트 종료", "Stop Test");
             AddText("pitch_recording", "녹음 중...", "Recording...");
             AddText("pitch_recognition_failed", "인식 실패", "Recognition failed");
+
+            // Element Types
+            AddText("element_fire", "화염", "Fire");
+            AddText("element_ice", "얼음", "Ice");
+            AddText("element_electric", "전기", "Electric");
+            AddText("element_earth", "대지", "Earth");
+            AddText("element_holy", "신성", "Holy");
+            AddText("element_void", "암흑", "Void");
+
+            // Pitch Element Settings
+            AddText("pitch_element_title", "피치-속성 설정", "Pitch-Element Settings");
+            AddText("pitch_low_element", "저음 속성", "Low Pitch Element");
+            AddText("pitch_mid_element", "중음 속성", "Mid Pitch Element");
+            AddText("pitch_high_element", "고음 속성", "High Pitch Element");
         }
 
         private void AddText(string key, string korean, string english)
