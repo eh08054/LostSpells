@@ -870,6 +870,9 @@ namespace LostSpells.Systems
                 case "MoveRight": return "오른쪽 이동";
                 case "Jump": return "점프";
                 case "StopMove": return "정지";
+                // InGame 방향 전환 명령
+                case "TurnLeft": return "왼쪽 보기";
+                case "TurnRight": return "오른쪽 보기";
                 default: return command;
             }
         }
@@ -1368,6 +1371,14 @@ namespace LostSpells.Systems
                     ExecuteMovementCommand("Stop");
                     break;
 
+                // InGame 방향 전환 명령어
+                case "TurnLeft":
+                    ExecuteTurnCommand("Left");
+                    break;
+                case "TurnRight":
+                    ExecuteTurnCommand("Right");
+                    break;
+
                 default:
                     // Debug.LogWarning($"[VoiceRecognition] 알 수 없는 시스템 명령: {command}");
                     break;
@@ -1579,6 +1590,23 @@ namespace LostSpells.Systems
                     break;
                 case "Stop":
                     playerComponent.SetVoiceMovement(0);
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// 방향 전환 명령 실행
+        /// </summary>
+        private void ExecuteTurnCommand(string direction)
+        {
+            if (playerComponent == null) return;
+            switch (direction)
+            {
+                case "Left":
+                    playerComponent.SetVoiceTurn(-1);
+                    break;
+                case "Right":
+                    playerComponent.SetVoiceTurn(1);
                     break;
             }
         }
@@ -1862,7 +1890,8 @@ namespace LostSpells.Systems
                     // 인게임 플레이 중: 일시정지/메뉴 열기, 이동 명령 가능
                     return command == "PauseGame" || command == "OpenMenu" ||
                            command == "MoveLeft" || command == "MoveRight" ||
-                           command == "Jump" || command == "StopMove";
+                           command == "Jump" || command == "StopMove" || 
+                           command == "TurnLeft" || command == "TurnRight";
 
                 case GameContext.InGame_Paused:
                     // 인게임 일시정지: 재개, 설정, 상점, 재시작, 메인메뉴

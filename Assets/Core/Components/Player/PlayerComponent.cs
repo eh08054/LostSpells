@@ -622,6 +622,14 @@ namespace LostSpells.Components
             voiceMovementDirection = Mathf.Clamp(direction, -1, 1);
         }
 
+        public void SetVoiceTurn(int direction)
+        {
+            if(direction == -1)
+                spriteRenderer.flipX = true;
+            else if(direction == 1)
+                spriteRenderer.flipX = false;
+        }
+
         /// <summary>
         /// 음성 명령으로 점프 요청
         /// </summary>

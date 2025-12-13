@@ -282,6 +282,17 @@ AVAILABLE_FUNCTIONS = [
         "description": "캐릭터 이동을 멈춥니다",
         "examples": ["정지", "멈춰", "이동 멈춰", "그만"]
     },
+    # InGame 방향 전환
+    {
+        "name": "TurnLeft",
+        "description": "캐릭터가 왼쪽으로 방향을 전환합니다",
+        "examples": ["좌측으로 돌아"]
+    },
+    {
+        "name": "TurnRight",
+        "description": "캐릭터가 오른쪽으로 방향을 전환합니다",
+        "examples": ["우측으로 돌아"]
+    }
 ]
 
 
@@ -553,6 +564,8 @@ def fallback_classify(text: str) -> dict:
         "정지": "StopMove",
         "멈춰": "StopMove",
         "그만": "StopMove",
+        "좌측으로 돌아": "TurnLeft",
+        "우측으로 돌아": "TurnRight",
     }
 
     for keyword, command in keyword_map.items():
@@ -710,7 +723,7 @@ async def recognize_skill(
         if context == "InGame_Playing" and skill_list:
             # 먼저 이동/점프/정지 명령인지 확인 (키워드 매칭)
             movement_result = fallback_classify(transcribed_text)
-            if movement_result["command"] in ["MoveLeft", "MoveRight", "Jump", "StopMove", "PauseGame", "OpenMenu"]:
+            if movement_result["command"] in ["MoveLeft", "MoveRight", "TurnRight", "TurnLeft", "Jump", "StopMove", "PauseGame", "OpenMenu"]:
                 print(f"[/recognize] InGame_Playing: 이동/시스템 명령 감지: {movement_result}")
                 processing_time = time.time() - start_time
                 return {
