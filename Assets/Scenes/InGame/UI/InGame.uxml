@@ -105,11 +105,6 @@
                             </ui:VisualElement>
                         </ui:ScrollView>
 
-                        <!-- 음성인식 결과 표시 패널 -->
-                        <ui:VisualElement name="VoiceRecognitionPanel" class="voice-recognition-panel">
-                            <ui:Label text="" name="VoiceRecognitionText" class="voice-recognition-text"/>
-                        </ui:VisualElement>
-
                         <!-- 전체 스킬 목록 (피치별로 그룹화) -->
                         <ui:ScrollView name="AllSkillScrollView" class="skill-scroll-view" vertical-scroller-visibility="Hidden" horizontal-scroller-visibility="Hidden">
                             <ui:VisualElement name="AllSkillList" class="skill-list">

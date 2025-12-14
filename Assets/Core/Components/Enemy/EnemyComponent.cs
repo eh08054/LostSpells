@@ -27,6 +27,7 @@ namespace LostSpells.Components
         [SerializeField] private SpriteRenderer spriteRenderer;
         [SerializeField] private Sprite enemySprite; // 적 스프라이트 (챕터별로 다름)
         [SerializeField] private Animator animator; // 애니메이터
+        [SerializeField] private float spriteScale = 1f; // 스프라이트 크기 배율 (체력바는 영향 없음)
 
         [Header("UI Elements")]
         [SerializeField] private TextMeshPro nameText;
@@ -89,6 +90,12 @@ namespace LostSpells.Components
             if (spriteRenderer != null && enemySprite != null)
             {
                 spriteRenderer.sprite = enemySprite;
+            }
+
+            // 스프라이트 크기 조정 (체력바에 영향 없음)
+            if (spriteRenderer != null && spriteScale != 1f)
+            {
+                spriteRenderer.transform.localScale = new Vector3(spriteScale, spriteScale, 1f);
             }
 
             // 플레이어 찾기

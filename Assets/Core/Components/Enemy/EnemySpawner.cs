@@ -16,7 +16,6 @@ namespace LostSpells.Systems
         [Header("Spawn Settings")]
         [SerializeField] private float spawnHeight = 0f;
         [SerializeField] private bool followCamera = true;
-        [SerializeField] private float enemyScale = 0.5f; // 적 크기 (기본 0.5)
 
         [Header("Wave Progression")]
         [SerializeField] private bool autoProgressWaves = true;
@@ -42,116 +41,70 @@ namespace LostSpells.Systems
         {
             mainCamera = UnityEngine.Camera.main;
             UpdateSpawnPoints();
-
-            // Resources에서 챕터 데이터 자동 로드 시도
-            if (chapterData == null)
-            {
-                try
-                {
-                    chapterData = Resources.Load<ChapterWaveData>("WaveData/Chapter1WaveData");
-                    if (chapterData != null)
-                    {
-                        // Debug.Log($"[EnemySpawner] Loaded chapter data: {chapterData.chapterName}");
-                    }
-                }
-                catch (System.Exception e)
-                {
-                    Debug.LogWarning($"[EnemySpawner] Failed to load chapter data: {e.Message}");
-                }
-            }
-
-            // 로드 실패 시 기본 웨이브 데이터 생성
-            if (chapterData == null)
-            {
-                CreateDefaultChapterData();
-            }
+            EnemyScaleData.Load();
         }
 
         /// <summary>
-        /// 기본 챕터 데이터 생성 (Resources 로드 실패 시)
+        /// 현재 챕터에 맞는 웨이브 데이터 로드
+        /// Start()에서 호출하여 GameStateManager가 준비된 후 실행
         /// </summary>
-        private void CreateDefaultChapterData()
+        private void LoadChapterWaveData()
         {
-            chapterData = ScriptableObject.CreateInstance<ChapterWaveData>();
-            chapterData.chapterId = 1;
-            chapterData.chapterName = "Chapter 1";
+            // 이미 Inspector에서 할당된 경우 사용
+            if (chapterData != null)
+                return;
 
-            // 기본 웨이브 생성
-            chapterData.waves = new WaveInfo[]
+            // GameStateManager에서 현재 챕터 ID 가져오기
+            int chapterId = 0;
+            if (GameStateManager.Instance != null)
             {
-                new WaveInfo
+                int currentId = GameStateManager.Instance.GetCurrentChapterId();
+                Debug.Log($"[EnemySpawner] GameStateManager 챕터 ID: {currentId}");
+                if (currentId >= 0)
                 {
-                    waveNumber = 1,
-                    startDelay = 1f,
-                    enemies = new EnemySpawnInfo[]
-                    {
-                        new EnemySpawnInfo
-                        {
-                            enemyPrefabName = "BlueDragonEnemy",
-                            spawnSide = SpawnSide.Right,
-                            count = 1,
-                            spawnInterval = 1.5f
-                        },
-                        new EnemySpawnInfo
-                        {
-                            enemyPrefabName = "GreenDragonEnemy",
-                            spawnSide = SpawnSide.Left,
-                            count = 1,
-                            spawnInterval = 1.5f
-                        }
-                    }
-                },
-                new WaveInfo
+                    chapterId = currentId;
+                }
+            }
+            else
+            {
+                Debug.LogWarning("[EnemySpawner] GameStateManager.Instance가 null입니다!");
+            }
+
+            // Resources에서 챕터 데이터 로드 시도
+            try
+            {
+                chapterData = Resources.Load<ChapterWaveData>($"WaveData/Chapter{chapterId}WaveData");
+                if (chapterData != null)
                 {
-                    waveNumber = 2,
-                    startDelay = 1f,
-                    enemies = new EnemySpawnInfo[]
-                    {
-                        new EnemySpawnInfo
-                        {
-                            enemyPrefabName = "BlueRexEnemy",
-                            spawnSide = SpawnSide.Right,
-                            count = 1,
-                            spawnInterval = 1f
-                        },
-                        new EnemySpawnInfo
-                        {
-                            enemyPrefabName = "BlueDragonEnemy",
-                            spawnSide = SpawnSide.Left,
-                            count = 1,
-                            spawnInterval = 1f
-                        }
-                    }
-                },
-                new WaveInfo
+                    Debug.Log($"[EnemySpawner] 챕터 {chapterId} 웨이브 데이터 로드: {chapterData.chapterName}");
+                }
+                else
                 {
-                    waveNumber = 3,
-                    startDelay = 1f,
-                    enemies = new EnemySpawnInfo[]
+                    // 해당 챕터 데이터가 없으면 Chapter1 시도
+                    chapterData = Resources.Load<ChapterWaveData>("WaveData/Chapter1WaveData");
+                    if (chapterData != null)
                     {
-                        new EnemySpawnInfo
-                        {
-                            enemyPrefabName = "GreenDragonEnemy",
-                            spawnSide = SpawnSide.Right,
-                            count = 1,
-                            spawnInterval = 1f
-                        },
-                        new EnemySpawnInfo
-                        {
-                            enemyPrefabName = "BlueRexEnemy",
-                            spawnSide = SpawnSide.Left,
-                            count = 1,
-                            spawnInterval = 1.5f
-                        }
+                        Debug.Log($"[EnemySpawner] 챕터 {chapterId} 데이터 없음, Chapter1 사용: {chapterData.chapterName}");
                     }
                 }
-            };
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"[EnemySpawner] 챕터 데이터 로드 실패: {e.Message}");
+            }
 
-            // Debug.Log("[EnemySpawner] Created default chapter data");
+            // 로드 실패 시 에러 로그
+            if (chapterData == null)
+            {
+                Debug.LogError($"[EnemySpawner] 챕터 {chapterId} 웨이브 데이터를 찾을 수 없습니다! Resources/WaveData/Chapter{chapterId}WaveData.asset 파일을 확인하세요.");
+            }
         }
 
         private void Start()
         {
+            // 챕터 데이터 로드 (GameStateManager가 준비된 후)
+            LoadChapterWaveData();
+
             if (autoStartWave)
             {
                 StartWave(debugStartWave);
@@ -231,6 +184,13 @@ namespace LostSpells.Systems
                 return;
             }
 
+            // 챕터 데이터가 없으면 먼저 로드
+            if (chapterData == null)
+            {
+                LoadChapterWaveData();
+            }
+
+            // 여전히 null이면 에러
             if (chapterData == null)
             {
                 Debug.LogError("[EnemySpawner] No chapter data assigned!");
@@ -364,8 +324,13 @@ namespace LostSpells.Systems
             Transform body = enemyObj.transform.Find("Body");
             if (body != null)
             {
-                body.localScale = Vector3.one * enemyScale;
+                // EnemyScaleData에서 크기 가져오기
+                float scale = EnemyScaleData.GetScale(prefab.name);
+                body.localScale = Vector3.one * scale;
             }
+
+            // EnemyScaleData에서 체력바 높이 가져오기
+            float healthBarHeight = EnemyScaleData.GetHealthBarHeight(prefab.name);
 
             // UI 위치 및 크기 조절 (플레이어와 동일하게)
             // Body 스프라이트가 sortingOrder=100이므로 UI는 그 위에 표시되어야 함
@@ -373,7 +338,7 @@ namespace LostSpells.Systems
             if (healthBar != null)
             {
                 // 적 스프라이트 위에 보이도록 높이 조절
-                healthBar.localPosition = new Vector3(0, 1.5f, 0);
+                healthBar.localPosition = new Vector3(0, healthBarHeight, 0);
                 healthBar.localScale = new Vector3(1f, 0.2f, 1f);
 
                 // SortingOrder를 Body(100)보다 높게 설정
@@ -398,11 +363,11 @@ namespace LostSpells.Systems
             Transform nameText = enemyObj.transform.Find("NameText");
             if (nameText != null)
             {
-                // 체력바 위에 보이도록 높이 조절
+                // 체력바 위에 보이도록 높이 조절 (체력바 + 0.3)
                 RectTransform rectTransform = nameText.GetComponent<RectTransform>();
                 if (rectTransform != null)
                 {
-                    rectTransform.anchoredPosition = new Vector2(0, 1.8f);
+                    rectTransform.anchoredPosition = new Vector2(0, healthBarHeight + 0.3f);
                 }
 
                 // SortingOrder를 Body(100)보다 높게 설정

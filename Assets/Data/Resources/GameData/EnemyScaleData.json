@@ -1,0 +1,491 @@
+{
+    "defaultScale": 1.0,
+    "defaultHealthBarHeight": 1.5,
+    "enemyScales": [
+        {
+            "enemyName": "AmanitaEnemy",
+            "scale": 0.6999998092651367,
+            "healthBarHeight": 1.2999999523162842
+        },
+        {
+            "enemyName": "PurpleBatEnemy",
+            "scale": 1.0,
+            "healthBarHeight": 1.5
+        },
+        {
+            "enemyName": "BlackBearEnemy",
+            "scale": 0.8999999761581421,
+            "healthBarHeight": 1.0999999046325684
+        },
+        {
+            "enemyName": "BrownBearEnemy",
+            "scale": 0.8999999761581421,
+            "healthBarHeight": 1.0999999046325684
+        },
+        {
+            "enemyName": "YellowBeeEnemy",
+            "scale": 1.0,
+            "healthBarHeight": 0.8999998569488525
+        },
+        {
+            "enemyName": "BeholderEnemy",
+            "scale": 1.0,
+            "healthBarHeight": 1.5
+        },
+        {
+            "enemyName": "BirdEnemy",
+            "scale": 0.6999999284744263,
+            "healthBarHeight": 1.2999999523162842
+        },
+        {
+            "enemyName": "BlackBoarEnemy",
+            "scale": 0.7999999523162842,
+            "healthBarHeight": 0.8999998569488525
+        },
+        {
+            "enemyName": "BrownBoarEnemy",
+            "scale": 0.7999999523162842,
+            "healthBarHeight": 0.8999998569488525
+        },
+        {
+            "enemyName": "BrainsterEnemy",
+            "scale": 1.0,
+            "healthBarHeight": 1.7000000476837159
+        },
+        {
+            "enemyName": "GreenBushEnemy",
+            "scale": 1.0,
+            "healthBarHeight": 1.5
+        },
+        {
+            "enemyName": "PurpleBushEnemy",
+            "scale": 1.0,
+            "healthBarHeight": 1.5
+        },
+        {
+            "enemyName": "BlueCrabEnemy",
+            "scale": 1.0,
+            "healthBarHeight": 1.1999999284744263
+        },
+        {
+            "enemyName": "RedCrabEnemy",
+            "scale": 1.0,
+            "healthBarHeight": 1.1999999284744263
+        },
+        {
+            "enemyName": "CubeEnemy",
+            "scale": 1.0,
+            "healthBarHeight": 1.399999976158142
+        },
+        {
+            "enemyName": "DeerEnemy",
+            "scale": 0.7999999523162842,
+            "healthBarHeight": 1.2999999523162842
+        },
+        {
+            "enemyName": "GoldenDemigrifEnemy",
+            "scale": 1.0,
+            "healthBarHeight": 1.2999999523162842
+        },
+        {
+            "enemyName": "GreenDemigrifEnemy",
+            "scale": 1.0,
+            "healthBarHeight": 1.2999999523162842
+        },
+        {
+            "enemyName": "DemonEnemy",
+            "scale": 1.0,
+            "healthBarHeight": 1.5
+        },
+        {
+            "enemyName": "AbyssDogEnemy",
+            "scale": 0.8999999761581421,
+            "healthBarHeight": 1.1999999284744263
+        },
+        {
+            "enemyName": "DeathDog1Enemy",
+            "scale": 0.5,
+            "healthBarHeight": 1.399999976158142
+        },
+        {
+            "enemyName": "DeathDog2Enemy",
+            "scale": 0.5,
+            "healthBarHeight": 1.399999976158142
+        },
+        {
+            "enemyName": "DeathDog3Enemy",
+            "scale": 0.5,
+            "healthBarHeight": 1.399999976158142
+        },
+        {
+            "enemyName": "HellDogEnemy",
+            "scale": 0.7999999523162842,
+            "healthBarHeight": 1.1999999284744263
+        },
+        {
+            "enemyName": "BlueDragonEnemy",
+            "scale": 0.5,
+            "healthBarHeight": 1.5
+        },
+        {
+            "enemyName": "GreenDragonEnemy",
+            "scale": 0.5,
+            "healthBarHeight": 1.5
+        },
+        {
+            "enemyName": "RedDragonEnemy",
+            "scale": 0.5,
+            "healthBarHeight": 1.5
+        },
+        {
+            "enemyName": "GreenDuckEnemy",
+            "scale": 1.0,
+            "healthBarHeight": 1.1999999284744263
+        },
+        {
+            "enemyName": "YellowDuckEnemy",
+            "scale": 1.0,
+            "healthBarHeight": 1.1999999284744263
+        },
+        {
+            "enemyName": "FlyingEyeEnemy",
+            "scale": 1.0,
+            "healthBarHeight": 1.5
+        },
+        {
+            "enemyName": "FairyEnemy",
+            "scale": 1.0,
+            "healthBarHeight": 1.5
+        },
+        {
+            "enemyName": "GreenFlowerEnemy",
+            "scale": 1.0,
+            "healthBarHeight": 1.1999999284744263
+        },
+        {
+            "enemyName": "GreenFrogEnemy",
+            "scale": 1.0,
+            "healthBarHeight": 0.9999998807907105
+        },
+        {
+            "enemyName": "RedFrogEnemy",
+            "scale": 1.0,
+            "healthBarHeight": 0.9999998807907105
+        },
+        {
+            "enemyName": "EarthGolemEnemy",
+            "scale": 1.0,
+            "healthBarHeight": 1.399999976158142
+        },
+        {
+            "enemyName": "FlameGolemEnemy",
+            "scale": 0.7999999523162842,
+            "healthBarHeight": 1.5
+        },
+        {
+            "enemyName": "IceGolemEnemy",
+            "scale": 1.0,
+            "healthBarHeight": 1.600000023841858
+        },
+        {
+            "enemyName": "Gorgon1Enemy",
+            "scale": 0.5,
+            "healthBarHeight": 1.2999999523162842
+        },
+        {
+            "enemyName": "Gorgon2Enemy",
+            "scale": 0.5,
+            "healthBarHeight": 1.2999999523162842
+        },
+        {
+            "enemyName": "Gorgon3Enemy",
+            "scale": 0.5,
+            "healthBarHeight": 1.2999999523162842
+        },
+        {
+            "enemyName": "Gorgon4Enemy",
+            "scale": 0.5,
+            "healthBarHeight": 1.2999999523162842
+        },
+        {
+            "enemyName": "Gorgon5Enemy",
+            "scale": 0.5,
+            "healthBarHeight": 1.2999999523162842
+        },
+        {
+            "enemyName": "BloodyJellyEnemy",
+            "scale": 1.0,
+            "healthBarHeight": 1.0999999046325684
+        },
+        {
+            "enemyName": "GreenJellyEnemy",
+            "scale": 1.0,
+            "healthBarHeight": 1.0999999046325684
+        },
+        {
+            "enemyName": "Lich1Enemy",
+            "scale": 0.5,
+            "healthBarHeight": 1.9000000953674317
+        },
+        {
+            "enemyName": "Lich2Enemy",
+            "scale": 0.5,
+            "healthBarHeight": 1.9000000953674317
+        },
+        {
+            "enemyName": "Lich3Enemy",
+            "scale": 0.5,
+            "healthBarHeight": 1.9000000953674317
+        },
+        {
+            "enemyName": "BlueManticoraEnemy",
+            "scale": 1.0000001192092896,
+            "healthBarHeight": 1.5
+        },
+        {
+            "enemyName": "RoyalManticoraEnemy",
+            "scale": 1.0,
+            "healthBarHeight": 1.5
+        },
+        {
+            "enemyName": "GreenMegaPumpkinEnemy",
+            "scale": 0.5,
+            "healthBarHeight": 1.5
+        },
+        {
+            "enemyName": "PurpleMegaPumpkinEnemy",
+            "scale": 0.5,
+            "healthBarHeight": 1.5
+        },
+        {
+            "enemyName": "YellowMegaPumpkinEnemy",
+            "scale": 0.5,
+            "healthBarHeight": 1.5
+        },
+        {
+            "enemyName": "Minotaur1Enemy",
+            "scale": 0.5,
+            "healthBarHeight": 1.8000000715255738
+        },
+        {
+            "enemyName": "Minotaur2Enemy",
+            "scale": 0.5,
+            "healthBarHeight": 1.8000000715255738
+        },
+        {
+            "enemyName": "Minotaur3Enemy",
+            "scale": 0.5,
+            "healthBarHeight": 1.8000000715255738
+        },
+        {
+            "enemyName": "MosquitoEnemy",
+            "scale": 1.0,
+            "healthBarHeight": 1.5
+        },
+        {
+            "enemyName": "BrownMushroomEnemy",
+            "scale": 1.0,
+            "healthBarHeight": 1.5
+        },
+        {
+            "enemyName": "PurpleMushroomEnemy",
+            "scale": 1.0,
+            "healthBarHeight": 1.5
+        },
+        {
+            "enemyName": "Naga1Enemy",
+            "scale": 0.5,
+            "healthBarHeight": 1.5
+        },
+        {
+            "enemyName": "Naga2Enemy",
+            "scale": 0.5,
+            "healthBarHeight": 1.5
+        },
+        {
+            "enemyName": "Naga3Enemy",
+            "scale": 0.5,
+            "healthBarHeight": 1.5
+        },
+        {
+            "enemyName": "GreenOgreEnemy",
+            "scale": 0.5,
+            "healthBarHeight": 1.5
+        },
+        {
+            "enemyName": "PurpleOgreEnemy",
+            "scale": 0.5,
+            "healthBarHeight": 1.5
+        },
+        {
+            "enemyName": "RedOgreEnemy",
+            "scale": 0.5,
+            "healthBarHeight": 1.5
+        },
+        {
+            "enemyName": "BrownPigEnemy",
+            "scale": 0.9999998807907105,
+            "healthBarHeight": 1.0999999046325684
+        },
+        {
+            "enemyName": "PinkPigEnemy",
+            "scale": 1.0,
+            "healthBarHeight": 1.0999999046325684
+        },
+        {
+            "enemyName": "PumpkinEnemy",
+            "scale": 1.0,
+            "healthBarHeight": 1.2999999523162842
+        },
+        {
+            "enemyName": "BrownRatEnemy",
+            "scale": 1.0,
+            "healthBarHeight": 0.8999998569488525
+        },
+        {
+            "enemyName": "GreyRatEnemy",
+            "scale": 1.0,
+            "healthBarHeight": 0.8999998569488525
+        },
+        {
+            "enemyName": "BlueRexEnemy",
+            "scale": 0.4000000059604645,
+            "healthBarHeight": 1.399999976158142
+        },
+        {
+            "enemyName": "GreenRexEnemy",
+            "scale": 0.4000000059604645,
+            "healthBarHeight": 1.399999976158142
+        },
+        {
+            "enemyName": "RedRexEnemy",
+            "scale": 0.4000000059604645,
+            "healthBarHeight": 1.399999976158142
+        },
+        {
+            "enemyName": "FireSalamandraEnemy",
+            "scale": 0.9000000953674316,
+            "healthBarHeight": 0.7999998331069946
+        },
+        {
+            "enemyName": "GreenSalamandraEnemy",
+            "scale": 0.8999999761581421,
+            "healthBarHeight": 0.7999998331069946
+        },
+        {
+            "enemyName": "RedScorpionEnemy",
+            "scale": 1.0,
+            "healthBarHeight": 1.1999999284744263
+        },
+        {
+            "enemyName": "GreenSnakeEnemy",
+            "scale": 1.0,
+            "healthBarHeight": 1.399999976158142
+        },
+        {
+            "enemyName": "YellowSnakeEnemy",
+            "scale": 1.0,
+            "healthBarHeight": 1.399999976158142
+        },
+        {
+            "enemyName": "BlackSpiderEnemy",
+            "scale": 0.7999999523162842,
+            "healthBarHeight": 0.9999998807907105
+        },
+        {
+            "enemyName": "BrownSpiderEnemy",
+            "scale": 0.8000000715255737,
+            "healthBarHeight": 0.9999998807907105
+        },
+        {
+            "enemyName": "PurpleSpiderEnemy",
+            "scale": 1.0,
+            "healthBarHeight": 0.9999998807907105
+        },
+        {
+            "enemyName": "RedSpiderEnemy",
+            "scale": 1.0,
+            "healthBarHeight": 0.9999998807907105
+        },
+        {
+            "enemyName": "BlueSpiritEnemy",
+            "scale": 1.0,
+            "healthBarHeight": 1.5
+        },
+        {
+            "enemyName": "BrownSpiritEnemy",
+            "scale": 1.0,
+            "healthBarHeight": 1.5
+        },
+        {
+            "enemyName": "SquidEnemy",
+            "scale": 1.0,
+            "healthBarHeight": 1.5
+        },
+        {
+            "enemyName": "BrownStumpEnemy",
+            "scale": 1.0,
+            "healthBarHeight": 1.2999999523162842
+        },
+        {
+            "enemyName": "DarkStumpEnemy",
+            "scale": 1.0,
+            "healthBarHeight": 1.2999999523162842
+        },
+        {
+            "enemyName": "GreenTortoiseEnemy",
+            "scale": 1.0,
+            "healthBarHeight": 0.9999998807907105
+        },
+        {
+            "enemyName": "BlackTrollEnemy",
+            "scale": 0.5,
+            "healthBarHeight": 1.600000023841858
+        },
+        {
+            "enemyName": "BlueTrollEnemy",
+            "scale": 0.5,
+            "healthBarHeight": 1.600000023841858
+        },
+        {
+            "enemyName": "GreenTrollEnemy",
+            "scale": 0.5,
+            "healthBarHeight": 1.600000023841858
+        },
+        {
+            "enemyName": "BrownWerevolfEnemy",
+            "scale": 0.5,
+            "healthBarHeight": 1.5
+        },
+        {
+            "enemyName": "RedWerevolfEnemy",
+            "scale": 0.5,
+            "healthBarHeight": 1.5
+        },
+        {
+            "enemyName": "BlackWerewolfEnemy",
+            "scale": 0.5,
+            "healthBarHeight": 1.5
+        },
+        {
+            "enemyName": "BlackWolfEnemy",
+            "scale": 0.8999999761581421,
+            "healthBarHeight": 1.0999999046325684
+        },
+        {
+            "enemyName": "BlueWolfEnemy",
+            "scale": 0.8999999761581421,
+            "healthBarHeight": 1.0999999046325684
+        },
+        {
+            "enemyName": "BrownWolfEnemy",
+            "scale": 0.7999999523162842,
+            "healthBarHeight": 1.0999999046325684
+        },
+        {
+            "enemyName": "GreyWolfEnemy",
+            "scale": 0.7999999523162842,
+            "healthBarHeight": 1.0999999046325684
+        }
+    ]
+}

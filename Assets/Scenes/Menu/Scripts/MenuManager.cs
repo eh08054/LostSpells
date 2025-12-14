@@ -610,7 +610,7 @@ namespace LostSpells.UI
         /// </summary>
         public void UpdateVoiceStatusPanel(string recognizedText, string executedCommand)
         {
-            bool hasContent = !string.IsNullOrEmpty(recognizedText) || !string.IsNullOrEmpty(executedCommand);
+            bool hasContent = !string.IsNullOrEmpty(executedCommand);
 
             if (voiceStatusPanel != null)
             {
@@ -619,18 +619,7 @@ namespace LostSpells.UI
 
             if (voiceStatusText != null && hasContent)
             {
-                if (!string.IsNullOrEmpty(recognizedText) && !string.IsNullOrEmpty(executedCommand))
-                {
-                    voiceStatusText.text = $"\"{recognizedText}\" → {executedCommand}";
-                }
-                else if (!string.IsNullOrEmpty(executedCommand))
-                {
-                    voiceStatusText.text = executedCommand;
-                }
-                else
-                {
-                    voiceStatusText.text = recognizedText;
-                }
+                voiceStatusText.text = executedCommand;
             }
         }
 

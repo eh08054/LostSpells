@@ -55,6 +55,9 @@ namespace LostSpells.Components
         private int voiceMovementDirection = 0; // -1: 왼쪽, 0: 정지, 1: 오른쪽
         private bool voiceJumpRequested = false;
 
+        // 실드 시스템
+        private bool hasActiveShield = false; // 활성화된 실드가 있는지
+
         private void Awake()
         {
             // SpriteRenderer가 없으면 추가
@@ -293,6 +296,13 @@ namespace LostSpells.Components
         /// </summary>
         public void TakeDamage(int damage)
         {
+            // 실드가 활성화되어 있으면 데미지 무효화
+            if (hasActiveShield)
+            {
+                Debug.Log("[Player] 실드로 데미지 방어!");
+                return;
+            }
+
             currentHealth -= damage;
             currentHealth = Mathf.Max(0, currentHealth);
 
@@ -517,6 +527,31 @@ namespace LostSpells.Components
         public int GetMaxHealth() => maxHealth;
         public int GetCurrentMana() => currentMana;
         public int GetMaxMana() => maxMana;
+
+        // ========== 실드 시스템 ==========
+
+        /// <summary>
+        /// 실드 활성화 (ShieldSkillBehavior에서 호출)
+        /// </summary>
+        public void ActivateShield()
+        {
+            hasActiveShield = true;
+            Debug.Log("[Player] 실드 활성화!");
+        }
+
+        /// <summary>
+        /// 실드 비활성화 (ShieldSkillBehavior에서 호출)
+        /// </summary>
+        public void DeactivateShield()
+        {
+            hasActiveShield = false;
+            Debug.Log("[Player] 실드 비활성화");
+        }
+
+        /// <summary>
+        /// 실드 활성화 여부 확인
+        /// </summary>
+        public bool HasActiveShield() => hasActiveShield;
 
         /// <summary>
         /// 플레이어 이름 설정 (음성인식 상태 표시용)
@@ -1077,6 +1112,13 @@ namespace LostSpells.Components
         /// </summary>
         private void FireProjectile(LostSpells.Data.SkillData skill)
         {
+            // 방어 스킬 (실드)인 경우 별도 처리
+            if (skill.skillType == LostSpells.Data.SkillType.Defense)
+            {
+                SpawnShieldSkillBasic(skill);
+                return;
+            }
+
             // 발사 위치 결정 (플레이어 위치 + 약간 앞으로)
             Vector3 offset = spriteRenderer.flipX ? Vector3.left * 0.5f : Vector3.right * 0.5f;
             Vector3 spawnPosition = transform.position + offset + Vector3.up * 0.3f;
@@ -1494,6 +1536,13 @@ namespace LostSpells.Components
         /// </summary>
         private void FireProjectileWithVariant(LostSpells.Data.SkillData skill, LostSpells.Data.ElementVariant variant)
         {
+            // 방어 스킬 (실드)인 경우 별도 처리
+            if (skill.skillType == LostSpells.Data.SkillType.Defense)
+            {
+                SpawnShieldSkill(skill, variant);
+                return;
+            }
+
             // 발사 위치 결정 (플레이어 위치 + 약간 앞으로)
             Vector3 offset = spriteRenderer.flipX ? Vector3.left * 0.5f : Vector3.right * 0.5f;
             Vector3 spawnPosition = transform.position + offset + Vector3.up * 0.3f;
@@ -1582,6 +1631,116 @@ namespace LostSpells.Components
             );
 
             Debug.Log($"[PlayerComponent] 속성 스킬 발사: {variant.name} (데미지: {skill.damage})");
+        }
+
+        /// <summary>
+        /// 실드 스킬 생성 (플레이어 중심에 생성, 플레이어를 따라다님)
+        /// </summary>
+        private void SpawnShieldSkill(LostSpells.Data.SkillData skill, LostSpells.Data.ElementVariant variant)
+        {
+            // 이미 실드가 활성화되어 있으면 마나 환불하고 중단
+            if (hasActiveShield)
+            {
+                currentMana += (int)skill.manaCost;
+                Debug.Log("[PlayerComponent] 이미 실드가 활성화되어 있습니다.");
+                return;
+            }
+
+            // VFX 스프라이트 로드
+            string vfxPath = variant.effectPrefab;
+            Sprite[] vfxSprites = null;
+            if (!string.IsNullOrEmpty(vfxPath))
+            {
+                vfxSprites = UnityEngine.Resources.LoadAll<Sprite>(vfxPath);
+                if (vfxSprites == null || vfxSprites.Length == 0)
+                {
+                    vfxSprites = UnityEngine.Resources.LoadAll<Sprite>(skill.effectPrefabPath);
+                }
+            }
+
+            // 실드 오브젝트 생성 (플레이어 중심에, 약간 위로)
+            GameObject shield = new GameObject($"Shield_{variant.name}");
+            shield.transform.position = transform.position + Vector3.up * 0.25f;
+
+            // SpriteRenderer 추가
+            SpriteRenderer sr = shield.AddComponent<SpriteRenderer>();
+            sr.sortingOrder = 50; // 플레이어 뒤에 표시
+
+            if (vfxSprites != null && vfxSprites.Length > 0)
+            {
+                sr.sprite = vfxSprites[0];
+                shield.transform.localScale = Vector3.one * 2.5f; // 실드 크기 (플레이어를 감싸도록)
+
+                // 애니메이션 추가
+                if (vfxSprites.Length > 1)
+                {
+                    SpriteAnimator animator = shield.AddComponent<SpriteAnimator>();
+                    animator.Initialize(vfxSprites, 12f);
+                }
+            }
+            else
+            {
+                // 폴백 스프라이트
+                sr.sprite = CreateCircleSprite(64, new Color(0.3f, 0.7f, 1f, 0.5f));
+                shield.transform.localScale = Vector3.one * 2f;
+            }
+
+            // ShieldSkillBehavior 컴포넌트 추가
+            ShieldSkillBehavior shieldBehavior = shield.AddComponent<ShieldSkillBehavior>();
+            shieldBehavior.Initialize(skill, this);
+
+            Debug.Log($"[PlayerComponent] 실드 생성: {variant.name} (지속시간: {skill.projectileLifetime}초)");
+        }
+
+        /// <summary>
+        /// 기본 실드 스킬 생성 (키보드 입력 등에서 호출)
+        /// </summary>
+        private void SpawnShieldSkillBasic(LostSpells.Data.SkillData skill)
+        {
+            // 이미 실드가 활성화되어 있으면 중단
+            if (hasActiveShield)
+            {
+                Debug.Log("[PlayerComponent] 이미 실드가 활성화되어 있습니다.");
+                return;
+            }
+
+            // VFX 스프라이트 로드
+            Sprite[] vfxSprites = null;
+            if (!string.IsNullOrEmpty(skill.effectPrefabPath))
+            {
+                vfxSprites = UnityEngine.Resources.LoadAll<Sprite>(skill.effectPrefabPath);
+            }
+
+            // 실드 오브젝트 생성 (플레이어 중심에, 약간 위로)
+            GameObject shield = new GameObject($"Shield_{skill.skillId}");
+            shield.transform.position = transform.position + Vector3.up * 0.25f;
+
+            // SpriteRenderer 추가
+            SpriteRenderer sr = shield.AddComponent<SpriteRenderer>();
+            sr.sortingOrder = 50;
+
+            if (vfxSprites != null && vfxSprites.Length > 0)
+            {
+                sr.sprite = vfxSprites[0];
+                shield.transform.localScale = Vector3.one * 2.5f;
+
+                if (vfxSprites.Length > 1)
+                {
+                    SpriteAnimator animator = shield.AddComponent<SpriteAnimator>();
+                    animator.Initialize(vfxSprites, 12f);
+                }
+            }
+            else
+            {
+                sr.sprite = CreateCircleSprite(64, new Color(0.3f, 0.7f, 1f, 0.5f));
+                shield.transform.localScale = Vector3.one * 2f;
+            }
+
+            // ShieldSkillBehavior 컴포넌트 추가
+            ShieldSkillBehavior shieldBehavior = shield.AddComponent<ShieldSkillBehavior>();
+            shieldBehavior.Initialize(skill, this);
+
+            Debug.Log($"[PlayerComponent] 실드 생성: {skill.skillId} (지속시간: {skill.projectileLifetime}초)");
         }
     }
 }

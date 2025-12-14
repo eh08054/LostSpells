@@ -84,9 +84,6 @@ namespace LostSpells.UI
         private Label diamondCountLabel;
         private Label reviveStoneCountLabel;
 
-        // 음성인식 결과 표시
-        private Label voiceRecognitionText;
-
         // 음성인식 상태 패널 (화면 하단)
         private VisualElement voiceStatusPanel;
         private Label voiceStatusText;
@@ -240,9 +237,6 @@ namespace LostSpells.UI
             // 화폐 표시 Label
             diamondCountLabel = root.Q<Label>("DiamondCount");
             reviveStoneCountLabel = root.Q<Label>("ReviveStoneCount");
-
-            // 음성인식 결과 표시
-            voiceRecognitionText = root.Q<Label>("VoiceRecognitionText");
 
             // 음성인식 상태 패널 (화면 하단)
             voiceStatusPanel = root.Q<VisualElement>("VoiceStatusPanel");
@@ -994,22 +988,19 @@ namespace LostSpells.UI
         }
 
         /// <summary>
-        /// 음성인식 결과 표시 (VoiceRecognitionManager에서 호출)
+        /// 음성인식 결과 표시 (VoiceRecognitionManager에서 호출) - 하단 패널로 이동하여 더 이상 사용하지 않음
         /// </summary>
         public void UpdateVoiceRecognitionDisplay(string message)
         {
-            if (voiceRecognitionText != null)
-            {
-                voiceRecognitionText.text = message;
-            }
+            // 스킬창 내 음성인식 결과 표시 제거됨 - 하단 VoiceStatusPanel 사용
         }
 
         /// <summary>
-        /// 음성인식 상태 패널 업데이트 (인식된 텍스트와 실행된 명령어 표시)
+        /// 음성인식 상태 패널 업데이트 (명령어만 표시)
         /// </summary>
         public void UpdateVoiceStatusPanel(string recognizedText, string executedCommand)
         {
-            bool hasContent = !string.IsNullOrEmpty(recognizedText) || !string.IsNullOrEmpty(executedCommand);
+            bool hasContent = !string.IsNullOrEmpty(executedCommand);
 
             if (voiceStatusPanel != null)
             {
@@ -1018,18 +1009,7 @@ namespace LostSpells.UI
 
             if (voiceStatusText != null && hasContent)
             {
-                if (!string.IsNullOrEmpty(recognizedText) && !string.IsNullOrEmpty(executedCommand))
-                {
-                    voiceStatusText.text = $"\"{recognizedText}\" → {executedCommand}";
-                }
-                else if (!string.IsNullOrEmpty(executedCommand))
-                {
-                    voiceStatusText.text = executedCommand;
-                }
-                else
-                {
-                    voiceStatusText.text = recognizedText;
-                }
+                voiceStatusText.text = executedCommand;
             }
         }
 

@@ -616,6 +616,9 @@ namespace LostSpells.Systems
                 UpdateVoiceRecognitionDisplay(processingText);
             }
 
+            // 화면 하단 상태 패널에 "인식중..." 표시
+            UpdateVoiceStatusPanelUI("", "인식중");
+
             // 서버로 전송
             StartCoroutine(SendAudioToServer());
         }
@@ -759,16 +762,16 @@ namespace LostSpells.Systems
                 {
                     if (string.IsNullOrEmpty(recognizedText))
                     {
-                        UpdateVoiceRecognitionDisplay("인식 실패: 음성 없음");
+                        UpdateVoiceRecognitionDisplay("인식실패: 음성 없음");
                     }
                     else
                     {
-                        UpdateVoiceRecognitionDisplay($"인식 실패: {recognizedText}");
+                        UpdateVoiceRecognitionDisplay($"인식실패: {recognizedText}");
                     }
                 }
 
                 // 실패 시에도 하단 패널에 표시
-                UpdateVoiceStatusPanelUI(recognizedText, "인식 실패");
+                UpdateVoiceStatusPanelUI(recognizedText, "인식실패");
             }
 
             StartCoroutine(ClearVoiceRecognitionDisplayAfterDelay(3f));
@@ -776,7 +779,24 @@ namespace LostSpells.Systems
         }
 
         /// <summary>
-        /// 스킬 또는 시스템 명령의 표시 이름 가져오기
+        /// 속성의 한국어 이름 반환
+        /// </summary>
+        private string GetElementKoreanName(string element)
+        {
+            switch (element)
+            {
+                case "Fire": return "화";
+                case "Ice": return "빙";
+                case "Electric": return "뇌";
+                case "Earth": return "지";
+                case "Holy": return "성";
+                case "Void": return "암";
+                default: return element;
+            }
+        }
+
+        /// <summary>
+        /// 스킬 또는 시스템 명령의 표시 이름 가져오기 (속성명 포함)
         /// </summary>
         private string GetSkillDisplayName(string voiceKeyword)
         {
@@ -787,24 +807,22 @@ namespace LostSpells.Systems
                 return GetSystemCommandDisplayName(command);
             }
 
-            // activeSkills에서 먼저 찾기 (현재 탭의 스킬 우선)
-            if (activeSkills != null && activeSkills.Count > 0)
-            {
-                foreach (var skill in activeSkills)
-                {
-                    if (skill.voiceKeyword == voiceKeyword)
-                    {
-                        return skill.GetLocalizedName();
-                    }
-                }
-            }
-
-            // activeSkills에 없으면 전체에서 찾기 (안전장치)
+            // 스킬 찾기 (전체에서 검색)
             var allSkills = DataManager.Instance.GetAllSkillData();
             foreach (var skill in allSkills)
             {
                 if (skill.voiceKeyword == voiceKeyword)
                 {
+                    // 일반 스킬인 경우 속성명 추가
+                    if (skill.isGenericSkill && skill.elementVariants != null)
+                    {
+                        string element = GetCurrentElement();
+                        if (skill.elementVariants.ContainsKey(element))
+                        {
+                            string elementKorean = GetElementKoreanName(element);
+                            return $"{skill.GetLocalizedName()} ({elementKorean})";
+                        }
+                    }
                     return skill.GetLocalizedName();
                 }
             }
@@ -1716,6 +1734,9 @@ namespace LostSpells.Systems
                 if (string.IsNullOrEmpty(processingText)) processingText = "처리 중...";
                 UpdateVoiceRecognitionDisplay(processingText);
             }
+
+            // 화면 하단 상태 패널에 "인식중..." 표시
+            UpdateVoiceStatusPanelUI("", "인식중");
 
             // 피치 분석 (인게임에서만 활성화)
             if (enablePitchAnalysis && currentScene == "InGame" && pitchAnalyzer != null && recordedClip != null)
