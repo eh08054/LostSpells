@@ -382,6 +382,60 @@ namespace LostSpells.Data
             return currentSaveData.endlessModeTopRecords;
         }
 
+        // ========== 챕터 진행 관리 ==========
+
+        /// <summary>
+        /// 챕터 클리어 처리
+        /// </summary>
+        public void MarkChapterCleared(int chapterId)
+        {
+            if (currentSaveData == null) return;
+
+            var progress = currentSaveData.GetChapterProgress(chapterId);
+            progress.isCompleted = true;
+
+            // 최고 해금 챕터 업데이트
+            if (chapterId + 1 > currentSaveData.highestChapterUnlocked)
+            {
+                currentSaveData.highestChapterUnlocked = chapterId + 1;
+            }
+
+            SaveGame();
+            Debug.Log($"[SaveManager] 챕터 {chapterId} 클리어! 다음 챕터 {chapterId + 1} 해금됨");
+        }
+
+        /// <summary>
+        /// 클리어된 챕터 ID 목록 가져오기
+        /// </summary>
+        public System.Collections.Generic.List<int> GetClearedChapterIds()
+        {
+            var clearedIds = new System.Collections.Generic.List<int>();
+
+            if (currentSaveData == null || currentSaveData.chapterProgressList == null)
+                return clearedIds;
+
+            foreach (var progress in currentSaveData.chapterProgressList)
+            {
+                if (progress.isCompleted)
+                {
+                    clearedIds.Add(progress.chapterId);
+                }
+            }
+
+            return clearedIds;
+        }
+
+        /// <summary>
+        /// 특정 챕터가 클리어되었는지 확인
+        /// </summary>
+        public bool IsChapterCleared(int chapterId)
+        {
+            if (currentSaveData == null) return false;
+
+            var progress = currentSaveData.chapterProgressList.Find(p => p.chapterId == chapterId);
+            return progress != null && progress.isCompleted;
+        }
+
         // ========== 데이터 초기화 ==========
 
         /// <summary>

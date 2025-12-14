@@ -88,7 +88,7 @@
       "skillDescriptionEn": "Causes an elemental explosion.",
       "skillType": 0,
       "cooldown": 10.0,
-      "manaCost": 10.0,
+      "manaCost": 30.0,
       "damage": 60.0,
       "range": 5.0,
       "projectileSpeed": 8.0,

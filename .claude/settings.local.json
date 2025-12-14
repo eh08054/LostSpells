@@ -75,7 +75,13 @@
       "Bash(xargs:*)",
       "Bash(git clean:*)",
       "Bash(rm:*)",
-      "Bash(git -c user.name=\"qqpmzz\" -c user.email=\"qpmz.official@gmail.com\" commit -m \"$(cat <<''EOF''\nRemove Editor folder scripts (one-time generation tools)\n\nDeleted files:\n- ChapterWaveDataCreator.cs\n- EnemyPrefabGenerator.cs\n- EnemyScaleTestControllerEditor.cs\n- EnemyScaleTestSceneCreator.cs\n- EnemySpawnInfoDrawer.cs\n- SaveManagerEditor.cs\n- VFXSetup.cs\n- WaveDataCreator.cs\n\nThese are one-time generation tools that can be recreated when needed.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n)\")"
+      "Bash(git -c user.name=\"qqpmzz\" -c user.email=\"qpmz.official@gmail.com\" commit -m \"$(cat <<''EOF''\nAdd enemy scale/healthbar test system and chapter wave data\n\nFeatures:\n- Enemy scale test scene: adjust enemy sprite size and health bar position\n- Auto-save to JSON when values change in Inspector\n- Group enemies by type (Bear, Wolf, Dragon, etc.) in test scene\n- EnemyScaleData.json stores per-enemy scale and healthBarHeight\n- EnemySpawner uses EnemyScaleData for spawning enemies\n\nNew files:\n- EnemyScaleData.cs: load/save enemy scale and healthbar height data\n- EnemyScaleTestController.cs: test scene controller\n- EnemyScaleTestControllerEditor.cs: custom inspector with buttons/sliders\n- EnemyScaleTestSceneCreator.cs: menu to create test scene\n- ChapterWaveData.cs: chapter-based wave data system\n- ChapterWaveDataCreator.cs: editor tool to create wave data assets\n- EnemyPrefabGenerator.cs: batch generate enemy prefabs\n- 89 new enemy prefabs in Resources/Enemies/\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git fetch:*)",
+      "Bash(git checkout:*)",
+      "Bash(git pull:*)",
+      "Bash(git stash:*)",
+      "Bash(git -c user.name=\"qqpmzz\" -c user.email=\"qpmz.official@gmail.com\" commit -m \"$(cat <<''EOF''\nRemove Editor scripts and disable Particle System Prewarm\n\nChanges:\n- Remove one-time Editor generation scripts (can be recreated when needed)\n- Disable Prewarm option on Player Particle System\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git -c user.name=\"qqpmzz\" -c user.email=\"qpmz.official@gmail.com\" commit -m \"$(cat <<''EOF''\nMerge branch ''person-taewoo'' into main\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n)\")"
     ],
     "deny": [],
     "ask": []

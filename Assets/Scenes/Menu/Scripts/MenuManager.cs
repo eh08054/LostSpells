@@ -347,7 +347,8 @@ namespace LostSpells.UI
 
             chapterButton.Add(chapterInfo);
 
-            var clearedChapterIds = new List<int>();
+            // 클리어된 챕터 목록 가져오기
+            var clearedChapterIds = SaveManager.Instance.GetClearedChapterIds();
             bool isLocked = chapterData.IsLocked(saveData.level, clearedChapterIds);
 
             if (isLocked)
@@ -360,14 +361,22 @@ namespace LostSpells.UI
                 lockOverlay.Add(lockIcon);
 
                 chapterButton.Add(lockOverlay);
+                chapterButton.AddToClassList("chapter-button-locked");
             }
 
-            chapterButton.clicked += () => OnChapterButtonClicked(chapterData);
+            chapterButton.clicked += () => OnChapterButtonClicked(chapterData, isLocked);
             container.Add(chapterButton);
         }
 
-        private void OnChapterButtonClicked(ChapterData chapterData)
+        private void OnChapterButtonClicked(ChapterData chapterData, bool isLocked)
         {
+            // 잠긴 챕터는 클릭해도 무시
+            if (isLocked)
+            {
+                Debug.Log($"[MenuManager] 챕터 {chapterData.chapterId}는 잠겨있습니다. 이전 챕터를 클리어하세요.");
+                return;
+            }
+
             GameStateManager.Instance.StartChapter(chapterData.chapterId);
             SceneManager.LoadScene("InGame");
         }

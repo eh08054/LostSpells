@@ -1523,6 +1523,13 @@ namespace LostSpells.UI
                     clearScoreValue.text = GameStateManager.Instance.GetScore().ToString();
                 }
 
+                // 챕터 클리어 처리 (다음 챕터 해금)
+                if (GameStateManager.Instance != null)
+                {
+                    int currentChapterId = GameStateManager.Instance.GetCurrentChapterId();
+                    SaveManager.Instance.MarkChapterCleared(currentChapterId);
+                }
+
                 stageClearPopup.style.display = DisplayStyle.Flex;
                 Time.timeScale = 0; // 게임 일시정지
             }
