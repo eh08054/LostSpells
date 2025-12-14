@@ -282,6 +282,16 @@ AVAILABLE_FUNCTIONS = [
         "description": "캐릭터 이동을 멈춥니다",
         "examples": ["정지", "멈춰", "이동 멈춰", "그만"]
     },
+    {
+        "name": "TurnLeft",
+        "description": "캐릭터가 왼쪽 방향으로 돌아봅니다 (이동 없이 방향만 전환)",
+        "examples": ["왼쪽으로 돌아", "왼쪽 돌아"]
+    },
+    {
+        "name": "TurnRight",
+        "description": "캐릭터가 오른쪽 방향으로 돌아봅니다 (이동 없이 방향만 전환)",
+        "examples": ["오른쪽으로 돌아", "오른쪽 돌아"]
+    },
 ]
 
 
@@ -539,13 +549,20 @@ def fallback_classify(text: str) -> dict:
         "챕터1": "SelectChapter1",
         "챕터 1": "SelectChapter1",
         "챕터0": "SelectTutorial",
+        # InGame 방향 전환 명령 (이동보다 먼저 체크해야 함)
+        "왼쪽으로 돌아": "TurnLeft",
+        "왼쪽 돌아": "TurnLeft",
+        "오른쪽으로 돌아": "TurnRight",
+        "오른쪽 돌아": "TurnRight",
         # InGame 이동 명령 (긴 것 먼저)
         "왼쪽으로 이동": "MoveLeft",
         "왼쪽 이동": "MoveLeft",
+        "왼쪽으로 가": "MoveLeft",
         "왼쪽으로": "MoveLeft",
         "왼쪽": "MoveLeft",
         "오른쪽으로 이동": "MoveRight",
         "오른쪽 이동": "MoveRight",
+        "오른쪽으로 가": "MoveRight",
         "오른쪽으로": "MoveRight",
         "오른쪽": "MoveRight",
         "점프": "Jump",
@@ -708,9 +725,9 @@ async def recognize_skill(
 
         # 4. 인게임 플레이 중에는 이동 명령만 빠르게 확인 후 스킬 매칭
         if context == "InGame_Playing" and skill_list:
-            # 먼저 이동/점프/정지 명령인지 확인 (키워드 매칭)
+            # 먼저 이동/점프/정지/방향전환 명령인지 확인 (키워드 매칭)
             movement_result = fallback_classify(transcribed_text)
-            if movement_result["command"] in ["MoveLeft", "MoveRight", "Jump", "StopMove", "PauseGame", "OpenMenu"]:
+            if movement_result["command"] in ["MoveLeft", "MoveRight", "TurnLeft", "TurnRight", "Jump", "StopMove", "PauseGame", "OpenMenu"]:
                 print(f"[/recognize] InGame_Playing: 이동/시스템 명령 감지: {movement_result}")
                 processing_time = time.time() - start_time
                 return {

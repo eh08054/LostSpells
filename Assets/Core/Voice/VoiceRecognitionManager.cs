@@ -886,6 +886,8 @@ namespace LostSpells.Systems
                 // InGame 이동 명령
                 case "MoveLeft": return "왼쪽 이동";
                 case "MoveRight": return "오른쪽 이동";
+                case "TurnLeft": return "왼쪽 돌기";
+                case "TurnRight": return "오른쪽 돌기";
                 case "Jump": return "점프";
                 case "StopMove": return "정지";
                 default: return command;
@@ -1066,23 +1068,23 @@ namespace LostSpells.Systems
         /// </summary>
         private void ExecuteSystemCommand(string command)
         {
-            // Debug.Log($"[VoiceRecognition] 시스템 명령 실행 시도: {command}");
+            Debug.Log($"[VoiceRecognition] 시스템 명령 실행 시도: {command}");
 
             // 현재 게임 컨텍스트 확인
             GameContext currentContext = GetCurrentGameContext();
-            // Debug.Log($"[VoiceRecognition] 현재 컨텍스트: {currentContext}");
+            Debug.Log($"[VoiceRecognition] 현재 컨텍스트: {currentContext}");
 
             // 컨텍스트에서 허용되지 않는 명령인지 확인
             if (!IsCommandAllowedInContext(command, currentContext))
             {
                 string hint = GetContextHintMessage(command, currentContext);
-                // Debug.LogWarning($"[VoiceRecognition] 현재 컨텍스트({currentContext})에서 '{command}' 명령 불가: {hint}");
+                Debug.LogWarning($"[VoiceRecognition] 현재 컨텍스트({currentContext})에서 '{command}' 명령 불가: {hint}");
                 UpdateVoiceRecognitionDisplay(hint);
                 StartCoroutine(ClearVoiceRecognitionDisplayAfterDelay(3f));
                 return;
             }
 
-            // Debug.Log($"[VoiceRecognition] 명령 실행 허용됨: {command}");
+            Debug.Log($"[VoiceRecognition] 명령 실행 허용됨: {command}");
 
             switch (command)
             {
@@ -1386,6 +1388,14 @@ namespace LostSpells.Systems
                     ExecuteMovementCommand("Stop");
                     break;
 
+                case "TurnLeft":
+                    ExecuteMovementCommand("TurnLeft");
+                    break;
+
+                case "TurnRight":
+                    ExecuteMovementCommand("TurnRight");
+                    break;
+
                 default:
                     // Debug.LogWarning($"[VoiceRecognition] 알 수 없는 시스템 명령: {command}");
                     break;
@@ -1582,7 +1592,16 @@ namespace LostSpells.Systems
         /// </summary>
         private void ExecuteMovementCommand(string direction)
         {
-            if (playerComponent == null) return;
+            if (playerComponent == null)
+            {
+                // playerComponent가 없으면 다시 찾기 시도
+                playerComponent = FindFirstObjectByType<PlayerComponent>();
+                if (playerComponent == null)
+                {
+                    Debug.LogWarning("[VoiceRecognition] ExecuteMovementCommand: playerComponent를 찾을 수 없습니다.");
+                    return;
+                }
+            }
 
             switch (direction)
             {
@@ -1597,6 +1616,14 @@ namespace LostSpells.Systems
                     break;
                 case "Stop":
                     playerComponent.SetVoiceMovement(0);
+                    break;
+                case "TurnLeft":
+                    Debug.Log("[VoiceRecognition] TurnLeft 명령 실행");
+                    playerComponent.TurnToDirection(-1);
+                    break;
+                case "TurnRight":
+                    Debug.Log("[VoiceRecognition] TurnRight 명령 실행");
+                    playerComponent.TurnToDirection(1);
                     break;
             }
         }
@@ -1880,9 +1907,10 @@ namespace LostSpells.Systems
                            command == "OpenSettings";
 
                 case GameContext.InGame_Playing:
-                    // 인게임 플레이 중: 일시정지/메뉴 열기, 이동 명령 가능
+                    // 인게임 플레이 중: 일시정지/메뉴 열기, 이동 명령, 방향 전환 가능
                     return command == "PauseGame" || command == "OpenMenu" ||
                            command == "MoveLeft" || command == "MoveRight" ||
+                           command == "TurnLeft" || command == "TurnRight" ||
                            command == "Jump" || command == "StopMove";
 
                 case GameContext.InGame_Paused:
@@ -1941,7 +1969,7 @@ namespace LostSpells.Systems
                     return "시작, 뒤로, 설정";
 
                 case GameContext.InGame_Playing:
-                    return "일시정지, 왼쪽, 오른쪽, 점프, 정지, 멈춰";
+                    return "일시정지, 왼쪽, 오른쪽, 돌아, 점프, 정지";
 
                 case GameContext.InGame_Paused:
                     return "계속, 설정, 상점, 재시작, 메인";

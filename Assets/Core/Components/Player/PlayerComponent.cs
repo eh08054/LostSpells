@@ -665,6 +665,43 @@ namespace LostSpells.Components
             voiceJumpRequested = true;
         }
 
+        /// <summary>
+        /// 방향 전환 (이동을 멈추고 바라보는 방향만 변경)
+        /// </summary>
+        /// <param name="direction">-1: 왼쪽, 1: 오른쪽</param>
+        public void TurnToDirection(int direction)
+        {
+            if (spriteRenderer == null)
+            {
+                Debug.LogWarning("[PlayerComponent] TurnToDirection: spriteRenderer가 null입니다.");
+                return;
+            }
+
+            // 이동 중이면 먼저 멈춤 (Update에서 스프라이트 방향을 덮어쓰지 않도록)
+            voiceMovementDirection = 0;
+
+            if (direction < 0)
+            {
+                spriteRenderer.flipX = true; // 왼쪽 바라보기
+                Debug.Log("[PlayerComponent] 왼쪽으로 방향 전환 (이동 중지)");
+            }
+            else if (direction > 0)
+            {
+                spriteRenderer.flipX = false; // 오른쪽 바라보기
+                Debug.Log("[PlayerComponent] 오른쪽으로 방향 전환 (이동 중지)");
+            }
+        }
+
+        /// <summary>
+        /// 현재 바라보는 방향 반환
+        /// </summary>
+        /// <returns>-1: 왼쪽, 1: 오른쪽</returns>
+        public int GetFacingDirection()
+        {
+            if (spriteRenderer == null) return 1;
+            return spriteRenderer.flipX ? -1 : 1;
+        }
+
         // ========== 스킬 시스템 ==========
 
         /// <summary>
