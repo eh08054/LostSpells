@@ -74,7 +74,8 @@
       "Bash(do echo '=== $folder ===' ls c:/Users/qqpmzz/vscode/GitHub/LostSpells/Assets/Templates/PixelFantasy/PixelMonsters/Pack1/$folder/)",
       "Bash(xargs:*)",
       "Bash(git clean:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(git -c user.name=\"qqpmzz\" -c user.email=\"qpmz.official@gmail.com\" commit -m \"$(cat <<''EOF''\nRemove Editor folder scripts (one-time generation tools)\n\nDeleted files:\n- ChapterWaveDataCreator.cs\n- EnemyPrefabGenerator.cs\n- EnemyScaleTestControllerEditor.cs\n- EnemyScaleTestSceneCreator.cs\n- EnemySpawnInfoDrawer.cs\n- SaveManagerEditor.cs\n- VFXSetup.cs\n- WaveDataCreator.cs\n\nThese are one-time generation tools that can be recreated when needed.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n)\")"
     ],
     "deny": [],
     "ask": []
